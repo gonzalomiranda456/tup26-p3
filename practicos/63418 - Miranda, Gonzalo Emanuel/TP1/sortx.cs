@@ -10,6 +10,8 @@ try
 
     string inputData = ReadInput(config.InputFile);
 
+    CsvData parsedData = ParseDelimited(inputData, config.Delimiter, config.NoHeader);
+
     WriteOutput(config.OutputFile, inputData);
 }
 catch (Exception ex)
@@ -95,8 +97,38 @@ void WriteOutput(string? filePath, string content)
     }
 }
 
-// almanecer criterios de ordenamientos 
+// Transforma el texto crudo en una tabla estructurada (cabeceras y filas)
+CsvData ParseDelimited(string rawText, string delimiter, bool noHeader)
+{
+    string[] lines = rawText.Replace("\r", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
+    List<string[]> rows = new List<string[]>();
+    string[] headers = Array.Empty<string>();
+
+    if (lines.Length == 0) return new CsvData(headers, rows);
+
+    int startIndex = 0;
+
+    if (!noHeader)
+    {
+        headers = lines[0].Split(delimiter);
+        startIndex = 1; 
+    }
+    else
+    {
+        int colCount = lines[0].Split(delimiter).Length;
+        headers = new string[colCount];
+        for (int i = 0; i < colCount; i++) headers[i] = $"Col{i}";
+    }
+    for (int i = startIndex; i < lines.Length; i++)
+    {
+        rows.Add(lines[i].Split(delimiter));
+    }
+
+    return new CsvData(headers, rows);
+}
+
+// almanecer criterios de ordenamientos 
 record SortField(string Name, bool Numeric, bool Descending);
 record AppConfig(
     string? InputFile,
@@ -105,3 +137,4 @@ record AppConfig(
     bool NoHeader,
     List<SortField> SortFields
 );
+record CsvData(string[] Headers, List<string[]> Rows);
