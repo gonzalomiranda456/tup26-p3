@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 // Flujo de funciones
 
@@ -7,10 +8,9 @@ try
 {
     AppConfig config = ParseArgs(args);
 
-    Console.WriteLine("Verificacion correcta ");
-    Console.WriteLine($"Archivo de entrada: {config.InputFile ?? "Ninguno (usará stdin)"}");
-    Console.WriteLine($"Delimitador: '{config.Delimiter}'");
-    Console.WriteLine($"Nummeros de filtros para ordenar: {config.SortFields.Count}");
+    string inputData = ReadInput(config.InputFile);
+
+    WriteOutput(config.OutputFile, inputData);
 }
 catch (Exception ex)
 {
@@ -71,6 +71,28 @@ AppConfig ParseArgs(string[] arguments)
     }
 
     return new AppConfig(input, output, delim, noHeader, sortFields);
+}
+// lectura del archivo 
+string ReadInput(string? filePath)
+{
+    if (string.IsNullOrEmpty(filePath))
+    {
+        return Console.In.ReadToEnd(); 
+    }
+    return File.ReadAllText(filePath); 
+}
+
+// Creacion del archivo de datos
+void WriteOutput(string? filePath, string content)
+{
+    if (string.IsNullOrEmpty(filePath))
+    {
+        Console.Write(content); 
+    }
+    else
+    {
+        File.WriteAllText(filePath, content); 
+    }
 }
 
 // almanecer criterios de ordenamientos 
