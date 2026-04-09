@@ -14,8 +14,11 @@ try
 
     SortRows(parsedData, config.SortFields);
 
-    WriteOutput(config.OutputFile, inputData);
+    string outputData = Serialize(parsedData, config.Delimiter, config.NoHeader);
+
+    WriteOutput(config.OutputFile, outputData); 
 }
+
 catch (Exception ex)
 {
     Console.Error.WriteLine($"Error: {ex.Message}");
@@ -170,6 +173,22 @@ void SortRows(CsvData data, List<SortField> sortFields)
         }
         return 0; 
     });
+}
+
+// Reconstruye la tabla en formato de texto usando el delimitador
+string Serialize(CsvData data, string delimiter, bool noHeader)
+{
+    var sb = new System.Text.StringBuilder();
+
+    if (!noHeader && data.Headers.Length > 0)
+    {
+        sb.AppendLine(string.Join(delimiter, data.Headers));
+    }
+    foreach (var row in data.Rows)
+    {
+        sb.AppendLine(string.Join(delimiter, row));
+    }
+    return sb.ToString();
 }
 
 // almanecer criterios de ordenamientos 
