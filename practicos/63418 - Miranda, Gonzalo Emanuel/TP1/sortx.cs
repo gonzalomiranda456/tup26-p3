@@ -12,6 +12,8 @@ try
 
     CsvData parsedData = ParseDelimited(inputData, config.Delimiter, config.NoHeader);
 
+    SortRows(parsedData, config.SortFields);
+
     WriteOutput(config.OutputFile, inputData);
 }
 catch (Exception ex)
@@ -126,6 +128,48 @@ CsvData ParseDelimited(string rawText, string delimiter, bool noHeader)
     }
 
     return new CsvData(headers, rows);
+}
+
+// ordenamiento de tablas
+void SortRows(CsvData data, List<SortField> sortFields)
+{
+    if (sortFields.Count == 0 || data.Rows.Count <= 1) return;
+
+    var sortColumns = new List<(int Index, SortField Field)>();
+    foreach (var field in sortFields)
+    {
+        int index = Array.IndexOf(data.Headers, field.Name);
+        if (index != -1) sortColumns.Add((index, field));
+    }
+
+    data.Rows.Sort((rowA, rowB) =>
+    {
+        foreach (var col in sortColumns)
+        {
+            
+            string valA = rowA.Length > col.Index ? rowA[col.Index] : "";
+            string valB = rowB.Length > col.Index ? rowB[col.Index] : "";
+
+            int result = 0;
+
+            if (col.Field.Numeric)
+            {
+                
+                double numA = double.TryParse(valA, out double nA) ? nA : 0;
+                double numB = double.TryParse(valB, out double nB) ? nB : 0;
+                result = numA.CompareTo(numB);
+            }
+            else
+            {
+                result = string.Compare(valA, valB, StringComparison.OrdinalIgnoreCase);
+            }
+            if (result != 0)
+            {
+                return col.Field.Descending ? -result : result;
+            }
+        }
+        return 0; 
+    });
 }
 
 // almanecer criterios de ordenamientos 
