@@ -33,13 +33,14 @@ public static class Compilador
     
     private static Nodo ParsearExpresion()
     {
-        Nodo nodoIzquierdo = ParsearFactor();
+        Nodo nodoIzquierdo = ParsearTermino();
 
         while (TokenActual().Tipo == TipoToken.Suma || TokenActual().Tipo == TipoToken.Resta)
         {
             Token operador = TokenActual();
             Avanzar(); 
-            Nodo nodoDerecho = ParsearFactor();
+            
+            Nodo nodoDerecho = ParsearTermino();
             
             if (operador.Tipo == TipoToken.Suma)
                 nodoIzquierdo = new SumaNodo(nodoIzquierdo, nodoDerecho);
@@ -50,9 +51,50 @@ public static class Compilador
         return nodoIzquierdo;
     }
 
+private static Nodo ParsearTermino()
+    {
+        Nodo nodoIzquierdo = ParsearFactor();
+
+        while (TokenActual().Tipo == TipoToken.Multiplicacion || TokenActual().Tipo == TipoToken.Division)
+        {
+            Token operador = TokenActual();
+            Avanzar();
+            Nodo nodoDerecho = ParsearFactor();
+
+            if (operador.Tipo == TipoToken.Multiplicacion)
+                nodoIzquierdo = new MultiplicacionNodo(nodoIzquierdo, nodoDerecho);
+            else
+                nodoIzquierdo = new DivisionNodo(nodoIzquierdo, nodoDerecho);
+        }
+        return nodoIzquierdo;
+    }
+
     private static Nodo ParsearFactor()
     {
         Token actual = TokenActual();
+
+        if (actual.Tipo == TipoToken.Suma) 
+        { 
+            Avanzar(); 
+            return ParsearFactor(); 
+        }
+        if (actual.Tipo == TipoToken.Resta) 
+        { 
+            Avanzar(); 
+            return new NegativoNodo(ParsearFactor()); 
+        }
+
+        if (actual.Tipo == TipoToken.ParentesisIzquierdo)
+        {
+            Avanzar();
+            Nodo nodoInterno = ParsearExpresion();
+            
+            if (TokenActual().Tipo != TipoToken.ParentesisDerecho)
+                throw new FormatException("Se esperaba ')' o hay un paréntesis sin cerrar.");
+                
+            Avanzar();
+            return nodoInterno;
+        }
 
         if (actual.Tipo == TipoToken.Numero)
         {
