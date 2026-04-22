@@ -4,18 +4,35 @@ static class Program
 {
     static void Main(string[] args) 
     {
-        Console.Title = "Calculadora de Expresiones - TP2";
-        Console.WriteLine("--- Intérprete de Expresiones Aritméticas ---");
+        if (Comandos.Procesar(args))
+        {
+            return;
+        }
 
-        if (args.Length == 0)
+        Console.WriteLine("\n== Evaluación de Expresiones Matemáticas ==\n");
+        Console.Write("Ingrese una expresión matemática con la variable 'x' (ej: (x - 1) * (x - 8/4) + 3): \n>  ");
+
+        var expresion = Console.ReadLine() ?? "";
+
+        if (string.IsNullOrWhiteSpace(expresion))
         {
-            
-            Console.WriteLine("Iniciando modo interactivo... (Escribe 'fin' para salir)");
-        }   
-        else
+            Console.WriteLine("No se ingresó ninguna expresión. Saliendo...");
+            return;
+        }
+
+        var funcion = Compilador.Parse(expresion);
+
+        while (true)
         {
+            Console.Write("x = ");
+            var x = Console.ReadLine() ?? "";
+
+            if (string.IsNullOrWhiteSpace(x) || x.ToLower() == "fin")
+            {
+                break;
+            }
             
-            Console.WriteLine($"Procesando {args.Length} argumentos de entrada...");
+            Console.WriteLine(funcion.Evaluar(int.Parse(x)));
         }
     }
 }
