@@ -23,7 +23,6 @@ class Parser
         return ParseExpresion();
     }
 
-    
 
     private Nodo ParseExpresion()
     {
@@ -38,6 +37,29 @@ class Parser
             else if (Match('-'))
             {
                 nodo = new RestaNodo(nodo, ParseTermino());
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return nodo;
+    }
+
+    private Nodo ParseTermino()
+    {
+        Nodo nodo = ParseFactor();
+
+        while (true)
+        {
+            if (Match('*'))
+            {
+                nodo = new MultiplicacionNodo(nodo, ParseFactor());
+            }
+            else if (Match('/'))
+            {
+                nodo = new DivisionNodo(nodo, ParseFactor());
             }
             else
             {
