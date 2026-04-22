@@ -20,9 +20,13 @@ class Parser
 
     public Nodo Parsear()
     {
-        return ParseExpresion();
-    }
+        Nodo nodo = ParseExpresion();
 
+        if (pos < texto.Length)
+            throw new FormatException("Token inesperado");
+
+        return nodo;
+    }
 
     private Nodo ParseExpresion()
     {
@@ -68,6 +72,49 @@ class Parser
         }
 
         return nodo;
+    }
+
+    private Nodo ParseFactor()
+    {
+        if (Match('+'))
+            return ParseFactor();
+
+        if (Match('-'))
+            return new NegativoNodo(ParseFactor());
+
+        if (Match('('))
+        {
+            Nodo nodo = ParseExpresion();
+
+            if (!Match(')'))
+                throw new FormatException("Se esperaba ')'");
+
+            return nodo;
+        }
+
+        if (pos < texto.Length && (texto[pos] == 'x' || texto[pos] == 'X'))
+        {
+            pos++;
+            return new VariableNodo();
+        }
+
+        return ParseNumero();
+    }
+
+    private Nodo ParseNumero()
+    {
+        string numero = "";
+
+        while (pos < texto.Length && char.IsDigit(texto[pos]))
+        {
+            numero += texto[pos];
+            pos++;
+        }
+
+        if (numero == "")
+            throw new FormatException("Token inesperado");
+
+        return new NumeroNodo(int.Parse(numero));
     }
 
     private bool Match(char c)
