@@ -13,3 +13,11 @@ class NumeroNodo : Nodo
         return valor;
     }
 }
+class VariableNodo : Nodo
+{
+    public override int Evaluar(int x = 0)
+    {
+        return x;
+    }
+    
+}
