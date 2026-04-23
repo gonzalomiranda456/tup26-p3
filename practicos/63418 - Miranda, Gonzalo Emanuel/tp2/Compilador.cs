@@ -28,7 +28,14 @@ public static class Compilador
     {
         _tokens = Tokenizar(expresion);
         _posicion = 0;
-        return ParsearExpresion();
+        
+        Nodo resultado = ParsearExpresion();
+
+        if (TokenActual().Tipo != TipoToken.Fin)
+        {
+            throw new FormatException($"Token inesperado: {TokenActual().Valor}");
+        }
+        return resultado;
     }
     
     private static Nodo ParsearExpresion()
