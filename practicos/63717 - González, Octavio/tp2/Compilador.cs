@@ -65,9 +65,34 @@ namespace Calculadora
                     continue;
                 }
 
-                
-                
-                throw new Exception("No entiendo que es este simbolo: " + actual);
+                // Si es un numero, leemos todos los digitos que vengan juntos
+                if (char.IsDigit(actual))
+                {
+                    string numero = "";
+                    while (_posicion < _texto.Length && char.IsDigit(_texto[_posicion]))
+                    {
+                        numero = numero + _texto[_posicion];
+                        _posicion++;
+                    }
+                    tokens.Add(new Token(TipoToken.Numero, numero));
+                    continue;
+                }
+
+                // Aca miramos los signos uno por uno
+                switch (actual)
+                {
+                    case '+': tokens.Add(new Token(TipoToken.Suma)); break;
+                    case '-': tokens.Add(new Token(TipoToken.Resta)); break;
+                    case '*': tokens.Add(new Token(TipoToken.Multiplicacion)); break;
+                    case '/': tokens.Add(new Token(TipoToken.Division)); break;
+                    case '(': tokens.Add(new Token(TipoToken.ParentesisIzquierdo)); break;
+                    case ')': tokens.Add(new Token(TipoToken.ParentesisDerecho)); break;
+                    default:
+                        // Si no es nada de lo anterior, recien ahi tiramos error
+                        throw new Exception("No entiendo que es este simbolo: " + actual);
+                }
+
+                _posicion++;
             }
 
             // Al final de todo avisamos que terminamos
