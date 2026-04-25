@@ -1,7 +1,7 @@
 namespace Tup26.AlumnosApp;
 
 [Flags]
-enum Estado : int {  // Usar valor único en el estado pero multiples en los filtros.
+public enum Estado : int {  // Usar valor único en el estado pero multiples en los filtros.
     Vacio       = 0b0000,
     Aprobado    = 0b0001,
     Pendiente   = 0b0010,

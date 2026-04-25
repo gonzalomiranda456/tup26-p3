@@ -1,22 +1,8 @@
 namespace Tup26.AlumnosApp;
 
-static class Log {
-    public static void Escribir(string mensaje, ConsoleColor color = ConsoleColor.Black) {
-        ConsoleColor colorAnterior = Console.ForegroundColor;
-        Console.ForegroundColor = color;
-        Console.WriteLine(mensaje);
-        Console.ForegroundColor = colorAnterior;
-    }
-
-    public static void Debug(string mensaje)   => Escribir(mensaje, ConsoleColor.Blue);
-    public static void Error(string mensaje)   => Escribir(mensaje, ConsoleColor.Red);
-    public static void Info(string mensaje)    => Escribir(mensaje, ConsoleColor.Green);
-    public static void Warning(string mensaje) => Escribir(mensaje, ConsoleColor.Yellow);
-}
-
 static class AlumnosManager {
 
-    public static Alumnos Cargar(string rutaArchivo) {
+    public static Alumnos Leer(string rutaArchivo) {
         Alumnos alumnos = new(Array.Empty<Alumno>());
         string comisionActual = string.Empty;
 
@@ -51,7 +37,7 @@ static class AlumnosManager {
         return alumnos;
     }
 
-    public static void Guardar(Alumnos alumnos, string rutaArchivo) {
+    public static void Escribir(Alumnos alumnos, string rutaArchivo) {
         try {
             List<Alumno> alumnosOrdenados = new(alumnos);
             alumnosOrdenados.Sort(Alumno.Comparar);
@@ -74,7 +60,7 @@ static class AlumnosManager {
                     comisionActual = comisionAlumno;
                     sb.AppendLine($"## {comisionActual}");
                     sb.AppendLine("```text");
-                    sb.AppendLine("LegajX  Nombre y Apellido                Teléfono         Foto  GitHub                   Prácticos          Exámenes        ");
+                    sb.AppendLine("Legajo  Nombre y Apellido                Teléfono         Foto  GitHub                   Prácticos          Exámenes        ");
                     sb.AppendLine("------  -------------------------------  ---------------  ----  -----------------------  -----------------  -----------------");
                 }
 
@@ -115,15 +101,7 @@ static class AlumnosManager {
         Console.WriteLine(separador);
 
         foreach (Alumno alumno in alumnosOrdenados) {
-            Console.WriteLine(FormatearFilaTabla(
-                alumno.Legajo.ToString(),
-                ObtenerNombreApellido(alumno),
-                FormatearTexto(alumno.Telefono),
-                alumno.ConFoto ? "Si" : "No",
-                FormatearGitHub(alumno.GitHub),
-                ObtenerComision(alumno),
-                FormatearEstados(alumno.practicos),
-                FormatearEstados(alumno.examenes)));
+            Console.WriteLine(FormatearFilaTabla( alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.Telefono, alumno.ConFoto ? "Si" : "No", alumno.GitHub, alumno.Comision, FormatearEstados(alumno.practicos), FormatearEstados(alumno.examenes)));
         }
 
         Console.WriteLine(separador);
@@ -203,7 +181,7 @@ static class AlumnosManager {
 
     public static void CopiarEnunciadoPracticos(Alumnos alumnos, string practico, bool forzar = false) {
         string nombrePractico    = practico.Trim();
-        string rutaOrigen        = Path.Combine(AppPaths.EnunciadosDirectory, nombrePractico);
+        string origen            = Path.Combine(AppPaths.EnunciadosDirectory, nombrePractico);
         string rutaBasePracticos = AppPaths.PracticosDirectory;
         string carpetaPractico   = nombrePractico.ToLower();
 
@@ -212,8 +190,8 @@ static class AlumnosManager {
             return;
         }
 
-        if (!Directory.Exists(rutaOrigen)) {
-            Log.Error($"No existe la carpeta del enunciado: {rutaOrigen}");
+        if (!Directory.Exists(origen)) {
+            Log.Error($"No existe la carpeta del enunciado: {origen}");
             return;
         }
 
@@ -236,11 +214,11 @@ static class AlumnosManager {
                 }
             }
 
-            string rutaDestino = Path.Combine(rutaAlumno, carpetaPractico);
+            string destino = Path.Combine(rutaAlumno, carpetaPractico);
 
             try {
-                CopiarContenidoDirectorio(rutaOrigen, rutaDestino, forzar);
-                Log.Info($"Enunciado copiado: {rutaOrigen} -> {rutaDestino}");
+                CopiarCarpeta(origen, destino, forzar);
+                Log.Info($"Enunciado copiado: {origen} -> {destino}");
             }
             catch (Exception ex) {
                 Log.Error($"Error al copiar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
@@ -305,39 +283,27 @@ static class AlumnosManager {
         }
     }
 
-    public static void GuardarJSON(Alumnos alumnos, string rutaArchivo) {
+    public static void EscribirJSON(Alumnos alumnos, string rutaArchivo) {
         try {
-            StringBuilder sb = new();
-            sb.AppendLine("[");
+            var datos = alumnos.Select(alumno => new {
+                alumno.Legajo,
+                alumno.Comision,
+                alumno.Nombre,
+                alumno.Apellido,
+                alumno.Telefono,
+                TieneFoto = alumno.ConFoto,
+                GitHub = alumno.GitHub,
+                Practicos = alumno.practicos.Select(e => e.ToEmoji()).ToList(),
+                Examenes = alumno.examenes.Select(e => e.ToEmoji()).ToList()
+            });
 
-            for (int i = 0; i < alumnos.Count; i++) {
-                Alumno alumno = alumnos[i];
-                string practicos = string.Join(", ", alumno.practicos.Select(p => $"\"{p.ToEmoji()}\""));
-                string examenes  = string.Join(", ", alumno.examenes.Select(e => $"\"{e.ToEmoji()}\""));
+            JsonSerializerOptions opciones = new() {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
 
-                sb.AppendLine($$"""
-                    {
-                        "legajo":   {{alumno.Legajo}},
-                        "comision": "{{alumno.Comision}}",
-                        "nombre":   "{{alumno.Nombre}}",
-                        "apellido": "{{alumno.Apellido}}",
-                        "telefono": "{{alumno.Telefono}}",
-                        "tieneFoto": {{alumno.ConFoto.ToString().ToLower()}},
-                        "gitHub": "  {{alumno.GitHub}}",
-                        "practicos": [ {{practicos}} ],
-                        "examenes":  [ {{examenes}} ]
-                    }
-                    """);
-
-                if (i < alumnos.Count - 1) {
-                    sb.Append(',');
-                }
-
-                sb.AppendLine();
-            }
-
-            sb.AppendLine("]");
-            File.WriteAllText(rutaArchivo, sb.ToString(), Encoding.UTF8);
+            File.WriteAllText(rutaArchivo, JsonSerializer.Serialize(datos, opciones) + Environment.NewLine, new UTF8Encoding(false));
+            
             Log.Info($"Alumnos guardados en JSON: {rutaArchivo}");
         }
         catch (Exception ex) {
@@ -345,26 +311,19 @@ static class AlumnosManager {
         }
     }
 
-    public static void GuardarVCard(Alumnos alumnos, string rutaArchivo) {
+    public static void EscribirVCard(Alumnos alumnos, string rutaArchivo) {
         try {
-            List<Alumno> alumnosConTelefono = alumnos
-                .Where(alumno => !string.IsNullOrWhiteSpace(alumno.TelefonoId))
-                .OrderBy(ObtenerComision)
-                .ThenBy(alumno => FormatearTexto(alumno.Apellido), StringComparer.OrdinalIgnoreCase)
-                .ThenBy(alumno => FormatearTexto(alumno.Nombre), StringComparer.OrdinalIgnoreCase)
-                .ThenBy(alumno => alumno.Legajo)
-                .ToList();
+            var alumnosConTelefono = alumnos.Where(a => a.ConTelefono)
+                .OrderBy(a => a.Comision).ThenBy(a => a.NombreCompleto).ThenBy(a => a.Legajo);
 
             StringBuilder sb = new();
-
             foreach (Alumno alumno in alumnosConTelefono) {
                 AppendVCardContacto(sb, alumno);
             }
-
             File.WriteAllText(rutaArchivo, sb.ToString(), new UTF8Encoding(false));
+
             Log.Info($"Contactos vCard guardados en: {rutaArchivo}");
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             Log.Error($"Error al guardar el archivo vCard: {ex.Message}");
         }
     }
@@ -382,28 +341,23 @@ static class AlumnosManager {
 
         (string apellido, string nombre) = ExtraerApellidoNombre(columnas[1]);
 
-        return new Alumno {
-            Legajo = legajo,
-            Comision = LimpiarCampo(comisionActual),
-            Nombre = nombre,
-            Apellido = apellido,
-            Telefono = ExtraerTelefono(columnas[2]),
-            TieneFoto = ExtraerFoto(columnas[3]),
-            GitHub = ExtraerGitHub(columnas[4]),
-            practicos = ExtraerPracticos(columnas[5]),
-            examenes = ExtraerExamenes(columnas[6])
-        };
+        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerFoto(columnas[3]));
+        CargarEstados(alumno.practicos, columnas[5]);
+        CargarEstados(alumno.examenes, columnas[6]);
+
+        return alumno;
     }
 
+
     static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes) {
-        string colLegajo = AjustarColumna(legajo, 6);
+        string colLegajo         = AjustarColumna(legajo, 6);
         string colNombreApellido = AjustarColumna(nombreApellido, 26);
-        string colTelefono = AjustarColumna(telefono, 15);
-        string colFoto = AjustarColumna(foto, 4);
-        string colGitHub = AjustarColumna(gitHub, 25);
-        string colComision = AjustarColumna(comision, 10);
-        string colPruebas = AjustarColumna(pruebas, 20);
-        string colExamenes = AjustarColumna(examenes, 20);
+        string colTelefono       = AjustarColumna(telefono, 15);
+        string colFoto           = AjustarColumna(foto, 4);
+        string colGitHub         = AjustarColumna(gitHub, 25);
+        string colComision       = AjustarColumna(comision, 10);
+        string colPruebas        = AjustarColumna(pruebas, 20);
+        string colExamenes       = AjustarColumna(examenes, 20);
 
         return $"{colLegajo}  {colNombreApellido}  {colTelefono}  {colFoto}  {colGitHub}  {colComision}  {colPruebas}  {colExamenes}";
     }
@@ -413,31 +367,17 @@ static class AlumnosManager {
     }
 
     static string FormatearFila(Alumno alumno) {
-        string legajo = AjustarColumna(alumno.Legajo.ToString(), 6);
-        string nombreApellido = AjustarColumna(ObtenerNombreApellido(alumno), 31);
-        string telefono = AjustarColumna(FormatearTexto(alumno.Telefono), 15);
-        string foto = AjustarColumna(alumno.TieneFoto ? "Si" : "No", 4);
-        string gitHub = AjustarColumna(FormatearGitHub(alumno.GitHub), 23);
-        string pruebas = AjustarColumna(FormatearEstados(alumno.practicos, 10));
-        string examenes = AjustarColumna(FormatearEstados(alumno.examenes, 10));
+        string legajo         = AjustarColumna(alumno.Legajo.ToString(), 6);
+        string nombreApellido = AjustarColumna(alumno.NombreCompleto, 31);
+        string telefono       = AjustarColumna(alumno.Telefono, 15);
+        string foto           = AjustarColumna(alumno.TieneFoto ? "Si" : "No", 4);
+        string gitHub         = AjustarColumna(alumno.GitHub, 23);
+        string pruebas        = AjustarColumna(FormatearEstados(alumno.practicos, 10));
+        string examenes       = AjustarColumna(FormatearEstados(alumno.examenes, 10));
 
         return $"{legajo}  {nombreApellido}  {telefono}  {foto}  {gitHub}  {pruebas}  {examenes}";
     }
 
-    static string ObtenerNombreApellido(Alumno alumno) {
-        string apellido = FormatearTexto(alumno.Apellido);
-        string nombre = FormatearTexto(alumno.Nombre);
-
-        if (apellido == "—") {
-            return nombre;
-        }
-
-        if (nombre == "—") {
-            return apellido;
-        }
-
-        return $"{apellido}, {nombre}";
-    }
 
     static string AjustarColumna(string texto, int ancho = 20) {
         string valor = FormatearTexto(texto);
@@ -455,7 +395,7 @@ static class AlumnosManager {
 
     static string LimpiarCampo(string texto) {
         string valor = texto.Trim();
-        if (valor == "—") { return string.Empty; }
+        if (valor is "—" or "-" or "(-)" or "(—)") { return string.Empty; }
 
         return valor;
     }
@@ -471,10 +411,10 @@ static class AlumnosManager {
 
         if (partes.Length == 2) {
             apellido = LimpiarCampo(partes[0]);
-            nombre = LimpiarCampo(partes[1]);
+            nombre   = LimpiarCampo(partes[1]);
         } else {
             apellido = LimpiarCampo(nombreCompleto);
-            nombre = string.Empty;
+            nombre   = string.Empty;
         }
 
         return (apellido, nombre);
@@ -482,75 +422,57 @@ static class AlumnosManager {
 
     static string ExtraerGitHub(string texto) {
         string valor = LimpiarCampo(texto);
-        if (string.Equals(valor, "No", StringComparison.OrdinalIgnoreCase)) {
-            return string.Empty;
-        }
-
-        return valor;
+        return string.Equals(valor, "no", StringComparison.OrdinalIgnoreCase) ? string.Empty : valor;
     }
 
     static string FormatearGitHub(string gitHub) {
-        if (string.IsNullOrWhiteSpace(gitHub)) {
-            return "-";
-        }
-
-        return gitHub.Trim();
+        gitHub = gitHub.Trim();
+        return string.IsNullOrWhiteSpace(gitHub) ? "-" : gitHub;
     }
 
     static string FormatearEstados(List<Estado> estados, int maxEstados = 20) {
         string valor = string.Empty;
-
-        if (estados != null && estados.Count > 0) {
+        if (estados?.Count > 0) {
             valor = string.Join(string.Empty, estados.Select(e => e.ToEmoji()));
         }
-
         valor = valor.Replace(" ", "⚪️");
-
         while (StringInfo.ParseCombiningCharacters(valor).Length < maxEstados) {
             valor += "⚪️";
         }
-
         return valor;
     }
 
-    static List<Estado> ParsearEstados(string texto) {
-        string valor = texto.Trim();
+    static bool ExtraerFoto(string texto) {
+        texto = texto.Trim().ToLower();
+        return texto== "si" || texto == "true" || texto == "yes";
+    }
 
-        if (string.IsNullOrWhiteSpace(valor) || valor == "-" || valor == "—") {
-            return new();
-        }
+    static void CargarEstados(List<Estado> destino, string texto) {
+        destino.Clear();
 
-        List<Estado> estados = new();
-        TextElementEnumerator enumerador = StringInfo.GetTextElementEnumerator(valor);
-
+        TextElementEnumerator enumerador = StringInfo.GetTextElementEnumerator(texto);
         while (enumerador.MoveNext()) {
-            string elemento = enumerador.GetTextElement();
-            Estado estado = EstadoExtensions.Parse(elemento);
+            string elemento = enumerador.GetTextElement().Trim();
+            if (string.IsNullOrWhiteSpace(elemento)) {
+                continue;
+            }
 
-            if (estado != Estado.Vacio) {
-                estados.Add(estado);
+            Estado estado = EstadoExtensions.Parse(elemento);
+            if (estado != Estado.Vacio || EsEstadoVacio(elemento)) {
+                destino.Add(estado);
             }
         }
 
-        return estados;
+        while (destino.Count > 0 && destino[^1] == Estado.Vacio) {
+            destino.RemoveAt(destino.Count - 1);
+        }
     }
 
-    static bool ExtraerFoto(string texto) {
-        return string.Equals(texto.Trim(), "Si", StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(texto.Trim(), "true", StringComparison.OrdinalIgnoreCase);
-    }
+    static bool EsEstadoVacio(string texto) =>
+        texto is "⚪" or "⚪️";
 
-    static List<Estado> ExtraerPracticos(string pruebas) {
-        return ParsearEstados(pruebas);
-    }
-
-    static List<Estado> ExtraerExamenes(string examenes) {
-        return ParsearEstados(examenes);
-    }
-
-    static bool TieneMismoLegajo(string nombreCarpeta, int legajo) {
-        //TODO: Verificar que el legajo esta en el nombre de la carpeta, considerando posibles formatos como "12345 - Nombre Apellido" o "12345_NombreApellido"
-        return nombreCarpeta.StartsWith($"{legajo}") || nombreCarpeta.StartsWith($"{legajo}_");
+    static bool TieneMismoLegajo(string carpeta, int legajo) {
+        return carpeta.StartsWith($"{legajo} ");
     }
 
     static List<string> BuscarCarpetasMismoLegajo(string rutaBase, int legajo) {
@@ -571,8 +493,8 @@ static class AlumnosManager {
         return carpetasMismoLegajo;
     }
 
-    static string? ObtenerCarpetaUnicaMismoLegajo(string rutaBase, int legajo) {
-        List<string> carpetasMismoLegajo = BuscarCarpetasMismoLegajo(rutaBase, legajo);
+    static string? ObtenerCarpetaUnicaMismoLegajo(string carpeta, int legajo) {
+        List<string> carpetasMismoLegajo = BuscarCarpetasMismoLegajo(carpeta, legajo);
 
         if (carpetasMismoLegajo.Count != 1) {
             return null;
@@ -581,38 +503,32 @@ static class AlumnosManager {
         return carpetasMismoLegajo[0];
     }
 
-    static string ObtenerRutaCarpetaPreferida(List<string> carpetasConLegajo, string nombreCarpetaEsperado) {
-        return carpetasConLegajo
-            .FirstOrDefault(carpeta => string.Equals(Path.GetFileName(carpeta), nombreCarpetaEsperado, StringComparison.OrdinalIgnoreCase))
-            ?? carpetasConLegajo[0];
-    }
-
-    static void RenombrarCarpeta(string rutaActual, string rutaNueva) {
-        if (!Directory.Exists(rutaNueva)) {
-            Directory.Move(rutaActual, rutaNueva);
+    static void RenombrarCarpeta(string origen, string destino) {
+        if (!Directory.Exists(destino)) {
+            Directory.Move(origen, destino);
             return;
         }
 
-        if (!string.Equals(rutaActual, rutaNueva, StringComparison.OrdinalIgnoreCase)) {
-            throw new IOException($"Ya existe una carpeta destino: {rutaNueva}");
+        if (!string.Equals(origen, destino, StringComparison.OrdinalIgnoreCase)) {
+            throw new IOException($"Ya existe una carpeta destino: {destino}");
         }
 
-        string? rutaDirectorioPadre = Path.GetDirectoryName(rutaActual);
+        string? rutaDirectorioPadre = Path.GetDirectoryName(origen);
         if (string.IsNullOrEmpty(rutaDirectorioPadre)) {
-            throw new IOException($"No se pudo determinar el directorio base para renombrar: {rutaActual}");
+            throw new IOException($"No se pudo determinar el directorio base para renombrar: {origen}");
         }
 
         string rutaTemporal = Path.Combine(rutaDirectorioPadre, $".tmp-renombrar-{Guid.NewGuid():N}");
-        Directory.Move(rutaActual, rutaTemporal);
-        Directory.Move(rutaTemporal, rutaNueva);
+        Directory.Move(origen, rutaTemporal);
+        Directory.Move(rutaTemporal, destino);
     }
 
-    static void CopiarContenidoDirectorio(string rutaOrigen, string rutaDestino, bool forzar = false) {
-        Directory.CreateDirectory(rutaDestino);
+    static void CopiarCarpeta(string origen, string destino, bool forzar = false) {
+        Directory.CreateDirectory(destino);
 
-        foreach (string archivoOrigen in Directory.GetFiles(rutaOrigen)) {
+        foreach (string archivoOrigen in Directory.GetFiles(origen)) {
             string nombreArchivo = Path.GetFileName(archivoOrigen);
-            string archivoDestino = Path.Combine(rutaDestino, nombreArchivo);
+            string archivoDestino = Path.Combine(destino, nombreArchivo);
 
             if (!forzar && File.Exists(archivoDestino)) {
                 continue;
@@ -621,21 +537,21 @@ static class AlumnosManager {
             File.Copy(archivoOrigen, archivoDestino, overwrite: forzar);
         }
 
-        foreach (string subdirectorioOrigen in Directory.GetDirectories(rutaOrigen)) {
-            string nombreSubdirectorio = Path.GetFileName(subdirectorioOrigen);
-            string subdirectorioDestino = Path.Combine(rutaDestino, nombreSubdirectorio);
-            CopiarContenidoDirectorio(subdirectorioOrigen, subdirectorioDestino, forzar);
+        foreach (string subdirectorioOrigen in Directory.GetDirectories(origen)) {
+            string nombreSubdirectorio  = Path.GetFileName(subdirectorioOrigen);
+            string subdirectorioDestino = Path.Combine(destino, nombreSubdirectorio);
+            CopiarCarpeta(subdirectorioOrigen, subdirectorioDestino, forzar);
         }
     }
 
     static void AppendVCardContacto(StringBuilder sb, Alumno alumno) {
-        string apellido = FormatearTextoVcard(alumno.Apellido);
-        string nombre = FormatearTextoVcard(alumno.Nombre);
-        string nombreCompleto = FormatearTextoVcard(ObtenerNombreVisible(alumno));
-        string comision = FormatearTextoVcard(ObtenerComision(alumno));
+        string apellido         = FormatearTextoVcard(alumno.Apellido);
+        string nombre           = FormatearTextoVcard(alumno.Nombre);
+        string nombreCompleto   = FormatearTextoVcard($"{nombre} {apellido}");
+        string comision         = FormatearTextoVcard(alumno.Comision);
         string etiquetaBusqueda = FormatearTextoVcard(ObtenerEtiquetaBusqueda(alumno));
-        string etiquetaVisible = FormatearTextoVcard(ObtenerEtiquetaVisible(alumno));
-        string telefonoE164 = $"+{alumno.TelefonoId}";
+        string etiquetaVisible  = FormatearTextoVcard($"{etiquetaBusqueda}-{alumno.Legajo}");
+        string telefonoE164     = $"+{alumno.TelefonoId}";
 
         sb.AppendLine("BEGIN:VCARD");
         sb.AppendLine("VERSION:3.0");
@@ -661,21 +577,6 @@ static class AlumnosManager {
             .Replace("\n", "\\n");
     }
 
-    static string ObtenerNombreVisible(Alumno alumno) {
-        string apellido = FormatearTexto(alumno.Apellido);
-        string nombre = FormatearTexto(alumno.Nombre);
-
-        if (apellido == "—") {
-            return nombre;
-        }
-
-        if (nombre == "—") {
-            return apellido;
-        }
-
-        return $"{nombre} {apellido}";
-    }
-
     static string ObtenerGitHubVisible(Alumno alumno) {
         string gitHub = FormatearGitHub(alumno.GitHub);
         return gitHub == "-" ? "sin GitHub" : gitHub;
@@ -685,16 +586,4 @@ static class AlumnosManager {
         return $"TUP26-P3-{ObtenerComision(alumno)}";
     }
 
-    static string ObtenerEtiquetaVisible(Alumno alumno) {
-        return $"{ObtenerEtiquetaBusqueda(alumno)}-{alumno.Legajo}";
-    }
-
-    static string EscaparJson(string texto) {
-        return texto
-            .Replace("\\", "\\\\")
-            .Replace("\"", "\\\"")
-            .Replace("\r", "\\r")
-            .Replace("\n", "\\n")
-            .Replace("\t", "\\t");
-    }
 }

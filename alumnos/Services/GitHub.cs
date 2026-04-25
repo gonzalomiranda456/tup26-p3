@@ -1,4 +1,3 @@
-using System.Data.SqlTypes;
 using System.IO.Enumeration;
 
 namespace Tup26.AlumnosApp;
@@ -179,11 +178,13 @@ class GitHub {
         }
     }
 
-    public void BajarArchivo(int numeroPR, string patron, string rutaDestino) {
+    public void BajarArchivo(int numeroPR, string patron, string rutaDestino, bool forzar = false) {
         string? salida = Ejecutar( $"Error al bajar archivos del PR #{numeroPR}",
             $"/pulls/{numeroPR}/files", "--paginate", "--jq", ".[] | \"\\(.filename)\\t\\(.raw_url)\"" );
 
         if (salida is null) { return; }
+
+        Directory.CreateDirectory(rutaDestino);
 
         List<string> urls = Lineas(salida, pasarAMinusculas: false);
 
@@ -200,6 +201,11 @@ class GitHub {
                 using HttpClient client = new();
                 string nombreArchivo = Path.GetFileName(nombreRemoto);
                 string rutaArchivo   = Path.Combine(rutaDestino, nombreArchivo);
+
+                if (!forzar && File.Exists(rutaArchivo)) {
+                    // Log.Info($"Archivo '{nombreRemoto}' ya existe. Se omite descarga: {rutaArchivo}");
+                    continue;
+                }
 
                 byte[] contenido = client.GetByteArrayAsync(url).Result;
                 File.WriteAllBytes(rutaArchivo, contenido);

@@ -20,7 +20,7 @@ class Alumnos : IEnumerable<Alumno> {
         new(Lista.Where(a => tiene == a.ConGithub));
 
     public Alumnos ConPractico(int numero, Estado estado) =>
-        new(Lista.Where(a =>  (a.practicos[numero - 1] & estado) != 0));
+        new(Lista.Where(a => (a.EstadoPractico(numero) & estado) != 0));
 
     public Alumnos ConTelefono(bool tiene = true) =>
         new(Lista.Where(a => tiene == a.ConTelefono));

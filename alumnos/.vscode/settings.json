@@ -1,4 +1,5 @@
 {
-    "workbench.colorTheme": "One Dark Pro",
-    "workbench.preferredDarkColorTheme": "One Dark Pro"
+    "workbench.colorTheme": "Dark 2026",
+    "workbench.preferredDarkColorTheme": "Dark 2026",
+    "editor.fontFamily": "Google Sans Code,Menlo, Monaco, 'Courier New', monospace"
 }
