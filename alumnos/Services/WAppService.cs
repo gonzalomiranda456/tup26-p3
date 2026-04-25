@@ -12,6 +12,7 @@ Servicio para interactuar con WhatsApp mediante `wacli`.
 - `Enviar(destinatario, mensaje)`: envía un mensaje a un contacto o grupo resolviendo nombre, teléfono o JID.
     - `destinatario`: nombre, teléfono o JID del contacto o grupo.
     - `mensaje`: contenido del mensaje.
+    - `rutaArchivo`: ruta opcional de una imagen, nota de audio o archivo común para enviar junto al mensaje.
 
 - `Invitar(grupo, usuarios)`: invita uno o más usuarios a un grupo.
     - `grupo`: grupo destino.
@@ -30,6 +31,14 @@ Servicio para interactuar con WhatsApp mediante `wacli`.
 */
 
 class WAppService {
+    static readonly HashSet<string> ExtensionesImagen = new(StringComparer.OrdinalIgnoreCase) {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"
+    };
+
+    static readonly HashSet<string> ExtensionesAudio = new(StringComparer.OrdinalIgnoreCase) {
+        ".ogg", ".opus", ".mp3", ".m4a", ".aac", ".wav", ".flac"
+    };
+
     readonly string? store;
     readonly TimeSpan timeout;
 
@@ -59,12 +68,21 @@ class WAppService {
     }
 
     public void Enviar(string destinatario, string mensaje) {
+        Enviar(destinatario, mensaje, rutaArchivo: null);
+    }
+
+    public void Enviar(string destinatario, string mensaje, string? rutaArchivo) {
         ValidarNoVacio(destinatario, nameof(destinatario));
-        ValidarNoVacio(mensaje, nameof(mensaje));
 
         string destino = ResolverDestinoMensaje(destinatario);
-        List<string> argumentos = ["send", "text", "--to", destino, "--message", mensaje];
-        Ejecutar(argumentos);
+
+        if (string.IsNullOrWhiteSpace(rutaArchivo)) {
+            ValidarNoVacio(mensaje, nameof(mensaje));
+            EnviarTexto(destino, mensaje);
+            return;
+        }
+
+        EnviarArchivo(destino, mensaje, rutaArchivo);
     }
 
 
@@ -92,8 +110,7 @@ class WAppService {
     void Sincronizar() {
         try {
             Ejecutar([ "groups", "refresh" ]);
-        }
-        catch (InvalidOperationException ex) when (EsErrorAutenticacionWacli(ex)) {
+        } catch (InvalidOperationException ex) when (EsErrorAutenticacionWacli(ex)) {
             Log.Warning("Aviso: wacli no está autenticado; se usa la base local para grupos y contactos.");
         }
     }
@@ -119,6 +136,44 @@ class WAppService {
 
         string chatJid = ResolverDestinoMensaje(referencia);
         return ListarMensajesDesdeBaseLocal(chatJid, desde, hasta);
+    }
+
+    void EnviarTexto(string destino, string mensaje) {
+        List<string> argumentos = ["send", "text", "--to", destino, "--message", mensaje];
+        Ejecutar(argumentos);
+    }
+
+    void EnviarArchivo(string destino, string mensaje, string rutaArchivo) {
+        string archivo = AppPaths.ResolverArchivo(rutaArchivo);
+        if (!AppPaths.ExisteArchivo(archivo)) {
+            throw new FileNotFoundException($"No existe el archivo a enviar: {archivo}", archivo);
+        }
+
+        TipoArchivoWhatsApp tipo = DetectarTipoArchivo(archivo);
+
+        if (tipo == TipoArchivoWhatsApp.Audio && !string.IsNullOrWhiteSpace(mensaje)) {
+            EnviarTexto(destino, mensaje);
+        }
+
+        List<string> argumentos = [
+            "send", "file",
+            "--to", destino,
+            "--file", archivo,
+            "--filename", AppPaths.NombreArchivo(archivo)
+        ];
+
+        string? mime = DetectarMime(archivo);
+        if (!string.IsNullOrWhiteSpace(mime)) {
+            argumentos.Add("--mime");
+            argumentos.Add(mime);
+        }
+
+        if (tipo != TipoArchivoWhatsApp.Audio && !string.IsNullOrWhiteSpace(mensaje)) {
+            argumentos.Add("--caption");
+            argumentos.Add(mensaje);
+        }
+
+        Ejecutar(argumentos);
     }
 
     string ResolverJidGrupo(string grupo) {
@@ -147,13 +202,20 @@ class WAppService {
             return referencia;
         }
 
-        if (EsReferenciaTelefonica(referencia)) {
-            return FormatearTelefonoJid(referencia);
-        }
-
         string? grupoJid = BuscarJidGrupoEnBaseLocal(referencia);
         if (!string.IsNullOrWhiteSpace(grupoJid)) {
             return grupoJid;
+        }
+
+        if (EsReferenciaTelefonica(referencia)) {
+            string telefono = NormalizarTelefono(referencia);
+            ContactoWhatsApp? contacto = BuscarContactoPorTelefonoEnBaseLocal(telefono);
+
+            if (contacto != null) {
+                return contacto.Jid;
+            }
+
+            return FormatearTelefonoJid(telefono);
         }
 
         ContactoWhatsApp? coincidencia = BuscarContactoPorReferenciaEnBaseLocal(referencia);
@@ -192,14 +254,33 @@ class WAppService {
         return null;
     }
 
+    ContactoWhatsApp? BuscarContactoPorTelefonoEnBaseLocal(string telefono) {
+        string valor = EscaparSqlite(telefono);
+
+        List<ContactoWhatsApp> coincidencias = DeduplicarContactos(EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
+            $"telefono = '{valor}' OR jid = '{valor}@s.whatsapp.net'")))
+            .Select(ParsearContactoWhatsApp))
+            .ToList();
+
+        if (coincidencias.Count == 1) {
+            return coincidencias[0];
+        }
+
+        if (coincidencias.Count > 1) {
+            string nombres = string.Join(", ", coincidencias.Select(contacto => $"{contacto.Name} ({contacto.Jid})"));
+            throw new InvalidOperationException($"El teléfono '{telefono}' coincide con varios contactos: {nombres}");
+        }
+
+        return null;
+    }
+
     ContactoWhatsApp? BuscarContactoPorReferenciaEnBaseLocal(string referencia) {
         string valor = EscaparSqlite(referencia);
 
-        List<ContactoWhatsApp> coincidenciasExactas = EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
+        List<ContactoWhatsApp> coincidenciasExactas = DeduplicarContactos(EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
             $"lower(nombre) = lower('{valor}') OR lower(jid) = lower('{valor}') OR lower(telefono) = lower('{valor}')")))
             .Select(ParsearContactoWhatsApp)
-            .GroupBy(contacto => contacto.Jid, StringComparer.OrdinalIgnoreCase)
-            .Select(grupo => grupo.First())
+            )
             .ToList();
 
         if (coincidenciasExactas.Count == 1) {
@@ -211,11 +292,10 @@ class WAppService {
             throw new InvalidOperationException($"La referencia exacta '{referencia}' coincide con varios contactos: {nombres}");
         }
 
-        List<ContactoWhatsApp> coincidenciasParciales = EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
+        List<ContactoWhatsApp> coincidenciasParciales = DeduplicarContactos(EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
             $"lower(nombre) LIKE lower('%{valor}%') OR lower(jid) LIKE lower('%{valor}%') OR lower(telefono) LIKE lower('%{valor}%')")))
             .Select(ParsearContactoWhatsApp)
-            .GroupBy(contacto => contacto.Jid, StringComparer.OrdinalIgnoreCase)
-            .Select(grupo => grupo.First())
+            )
             .ToList();
 
         if (coincidenciasParciales.Count == 1) {
@@ -243,7 +323,7 @@ class WAppService {
 
         List<string> filas = EjecutarSqlite(
             $@"ATTACH DATABASE '{rutaSessionDb}' AS session;
-                SELECT
+                SELECT DISTINCT
                     gp.user_jid || char(9) ||
                     COALESCE(
                         NULLIF(ca.alias, ''),
@@ -278,7 +358,7 @@ class WAppService {
                 WHERE gp.group_jid = '{jid}'
                 ORDER BY CASE gp.role WHEN 'superadmin' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, gp.user_jid;");
 
-        return filas.Select(ParsearContactoWhatsApp).ToList();
+        return DeduplicarContactos(filas.Select(ParsearContactoWhatsApp)).ToList();
     }
 
     List<MensajeWhatsApp> ListarMensajesDesdeBaseLocal(string chatJid, DateTime? desde, DateTime? hasta) {
@@ -359,6 +439,69 @@ class WAppService {
         return candidato.All(char.IsDigit) ? candidato : string.Empty;
     }
 
+    static TipoArchivoWhatsApp DetectarTipoArchivo(string rutaArchivo) {
+        string extension = AppPaths.ExtensionArchivo(rutaArchivo);
+
+        if (ExtensionesImagen.Contains(extension)) {
+            return TipoArchivoWhatsApp.Imagen;
+        }
+
+        if (ExtensionesAudio.Contains(extension)) {
+            return TipoArchivoWhatsApp.Audio;
+        }
+
+        return TipoArchivoWhatsApp.Archivo;
+    }
+
+    static string? DetectarMime(string rutaArchivo) {
+        return AppPaths.ExtensionArchivo(rutaArchivo) switch {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png"            => "image/png",
+            ".gif"            => "image/gif",
+            ".webp"           => "image/webp",
+            ".heic"           => "image/heic",
+            ".ogg" or ".opus" => "audio/ogg",
+            ".mp3"            => "audio/mpeg",
+            ".m4a"            => "audio/mp4",
+            ".aac"            => "audio/aac",
+            ".wav"            => "audio/wav",
+            ".flac"           => "audio/flac",
+            ".pdf"            => "application/pdf",
+            ".txt"            => "text/plain",
+            ".csv"            => "text/csv",
+            ".json"           => "application/json",
+            ".html" or ".htm" => "text/html",
+            ".doc"            => "application/msword",
+            ".docx"           => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls"            => "application/vnd.ms-excel",
+            ".xlsx"           => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".ppt"            => "application/vnd.ms-powerpoint",
+            ".pptx"           => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".zip"            => "application/zip",
+            ".rar"            => "application/vnd.rar",
+            ".7z"             => "application/x-7z-compressed",
+            _                 => null
+        };
+    }
+
+    static string ClaveContactoWhatsApp(ContactoWhatsApp contacto) {
+        if (!string.IsNullOrWhiteSpace(contacto.PhoneNumber)) {
+            return contacto.PhoneNumber;
+        }
+
+        return contacto.Jid;
+    }
+
+    static IEnumerable<ContactoWhatsApp> DeduplicarContactos(IEnumerable<ContactoWhatsApp> contactos) {
+        return contactos
+            .GroupBy(ClaveContactoWhatsApp, StringComparer.OrdinalIgnoreCase)
+            .Select(grupo => grupo.OrderByDescending(EsJidLid).First());
+    }
+
+    static bool EsJidLid(ContactoWhatsApp contacto) {
+        return contacto.Jid.EndsWith("@lid", StringComparison.OrdinalIgnoreCase);
+    }
+
     static bool EsJidWhatsapp(string texto) {
         return texto.EndsWith("@g.us", StringComparison.OrdinalIgnoreCase) ||
                texto.EndsWith("@s.whatsapp.net", StringComparison.OrdinalIgnoreCase) ||
@@ -373,10 +516,20 @@ class WAppService {
     }
 
     static string FormatearTelefonoJid(string telefono) {
-        string digitos = Regex.Replace(telefono.Trim(), @"\D", string.Empty);
+        string digitos = NormalizarTelefono(telefono);
 
         if (string.IsNullOrWhiteSpace(digitos)) {
             throw new InvalidOperationException($"No se pudo resolver el teléfono '{telefono}'.");
+        }
+
+        return $"{digitos}@s.whatsapp.net";
+    }
+
+    static string NormalizarTelefono(string telefono) {
+        string digitos = Regex.Replace(telefono.Trim(), @"\D", string.Empty);
+
+        if (string.IsNullOrWhiteSpace(digitos)) {
+            return string.Empty;
         }
 
         if (digitos.StartsWith("54")) {
@@ -392,7 +545,7 @@ class WAppService {
             digitos = $"549{digitos}";
         }
 
-        return $"{digitos}@s.whatsapp.net";
+        return digitos;
     }
 
     static DateTime ConvertirUnixAFechaLocal(long unixSeconds) {
@@ -417,7 +570,11 @@ class WAppService {
         return $@"ATTACH DATABASE '{{SESSION_DB}}' AS session;
                 WITH candidatos AS (
                     SELECT DISTINCT
-                        COALESCE(NULLIF(c.jid, ''), CASE WHEN NULLIF(c.phone, '') IS NOT NULL THEN c.phone || '@s.whatsapp.net' END) AS jid,
+                        COALESCE(
+                            CASE WHEN NULLIF(lm.lid, '') IS NOT NULL THEN lm.lid || '@lid' END,
+                            NULLIF(c.jid, ''),
+                            CASE WHEN NULLIF(c.phone, '') IS NOT NULL THEN c.phone || '@s.whatsapp.net' END
+                        ) AS jid,
                         COALESCE(
                             NULLIF(ca.alias, ''),
                             NULLIF(c.full_name, ''),
@@ -427,10 +584,15 @@ class WAppService {
                             NULLIF(c.phone, ''),
                             NULLIF(c.jid, '')
                         ) AS nombre,
-                        COALESCE(NULLIF(c.phone, ''), '') AS telefono
+                        COALESCE(NULLIF(c.phone, ''), NULLIF(lm.pn, ''), '') AS telefono
                     FROM contacts c
+                    LEFT JOIN session.whatsmeow_lid_map lm
+                        ON replace(c.jid, '@lid', '') = lm.lid
+                        OR c.jid = lm.pn || '@s.whatsapp.net'
+                        OR c.phone = lm.pn
                     LEFT JOIN contact_aliases ca
                         ON ca.jid = c.jid
+                        OR ca.jid = lm.lid || '@lid'
                         OR ca.jid = c.phone || '@s.whatsapp.net'
 
                     UNION
@@ -446,10 +608,15 @@ class WAppService {
                             NULLIF(sc.redacted_phone, ''),
                             NULLIF(sc.their_jid, '')
                         ) AS nombre,
-                        COALESCE(NULLIF(sc.redacted_phone, ''), '') AS telefono
+                        COALESCE(NULLIF(lm.pn, ''), NULLIF(sc.redacted_phone, ''), '') AS telefono
                     FROM session.whatsmeow_contacts sc
+                    LEFT JOIN session.whatsmeow_lid_map lm
+                        ON replace(sc.their_jid, '@lid', '') = lm.lid
+                        OR sc.their_jid = lm.pn || '@s.whatsapp.net'
                     LEFT JOIN contact_aliases ca
                         ON ca.jid = sc.their_jid
+                        OR ca.jid = lm.lid || '@lid'
+                        OR ca.jid = lm.pn || '@s.whatsapp.net'
                         OR ca.jid = sc.redacted_phone || '@s.whatsapp.net'
                 )
                 SELECT DISTINCT
@@ -561,7 +728,19 @@ class WAppService {
             throw new InvalidOperationException($"wacli falló con código {proceso.ExitCode}: {detalle}");
         }
 
-        return salida;
+        return FiltrarSalidaWacli(salida);
+    }
+
+    static string FiltrarSalidaWacli(string salida) {
+        return string.Join(Environment.NewLine,
+            salida.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None)
+                  .Where(linea => !EsLineaRuidoWacli(linea)))
+            .Trim();
+    }
+
+    static bool EsLineaRuidoWacli(string linea) {
+        return linea.Contains("Failed to handle retry receipt", StringComparison.OrdinalIgnoreCase) &&
+               linea.Contains("couldn't find message", StringComparison.OrdinalIgnoreCase);
     }
 
     string EjecutarSqliteConSessionDb(string query) {
@@ -609,6 +788,12 @@ class WAppService {
     }
 }
 
-record ContactoWhatsApp(string Jid, string Name, string PhoneNumber);
-record GrupoWhatsApp(string Jid, string Group, DateTime? Creado);
-record MensajeWhatsApp(DateTime Fecha, string SenderJid, string SenderName, string Content, bool FromMe);
+enum TipoArchivoWhatsApp {
+    Imagen,
+    Audio,
+    Archivo
+}
+
+public record ContactoWhatsApp(string Jid, string Name, string PhoneNumber);
+public record GrupoWhatsApp(string Jid, string Group, DateTime? Creado);
+public record MensajeWhatsApp(DateTime Fecha, string SenderJid, string SenderName, string Content, bool FromMe);

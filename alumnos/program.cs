@@ -52,6 +52,17 @@ class Program {
                 new GitHub().NormalizarTitulos(alumnos, simular: args.Contains("--simular"));
                 return 0;
 
+            case "wapp":
+                WAppService wapp = new();
+                foreach(var grupo in wapp.Grupos()) {
+                    Console.WriteLine($"Grupo: {grupo.Group}");
+                    foreach(var contacto in wapp.Participantes(grupo.Group)) {
+                        Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber}");
+                    }
+                }
+                wapp.Enviar("prueba", $"Hola, este es un mensaje de prueba desde la aplicación de alumnos. Enviado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}.", rutaArchivo: "/Users/adibattista/Documents/GitHub/tup26-p3/practicos/63174 - Jerez, Luciano Germán/TP1/enunciado.md");
+                return 0;
+
             default:
                 Log.Error($"Comando desconocido: {args[0]}");
                 MostrarAyuda();

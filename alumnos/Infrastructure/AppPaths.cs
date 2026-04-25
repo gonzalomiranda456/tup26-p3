@@ -87,6 +87,30 @@ static class AppPaths {
     public static bool ExisteArchivo(string rutaArchivo) =>
         File.Exists(rutaArchivo);
 
+    public static string ResolverArchivo(string rutaArchivo) {
+        if (string.IsNullOrWhiteSpace(rutaArchivo)) {
+            return string.Empty;
+        }
+
+        string ruta = rutaArchivo.Trim();
+
+        if (ruta == "~") {
+            ruta = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        } else if (ruta.StartsWith("~/", StringComparison.Ordinal)) {
+            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ruta.Substring(2));
+        } else {
+            ruta = Environment.ExpandEnvironmentVariables(ruta);
+        }
+
+        return Path.GetFullPath(ruta);
+    }
+
+    public static string NombreArchivo(string rutaArchivo) =>
+        Path.GetFileName(rutaArchivo);
+
+    public static string ExtensionArchivo(string rutaArchivo) =>
+        Path.GetExtension(rutaArchivo).ToLowerInvariant();
+
     public static bool ExisteDirectorio(string rutaDirectorio) =>
         Directory.Exists(rutaDirectorio);
 
