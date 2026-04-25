@@ -2,12 +2,15 @@ namespace Tup26.AlumnosApp;
 
 static class AlumnosManager {
 
+    public static Alumnos Leer() =>
+        Leer(AppPaths.ArchivoAlumnos);
+
     public static Alumnos Leer(string rutaArchivo) {
         Alumnos alumnos = new(Array.Empty<Alumno>());
         string comisionActual = string.Empty;
 
         try {
-            string[] lineas = File.ReadAllLines(rutaArchivo, Encoding.UTF8);
+            string[] lineas = AppPaths.LeerLineas(rutaArchivo);
 
             foreach (string linea in lineas) {
                 if (string.IsNullOrWhiteSpace(linea)) {
@@ -71,7 +74,7 @@ static class AlumnosManager {
                 sb.AppendLine("```");
             }
 
-            File.WriteAllText(rutaArchivo, sb.ToString().TrimEnd() + Environment.NewLine, Encoding.UTF8);
+            AppPaths.EscribirAlumnosMarkdown(sb.ToString().TrimEnd() + Environment.NewLine, rutaArchivo);
             Log.Info($"Alumnos guardados en: {rutaArchivo}");
         }
         catch (Exception ex) {
@@ -80,7 +83,7 @@ static class AlumnosManager {
     }
 
     public static void Listar(Alumnos alumnos, string titulo = "Listado de Alumnos") {
-        if (alumnos == null || alumnos.Count == 0) {
+        if (alumnos == null || !alumnos.Any()) {
             Log.Warning("No hay alumnos para mostrar.");
             return;
         }
@@ -105,30 +108,29 @@ static class AlumnosManager {
         }
 
         Console.WriteLine(separador);
-        Console.WriteLine($"Total de alumnos: {alumnos.Count}");
+        Console.WriteLine($"Total de alumnos: {alumnos.Count()}");
         Console.WriteLine();
     }
 
     public static void CrearCarpetas(Alumnos alumnos) {
-        string rutaBase = AppPaths.PracticosDirectory;
-        Directory.CreateDirectory(rutaBase);
+        AppPaths.AsegurarDirectorioPracticos();
 
         foreach (Alumno alumno in alumnos) {
             string nombreCarpeta = alumno.CarpetaNombre;
-            string rutaCarpeta   = Path.Combine(rutaBase, nombreCarpeta);
+            string rutaCarpeta   = AppPaths.RutaCarpetaAlumnoEsperada(alumno);
             try {
-                List<string> carpetasConLegajo = BuscarCarpetasMismoLegajo(rutaBase, alumno.Legajo);
+                List<string> carpetasConLegajo = AppPaths.BuscarCarpetasMismoLegajo(alumno.Legajo);
 
-                if (carpetasConLegajo.Count == 0) {
-                    Directory.CreateDirectory(rutaCarpeta);
+                if (!carpetasConLegajo.Any()) {
+                    AppPaths.AsegurarCarpetaAlumno(alumno);
                     Log.Debug($" ➕ {rutaCarpeta, -40}");
                 } else if (carpetasConLegajo.Count == 1){
                     string rutaCarpetaExistente = carpetasConLegajo[0];
-                    string rutaRelativa = Path.GetRelativePath(rutaBase, rutaCarpetaExistente); 
+                    string rutaRelativa = AppPaths.RutaRelativaDesdePracticos(rutaCarpetaExistente); 
                     if (string.Equals(rutaCarpetaExistente, rutaCarpeta, StringComparison.OrdinalIgnoreCase)) {
                         Log.Info($" ✅ {rutaRelativa, -40}");
                     } else {
-                        RenombrarCarpeta(rutaCarpetaExistente, rutaCarpeta);
+                        AppPaths.RenombrarCarpetaAlumno(rutaCarpetaExistente, alumno);
                         Log.Warning($" 🔄 {rutaRelativa, -40} → {nombreCarpeta}");
                     }
                 } else {
@@ -142,10 +144,8 @@ static class AlumnosManager {
     }
 
     public static void CopiarFotoPerfil(Alumnos alumnos, string rutaFotos) {
-        string rutaBase = AppPaths.PracticosDirectory;
-
-        if (!Directory.Exists(rutaBase)) {
-            Log.Error($"No existe la carpeta base de prácticos: {rutaBase}");
+        if (!AppPaths.ExisteDirectorioPracticos()) {
+            Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
             return;
         }
 
@@ -154,24 +154,22 @@ static class AlumnosManager {
                 continue;
             }
 
-            string rutaFotoOrigen = Path.Combine(rutaFotos, alumno.TelefonoId, "foto.png");
-            if (!File.Exists(rutaFotoOrigen)) {
+            if (!AppPaths.ExisteFotoPerfil(rutaFotos, alumno)) {
                 continue;
             }
 
-            string? rutaCarpetaAlumno = ObtenerCarpetaUnicaMismoLegajo(rutaBase, alumno.Legajo);
-            if (rutaCarpetaAlumno == null || !Directory.Exists(rutaCarpetaAlumno)) {
+            string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(alumno.Legajo);
+            if (!AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno)) {
                 continue;
             }
 
-            string rutaFotoDestino = Path.Combine(rutaCarpetaAlumno, "foto.png");
-            if (File.Exists(rutaFotoDestino)) {
+            if (AppPaths.ExisteFotoAlumno(rutaCarpetaAlumno!)) {
                 continue;
             }
 
             try {
-                File.Copy(rutaFotoOrigen, rutaFotoDestino);
-                Log.Info($"Foto copiada: {rutaFotoOrigen} -> {rutaFotoDestino}");
+                CopiaRuta copia = AppPaths.CopiarFotoPerfil(rutaFotos, alumno, rutaCarpetaAlumno!);
+                Log.Info($"Foto copiada: {copia.Origen} -> {copia.Destino}");
             }
             catch (Exception ex) {
                 Log.Error($"Error al copiar la foto para {alumno.CarpetaNombre}: {ex.Message}");
@@ -181,31 +179,28 @@ static class AlumnosManager {
 
     public static void CopiarEnunciadoPracticos(Alumnos alumnos, string practico, bool forzar = false) {
         string nombrePractico    = practico.Trim();
-        string origen            = Path.Combine(AppPaths.EnunciadosDirectory, nombrePractico);
-        string rutaBasePracticos = AppPaths.PracticosDirectory;
-        string carpetaPractico   = nombrePractico.ToLower();
 
         if (string.IsNullOrWhiteSpace(nombrePractico)) {
             Log.Error("Debe indicar el nombre del práctico a copiar.");
             return;
         }
 
-        if (!Directory.Exists(origen)) {
-            Log.Error($"No existe la carpeta del enunciado: {origen}");
+        if (!AppPaths.ExisteEnunciadoPractico(nombrePractico)) {
+            Log.Error($"No existe la carpeta del enunciado: {AppPaths.EnunciadoPracticoDirectory(nombrePractico)}");
             return;
         }
 
-        if (!Directory.Exists(rutaBasePracticos)) {
-            Log.Error($"No existe la carpeta base de prácticos: {rutaBasePracticos}");
+        if (!AppPaths.ExisteDirectorioPracticos()) {
+            Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
             return;
         }
 
         foreach (Alumno alumno in alumnos) {
-            string rutaAlumno = Path.Combine(rutaBasePracticos, alumno.CarpetaNombre);
+            string rutaAlumno = AppPaths.RutaCarpetaAlumnoEsperada(alumno);
 
-            if (!Directory.Exists(rutaAlumno)) {
+            if (!AppPaths.ExisteDirectorio(rutaAlumno)) {
                 try {
-                    Directory.CreateDirectory(rutaAlumno);
+                    AppPaths.AsegurarCarpetaAlumno(alumno);
                     Log.Debug($" ➕ {rutaAlumno, -40}");
                 }
                 catch (Exception ex) {
@@ -214,11 +209,9 @@ static class AlumnosManager {
                 }
             }
 
-            string destino = Path.Combine(rutaAlumno, carpetaPractico);
-
             try {
-                CopiarCarpeta(origen, destino, forzar);
-                Log.Info($"Enunciado copiado: {origen} -> {destino}");
+                CopiaRuta copia = AppPaths.CopiarEnunciadoPractico(alumno, nombrePractico, forzar);
+                Log.Info($"Enunciado copiado: {copia.Origen} -> {copia.Destino}");
             }
             catch (Exception ex) {
                 Log.Error($"Error al copiar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
@@ -233,17 +226,12 @@ static class AlumnosManager {
             porLegajo[alumno.Legajo] = alumno;
         }
 
-        foreach (string carpetaPerfil in Directory.GetDirectories(rutaPerfiles)) {
-            string rutaPerfil = Path.Combine(carpetaPerfil, "perfil.md");
-            if (!File.Exists(rutaPerfil)) {
-                continue;
-            }
-
+        foreach (PerfilMarkdown perfil in AppPaths.LeerPerfilesMarkdown(rutaPerfiles)) {
             try {
                 int legajo = 0;
                 string gitHub = string.Empty;
 
-                foreach (string linea in File.ReadAllLines(rutaPerfil, Encoding.UTF8)) {
+                foreach (string linea in perfil.Lineas) {
                     string l = linea.Trim();
 
                     if (l.StartsWith("- Legajo:")) {
@@ -278,7 +266,7 @@ static class AlumnosManager {
                 }
             }
             catch (Exception ex) {
-                Log.Error($"Error al leer perfil {rutaPerfil}: {ex.Message}");
+                Log.Error($"Error al leer perfil {perfil.Ruta}: {ex.Message}");
             }
         }
     }
@@ -302,7 +290,7 @@ static class AlumnosManager {
                 WriteIndented = true
             };
 
-            File.WriteAllText(rutaArchivo, JsonSerializer.Serialize(datos, opciones) + Environment.NewLine, new UTF8Encoding(false));
+            AppPaths.EscribirAlumnosJson(JsonSerializer.Serialize(datos, opciones) + Environment.NewLine, rutaArchivo);
             
             Log.Info($"Alumnos guardados en JSON: {rutaArchivo}");
         }
@@ -320,7 +308,7 @@ static class AlumnosManager {
             foreach (Alumno alumno in alumnosConTelefono) {
                 AppendVCardContacto(sb, alumno);
             }
-            File.WriteAllText(rutaArchivo, sb.ToString(), new UTF8Encoding(false));
+            AppPaths.EscribirAlumnosVCard(sb.ToString(), rutaArchivo);
 
             Log.Info($"Contactos vCard guardados en: {rutaArchivo}");
         } catch (Exception ex) {
@@ -470,79 +458,6 @@ static class AlumnosManager {
 
     static bool EsEstadoVacio(string texto) =>
         texto is "⚪" or "⚪️";
-
-    static bool TieneMismoLegajo(string carpeta, int legajo) {
-        return carpeta.StartsWith($"{legajo} ");
-    }
-
-    static List<string> BuscarCarpetasMismoLegajo(string rutaBase, int legajo) {
-        List<string> carpetasMismoLegajo = new();
-
-        if (!Directory.Exists(rutaBase)) {
-            return carpetasMismoLegajo;
-        }
-
-        foreach (string carpetaExistente in Directory.GetDirectories(rutaBase)) {
-            string nombreCarpetaExistente = Path.GetFileName(carpetaExistente);
-
-            if (TieneMismoLegajo(nombreCarpetaExistente, legajo)) {
-                carpetasMismoLegajo.Add(carpetaExistente);
-            }
-        }
-
-        return carpetasMismoLegajo;
-    }
-
-    static string? ObtenerCarpetaUnicaMismoLegajo(string carpeta, int legajo) {
-        List<string> carpetasMismoLegajo = BuscarCarpetasMismoLegajo(carpeta, legajo);
-
-        if (carpetasMismoLegajo.Count != 1) {
-            return null;
-        }
-
-        return carpetasMismoLegajo[0];
-    }
-
-    static void RenombrarCarpeta(string origen, string destino) {
-        if (!Directory.Exists(destino)) {
-            Directory.Move(origen, destino);
-            return;
-        }
-
-        if (!string.Equals(origen, destino, StringComparison.OrdinalIgnoreCase)) {
-            throw new IOException($"Ya existe una carpeta destino: {destino}");
-        }
-
-        string? rutaDirectorioPadre = Path.GetDirectoryName(origen);
-        if (string.IsNullOrEmpty(rutaDirectorioPadre)) {
-            throw new IOException($"No se pudo determinar el directorio base para renombrar: {origen}");
-        }
-
-        string rutaTemporal = Path.Combine(rutaDirectorioPadre, $".tmp-renombrar-{Guid.NewGuid():N}");
-        Directory.Move(origen, rutaTemporal);
-        Directory.Move(rutaTemporal, destino);
-    }
-
-    static void CopiarCarpeta(string origen, string destino, bool forzar = false) {
-        Directory.CreateDirectory(destino);
-
-        foreach (string archivoOrigen in Directory.GetFiles(origen)) {
-            string nombreArchivo = Path.GetFileName(archivoOrigen);
-            string archivoDestino = Path.Combine(destino, nombreArchivo);
-
-            if (!forzar && File.Exists(archivoDestino)) {
-                continue;
-            }
-
-            File.Copy(archivoOrigen, archivoDestino, overwrite: forzar);
-        }
-
-        foreach (string subdirectorioOrigen in Directory.GetDirectories(origen)) {
-            string nombreSubdirectorio  = Path.GetFileName(subdirectorioOrigen);
-            string subdirectorioDestino = Path.Combine(destino, nombreSubdirectorio);
-            CopiarCarpeta(subdirectorioOrigen, subdirectorioDestino, forzar);
-        }
-    }
 
     static void AppendVCardContacto(StringBuilder sb, Alumno alumno) {
         string apellido         = FormatearTextoVcard(alumno.Apellido);

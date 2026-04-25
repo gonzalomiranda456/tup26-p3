@@ -239,7 +239,7 @@ class WAppService {
 
     List<ContactoWhatsApp> ListarParticipantesDesdeBaseLocal(string grupoJid) {
         string jid = EscaparSqlite(grupoJid);
-        string rutaSessionDb = EscaparSqlite(Path.Combine(ObtenerDirectorioStore(), "session.db"));
+        string rutaSessionDb = EscaparSqlite(AppPaths.WacliSessionDatabase(store));
 
         List<string> filas = EjecutarSqlite(
             $@"ATTACH DATABASE '{rutaSessionDb}' AS session;
@@ -461,9 +461,9 @@ class WAppService {
     }
 
     List<string> EjecutarSqlite(string query) {
-        string rutaDb = Path.Combine(ObtenerDirectorioStore(), "wacli.db");
+        string rutaDb = AppPaths.WacliDatabase(store);
 
-        if (!File.Exists(rutaDb)) {
+        if (!AppPaths.ExisteArchivo(rutaDb)) {
             Log.Warning($"Aviso: no existe la base local de wacli: {rutaDb}");
             return new();
         }
@@ -497,24 +497,6 @@ class WAppService {
                      .Select(linea => linea.Trim())
                      .Where(linea => !string.IsNullOrWhiteSpace(linea))
                      .ToList();
-    }
-
-    string ObtenerDirectorioStore() {
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        if (string.IsNullOrWhiteSpace(store)) {
-            return Path.Combine(home, ".wacli");
-        }
-
-        if (store == "~") {
-            return home;
-        }
-
-        if (store.StartsWith("~/", StringComparison.Ordinal)) {
-            return Path.Combine(home, store.Substring(2));
-        }
-
-        return Environment.ExpandEnvironmentVariables(store);
     }
 
     static string EscaparSqlite(string valor) {
@@ -583,7 +565,7 @@ class WAppService {
     }
 
     string EjecutarSqliteConSessionDb(string query) {
-        string rutaSessionDb = EscaparSqlite(Path.Combine(ObtenerDirectorioStore(), "session.db"));
+        string rutaSessionDb = EscaparSqlite(AppPaths.WacliSessionDatabase(store));
         return query.Replace("{SESSION_DB}", rutaSessionDb, StringComparison.Ordinal);
     }
 

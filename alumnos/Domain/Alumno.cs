@@ -21,7 +21,6 @@ public class Alumno {
     public string TelefonoId     => TelefonoID(Telefono);
     public bool   ConGithub      => EsGitHubValido(GitHub);
     public bool   ConFoto        => TieneFoto;
-    // public string WhastAppId     => WhastAppId(Telefono);
 
     public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto) {
         Legajo    = legajo;

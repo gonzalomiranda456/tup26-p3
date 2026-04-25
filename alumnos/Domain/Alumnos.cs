@@ -1,14 +1,7 @@
 namespace Tup26.AlumnosApp;
 
 class Alumnos : IEnumerable<Alumno> {
-
-    public Alumno? BuscarPorLegajo(int legajo) =>
-        Lista.FirstOrDefault(a => a.Legajo == legajo);
-        
-    public List<Alumno> Lista { get; set; } = new();
-
-    public Alumno this[int index] => Lista[index];
-    public int Count => Lista.Count;
+    List<Alumno> Lista { get; init; }
 
     public Alumnos(IEnumerable<Alumno> alumnos) =>
         Lista = alumnos?.ToList() ?? new();
@@ -16,6 +9,9 @@ class Alumnos : IEnumerable<Alumno> {
     public void Agregar(Alumno alumno) =>
         Lista.Add(alumno);
 
+    public Alumno? BuscarPorLegajo(int legajo) =>
+        Lista.FirstOrDefault(a => a.Legajo == legajo);
+        
     public Alumnos ConGithub(bool tiene = true) =>
         new(Lista.Where(a => tiene == a.ConGithub));
 

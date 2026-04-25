@@ -2,7 +2,7 @@ namespace Tup26.AlumnosApp;
 
 class Program {
     static int Main(string[] args) {
-        Alumnos alumnos = AlumnosManager.Leer(AppPaths.ArchivoAlumnos);
+        Alumnos alumnos = AlumnosManager.Leer();
 
         if (args.Length == 0 || EsComando(args[0], "ayuda", "help", "-h", "--help")) {
             MostrarAyuda();
@@ -33,7 +33,7 @@ class Program {
                 return 0;
 
             case "json":
-                AlumnosManager.EscribirJSON(alumnos, ObtenerRuta(args, 1, "alumnos.json"));
+                AlumnosManager.EscribirJSON(alumnos, ObtenerRuta(args, 1, AppPaths.ArchivoJsonAlumnos));
                 return 0;
 
             case "vcf":

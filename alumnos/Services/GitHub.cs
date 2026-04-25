@@ -184,7 +184,7 @@ class GitHub {
 
         if (salida is null) { return; }
 
-        Directory.CreateDirectory(rutaDestino);
+        AppPaths.AsegurarDirectorio(rutaDestino);
 
         List<string> urls = Lineas(salida, pasarAMinusculas: false);
 
@@ -199,16 +199,13 @@ class GitHub {
                 if (!FileSystemName.MatchesSimpleExpression(patron, nombreRemoto, ignoreCase: true)) { continue; }
 
                 using HttpClient client = new();
-                string nombreArchivo = Path.GetFileName(nombreRemoto);
-                string rutaArchivo   = Path.Combine(rutaDestino, nombreArchivo);
-
-                if (!forzar && File.Exists(rutaArchivo)) {
+                if (!forzar && AppPaths.ExisteArchivoDescargado(rutaDestino, nombreRemoto)) {
                     // Log.Info($"Archivo '{nombreRemoto}' ya existe. Se omite descarga: {rutaArchivo}");
                     continue;
                 }
 
                 byte[] contenido = client.GetByteArrayAsync(url).Result;
-                File.WriteAllBytes(rutaArchivo, contenido);
+                string rutaArchivo = AppPaths.GuardarArchivoDescargado(rutaDestino, nombreRemoto, contenido, forzar);
                 Log.Warning($"Archivo '{nombreRemoto}'\n      {rutaArchivo} ");
             } catch (Exception ex) {
                 Log.Error($"Error al descargar el archivo desde '{linea}': {ex.Message}");
