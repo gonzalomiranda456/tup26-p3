@@ -9,10 +9,10 @@ Servicio para interactuar con WhatsApp mediante `wacli`.
 
 - `Sincronizar()`: actualiza la base local desde `wacli` y recarga los grupos disponibles.
 
-- `Enviar(destinatario, mensaje)`: envía un mensaje a un contacto o grupo resolviendo nombre, teléfono o JID.
+- `Enviar(destinatario, mensaje, archivo)`: envía un mensaje a un contacto o grupo resolviendo nombre, teléfono o JID.
     - `destinatario`: nombre, teléfono o JID del contacto o grupo.
     - `mensaje`: contenido del mensaje.
-    - `rutaArchivo`: ruta opcional de una imagen, nota de audio o archivo común para enviar junto al mensaje.
+    - `archivo`: ruta opcional de una imagen, nota de audio o archivo común para enviar junto al mensaje.
 
 - `Invitar(grupo, usuarios)`: invita uno o más usuarios a un grupo.
     - `grupo`: grupo destino.
@@ -22,6 +22,9 @@ Servicio para interactuar con WhatsApp mediante `wacli`.
 
 - `Participantes(grupo)`: obtiene los participantes de un grupo.
     - `grupo`: grupo a consultar.
+
+- `BuscarContactoPorJid(jid)`: devuelve un contacto a partir de su JID.
+    - `jid`: JID del contacto.
 
 - `Mensajes(referencia, desde, hasta)`: devuelve los mensajes de una conversación filtrando opcionalmente por rango de fechas.
     - `referencia`: contacto, grupo, teléfono o JID.
@@ -41,6 +44,7 @@ class WAppService {
 
     readonly string? store;
     readonly TimeSpan timeout;
+    readonly Dictionary<string, ContactoWhatsApp?> contactosPorAutor = new(StringComparer.OrdinalIgnoreCase);
 
     public WAppService(string? store = null, TimeSpan? timeout = null) {
         this.store   = store;
@@ -67,24 +71,19 @@ class WAppService {
         }
     }
 
-    public void Enviar(string destinatario, string mensaje) {
-        Enviar(destinatario, mensaje, rutaArchivo: null);
-    }
-
-    public void Enviar(string destinatario, string mensaje, string? rutaArchivo) {
+    public void Enviar(string destinatario, string mensaje, string? archivo) {
         ValidarNoVacio(destinatario, nameof(destinatario));
 
         string destino = ResolverDestinoMensaje(destinatario);
 
-        if (string.IsNullOrWhiteSpace(rutaArchivo)) {
+        if (string.IsNullOrWhiteSpace(archivo)) {
             ValidarNoVacio(mensaje, nameof(mensaje));
             EnviarTexto(destino, mensaje);
             return;
         }
 
-        EnviarArchivo(destino, mensaje, rutaArchivo);
+        EnviarArchivo(destino, mensaje, archivo);
     }
-
 
     public void Invitar(string grupo, params string[] contactos) {
         ValidarNoVacio(grupo, nameof(grupo));
@@ -109,9 +108,11 @@ class WAppService {
 
     void Sincronizar() {
         try {
-            Ejecutar([ "groups", "refresh" ]);
+            Ejecutar(["groups", "refresh" ]);
         } catch (InvalidOperationException ex) when (EsErrorAutenticacionWacli(ex)) {
             Log.Warning("Aviso: wacli no está autenticado; se usa la base local para grupos y contactos.");
+        } catch (InvalidOperationException ex) {
+            Log.Warning($"Aviso: no se pudo sincronizar wacli; se usa la base local para grupos y contactos. {ex.Message}");
         }
     }
 
@@ -126,6 +127,31 @@ class WAppService {
         return ListarParticipantesDesdeBaseLocal(grupoJid);
     }
 
+    public ContactoWhatsApp? BuscarContactoPorJid(string jid) {
+        ValidarNoVacio(jid, nameof(jid));
+
+        string referencia = NormalizarJidWhatsapp(jid);
+
+        ContactoWhatsApp? contacto = BuscarContactoPorJidEnBaseLocal(referencia);
+        if (contacto is not null) {
+            return contacto;
+        }
+
+        string telefono = ResolverTelefonoDesdeJid(referencia);
+        if (!string.IsNullOrWhiteSpace(telefono)) {
+            contacto = BuscarContactoPorTelefonoEnBaseLocal(telefono);
+            if (contacto is not null) {
+                return contacto;
+            }
+        }
+
+        if (EsReferenciaTelefonica(referencia)) {
+            return BuscarContactoPorTelefonoEnBaseLocal(NormalizarTelefono(referencia));
+        }
+
+        return null;
+    }
+
     public List<GrupoWhatsApp> Grupos() {
         return ListarGruposDesdeBaseLocal();
     }
@@ -136,6 +162,13 @@ class WAppService {
 
         string chatJid = ResolverDestinoMensaje(referencia);
         return ListarMensajesDesdeBaseLocal(chatJid, desde, hasta);
+    }
+
+    public string ObtenerAutorMensaje(MensajeWhatsApp mensaje) {
+        string nombre = mensaje.FromMe ? "yo" : ObtenerNombreAutorMensaje(mensaje);
+        string telefono = ObtenerTelefonoAutorMensaje(mensaje);
+
+        return $"[{telefono}|{nombre}]";
     }
 
     void EnviarTexto(string destino, string mensaje) {
@@ -376,8 +409,137 @@ class WAppService {
         List<string> filas = EjecutarSqlite(
             $"SELECT ts || char(9) || COALESCE(sender_jid, '') || char(9) || COALESCE(sender_name, '') || char(9) || COALESCE(NULLIF(display_text, ''), NULLIF(text, ''), '') || char(9) || from_me FROM messages WHERE {string.Join(" AND ", condiciones)} ORDER BY ts;");
 
-        return filas.Select(ParsearMensajeWhatsApp).ToList();
+        return filas
+            .Select(ParsearMensajeWhatsApp)
+            .Where(mensaje => !EsMensajeVacio(mensaje))
+            .ToList();
     }
+
+    static bool EsMensajeVacio(MensajeWhatsApp mensaje) =>
+        mensaje.Fecha.Year == 1970 &&
+        mensaje.Fecha.Month == 1 &&
+        mensaje.Fecha.Day == 1;
+
+    string ObtenerTelefonoAutorMensaje(MensajeWhatsApp mensaje) {
+        ContactoWhatsApp? contacto = BuscarContactoAutorMensaje(mensaje);
+        string telefono = TelefonoContactoValido(contacto, mensaje.SenderJid) ? contacto!.PhoneNumber : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(telefono)) {
+            telefono = ResolverTelefonoDesdeJid(mensaje.SenderJid);
+        }
+
+        if (string.IsNullOrWhiteSpace(telefono) && !EsJidGrupo(mensaje.SenderJid)) {
+            telefono = ExtraerTelefonoDesdeJid(contacto?.Jid ?? mensaje.SenderJid);
+        }
+
+        return string.IsNullOrWhiteSpace(telefono) ? "desconocido" : telefono;
+    }
+
+    string ObtenerNombreAutorMensaje(MensajeWhatsApp mensaje) {
+        ContactoWhatsApp? contacto = BuscarContactoAutorMensaje(mensaje);
+        if (contacto is not null && EsNombreAutorValido(contacto.Name)) {
+            return contacto.Name;
+        }
+
+        if (EsNombreAutorValido(mensaje.SenderName)) {
+            return mensaje.SenderName;
+        }
+
+        return "desconocido";
+    }
+
+    ContactoWhatsApp? BuscarContactoAutorMensaje(MensajeWhatsApp mensaje) {
+        if (!string.IsNullOrWhiteSpace(mensaje.SenderJid) && !EsJidGrupo(mensaje.SenderJid)) {
+            ContactoWhatsApp? contacto = BuscarContactoAutorMensaje(mensaje.SenderJid, BuscarContactoPorJid);
+            if (contacto is not null) {
+                return contacto;
+            }
+        }
+
+        if (EsNombreAutorValido(mensaje.SenderName)) {
+            return BuscarContactoAutorMensaje(mensaje.SenderName, BuscarContactoPorReferenciaEnBaseLocal);
+        }
+
+        return null;
+    }
+
+    ContactoWhatsApp? BuscarContactoAutorMensaje(string referencia, Func<string, ContactoWhatsApp?> buscar) {
+        string clave = referencia.Trim();
+        if (contactosPorAutor.TryGetValue(clave, out ContactoWhatsApp? contacto)) {
+            return contacto;
+        }
+
+        try {
+            contacto = buscar(clave);
+        } catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) {
+            contacto = null;
+        }
+
+        contactosPorAutor[clave] = contacto;
+        return contacto;
+    }
+
+    ContactoWhatsApp? BuscarContactoPorJidEnBaseLocal(string jid) {
+        string valor = EscaparSqlite(jid);
+
+        List<ContactoWhatsApp> coincidencias = DeduplicarContactos(EjecutarSqlite(EjecutarSqliteConSessionDb(ConstruirConsultaContactos(
+            $"lower(jid) = lower('{valor}')")))
+            .Select(ParsearContactoWhatsApp))
+            .ToList();
+
+        if (coincidencias.Count == 1) {
+            return coincidencias[0];
+        }
+
+        if (coincidencias.Count > 1) {
+            return coincidencias[0];
+        }
+
+        return null;
+    }
+
+    string ResolverTelefonoDesdeJid(string jid) {
+        string referencia = NormalizarJidWhatsapp(jid);
+        if (string.IsNullOrWhiteSpace(referencia) || EsJidGrupo(referencia)) {
+            return string.Empty;
+        }
+
+        if (!EsJidLid(referencia)) {
+            return ExtraerTelefonoDesdeJid(referencia);
+        }
+
+        string lid = ExtraerIdentificadorDesdeJid(referencia);
+        if (string.IsNullOrWhiteSpace(lid)) {
+            return string.Empty;
+        }
+
+        string valor = EscaparSqlite(lid);
+        List<string> coincidencias = EjecutarSqlite(EjecutarSqliteConSessionDb($@"ATTACH DATABASE '{{SESSION_DB}}' AS session;
+                SELECT DISTINCT pn
+                FROM session.whatsmeow_lid_map
+                WHERE lid = '{valor}'
+                    AND NULLIF(pn, '') IS NOT NULL
+                ORDER BY pn;"));
+
+        return coincidencias.FirstOrDefault()?.Trim() ?? string.Empty;
+    }
+
+    static bool TelefonoContactoValido(ContactoWhatsApp? contacto, string senderJid) {
+        if (contacto is null || string.IsNullOrWhiteSpace(contacto.PhoneNumber)) {
+            return false;
+        }
+
+        if (EsJidLid(senderJid) && contacto.PhoneNumber == ExtraerIdentificadorDesdeJid(senderJid)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static bool EsNombreAutorValido(string nombre) =>
+        !string.IsNullOrWhiteSpace(nombre) &&
+        nombre != "0" &&
+        !EsJidWhatsapp(nombre);
 
     static ContactoWhatsApp ParsearContactoWhatsApp(string fila) {
         string[] partes = fila.Split('\t');
@@ -428,13 +590,42 @@ class WAppService {
         return new(fecha, senderJid, senderName, content, fromMe);
     }
 
-    static string ExtraerTelefonoDesdeJid(string jid) {
+    static string NormalizarJidWhatsapp(string jid) {
         if (string.IsNullOrWhiteSpace(jid)) {
             return string.Empty;
         }
 
-        int separador = jid.IndexOf('@');
-        string candidato = separador >= 0 ? jid.Substring(0, separador) : jid;
+        string valor = jid.Trim();
+        int separador = valor.IndexOf('@');
+        if (separador < 0) {
+            return valor;
+        }
+
+        string identificador = valor.Substring(0, separador);
+        string dominio = valor.Substring(separador);
+
+        if (dominio.Equals("@lid", StringComparison.OrdinalIgnoreCase)) {
+            int dispositivo = identificador.IndexOf(':');
+            if (dispositivo >= 0) {
+                identificador = identificador.Substring(0, dispositivo);
+            }
+        }
+
+        return $"{identificador}{dominio}";
+    }
+
+    static string ExtraerIdentificadorDesdeJid(string jid) {
+        string valor = NormalizarJidWhatsapp(jid);
+        if (string.IsNullOrWhiteSpace(valor)) {
+            return string.Empty;
+        }
+
+        int separador = valor.IndexOf('@');
+        return separador >= 0 ? valor.Substring(0, separador) : valor;
+    }
+
+    static string ExtraerTelefonoDesdeJid(string jid) {
+        string candidato = ExtraerIdentificadorDesdeJid(jid);
 
         return candidato.All(char.IsDigit) ? candidato : string.Empty;
     }
@@ -498,8 +689,12 @@ class WAppService {
             .Select(grupo => grupo.OrderByDescending(EsJidLid).First());
     }
 
+    static bool EsJidLid(string jid) {
+        return jid.EndsWith("@lid", StringComparison.OrdinalIgnoreCase);
+    }
+
     static bool EsJidLid(ContactoWhatsApp contacto) {
-        return contacto.Jid.EndsWith("@lid", StringComparison.OrdinalIgnoreCase);
+        return EsJidLid(contacto.Jid);
     }
 
     static bool EsJidWhatsapp(string texto) {
@@ -536,8 +731,7 @@ class WAppService {
             if (!digitos.StartsWith("549")) {
                 digitos = $"549{digitos.Substring(2)}";
             }
-        }
-        else {
+        } else {
             if (digitos.StartsWith("0")) {
                 digitos = digitos.Substring(1);
             }
@@ -584,7 +778,7 @@ class WAppService {
                             NULLIF(c.phone, ''),
                             NULLIF(c.jid, '')
                         ) AS nombre,
-                        COALESCE(NULLIF(c.phone, ''), NULLIF(lm.pn, ''), '') AS telefono
+                        COALESCE(NULLIF(lm.pn, ''), NULLIF(c.phone, ''), '') AS telefono
                     FROM contacts c
                     LEFT JOIN session.whatsmeow_lid_map lm
                         ON replace(c.jid, '@lid', '') = lm.lid
@@ -721,7 +915,7 @@ class WAppService {
         }
 
         string salida = proceso.StandardOutput.ReadToEnd().Trim();
-        string error = proceso.StandardError.ReadToEnd().Trim();
+        string error  = proceso.StandardError.ReadToEnd().Trim();
 
         if (proceso.ExitCode != 0) {
             string detalle = string.IsNullOrWhiteSpace(error) ? salida : error;
@@ -761,8 +955,8 @@ class WAppService {
             return $"{(int)duracion.TotalMinutes}m";
         }
 
-        int horas = (int)duracion.TotalHours;
-        int minutos = duracion.Minutes;
+        int horas    = (int)duracion.TotalHours;
+        int minutos  = duracion.Minutes;
         int segundos = duracion.Seconds;
 
         StringBuilder sb = new();
@@ -788,11 +982,7 @@ class WAppService {
     }
 }
 
-enum TipoArchivoWhatsApp {
-    Imagen,
-    Audio,
-    Archivo
-}
+enum TipoArchivoWhatsApp { Imagen, Audio, Archivo }
 
 public record ContactoWhatsApp(string Jid, string Name, string PhoneNumber);
 public record GrupoWhatsApp(string Jid, string Group, DateTime? Creado);

@@ -52,15 +52,36 @@ class Program {
                 new GitHub().NormalizarTitulos(alumnos, simular: args.Contains("--simular"));
                 return 0;
 
+            case "bajar-prs":
+                BajarPullRequests(args);
+                return 0;
+
+            case "cerrar-prs":
+                GitHub gh = new();
+                gh.CerrarPRsAbiertos();
+                return 0;
+
+            case "revisar-presentados":
+                RevisarPresentados(alumnos, args);
+                return 0;
+
+            
             case "wapp":
                 WAppService wapp = new();
                 foreach(var grupo in wapp.Grupos()) {
                     Console.WriteLine($"Grupo: {grupo.Group}");
-                    foreach(var contacto in wapp.Participantes(grupo.Group)) {
-                        Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber}");
-                    }
+                    // foreach(var contacto in wapp.Participantes(grupo.Group)) {
+                    //     Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
+                    // }
                 }
-                wapp.Enviar("prueba", $"Hola, este es un mensaje de prueba desde la aplicación de alumnos. Enviado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}.", rutaArchivo: "/Users/adibattista/Documents/GitHub/tup26-p3/practicos/63174 - Jerez, Luciano Germán/TP1/enunciado.md");
+                const string grupoObjetivo = "c7";
+                Console.WriteLine($"\nMensajes del grupo: {grupoObjetivo}");
+
+                var mensajes = wapp.Mensajes(grupoObjetivo);
+                foreach (var mensaje in mensajes) {
+                    string autor = wapp.ObtenerAutorMensaje(mensaje);
+                    Console.WriteLine($"[{mensaje.Fecha:dd/MM/yyyy HH:mm}] {autor}: {mensaje.Content}");
+                }
                 return 0;
 
             default:
@@ -79,16 +100,20 @@ class Program {
     static void MostrarAyuda() {
         Console.WriteLine("""
         Uso:
-          dotnet run -- listar
-          dotnet run -- sin-github
-          dotnet run -- sin-telefono
-          dotnet run -- sin-foto
-          dotnet run -- guardar [archivo.md]
-          dotnet run -- json [archivo.json]
-          dotnet run -- vcf [archivo.vcf]
-          dotnet run -- crear-carpetas
-          dotnet run -- prs
-          dotnet run -- normalizar-prs [--simular]
+            dotnet run -- listar
+            dotnet run -- sin-github
+            dotnet run -- sin-telefono
+            dotnet run -- sin-foto
+            dotnet run -- guardar [archivo.md]
+            dotnet run -- json [archivo.json]
+            dotnet run -- vcf [archivo.vcf]
+            dotnet run -- crear-carpetas
+            dotnet run -- prs
+            dotnet run -- normalizar-prs [--simular]
+            dotnet run -- bajar-prs TP1 [--forzar]
+            dotnet run -- cerrar-prs TP1
+            dotnet run -- revisar-presentados TP1
+            dotnet run -- wapp
         """);
     }
 
@@ -106,15 +131,106 @@ class Program {
 
             var detallePr = gh.ObtenerEstado(pr.Numero);
             int cantidadArchivos = gh.ListarArchivos(pr.Numero).Count;
-            int cantidadCommits = gh.Commits(pr.Numero).Count;
-            string estado = detallePr.Estado == "open" ? "abierto" : detallePr.Estado == "closed" ? "cerrado" : "sin dato";
+            int cantidadLineas   = gh.CantidadLineas(pr.Numero);
+            int cantidadCommits  = gh.Commits(pr.Numero).Count;
+            string estado    = detallePr.Estado == "open" ? "abierto" : detallePr.Estado == "closed" ? "cerrado" : "sin dato";
             string mergeable = detallePr.EsMergeable ? "mergeable" : "con conflictos";
             int tp = GitHub.ExtraerTP(pr.Titulo);
+            string carpetaTp = tp > 0 ? $"tp{tp}" : string.Empty;
+            List<string> archivosTp = string.IsNullOrWhiteSpace(carpetaTp)
+                ? new()
+                : gh.ListarArchivosDirectorio(pr.Numero, alumno.CarpetaNombre, carpetaTp);
 
             Console.ForegroundColor = detallePr.EsMergeable ? ConsoleColor.Green : ConsoleColor.Red;
             Console.BackgroundColor = cantidadArchivos < 10 ? ConsoleColor.Black : ConsoleColor.DarkRed;
-            Console.WriteLine($"PR #{pr.Numero:000} | {legajo} | {alumno.NombreCompleto,-40} | A:{cantidadArchivos,4} | C:{cantidadCommits,2} | {estado} | {mergeable,-13} | TP{tp}");
+            Console.WriteLine($"PR #{pr.Numero:000} | {legajo} | {alumno.NombreCompleto,-40} | A:{cantidadArchivos,4} | L:{cantidadLineas,4} | C:{cantidadCommits,2} | {estado} | {mergeable,-15} | TP{tp}");
+            foreach (string archivo in archivosTp) {
+                Console.WriteLine($"  - {archivo}");
+            }
             Console.ResetColor();
         }
+    }
+
+    static void BajarPullRequests(string[] args) {
+        if (args.Length < 2) {
+            Log.Error("Debe indicar el trabajo práctico a bajar. Ejemplo: bajar-prs TP1");
+            return;
+        }
+
+        int numeroTp = ObtenerNumeroTP(args[1]);
+        if (numeroTp <= 0) {
+            Log.Error($"No se pudo interpretar el trabajo práctico '{args[1]}'. Use un valor como TP1 o 1.");
+            return;
+        }
+
+        string carpetaTp = $"tp{numeroTp}";
+        bool forzar = args.Any(arg => string.Equals(arg, "--forzar", StringComparison.OrdinalIgnoreCase));
+        GitHub gh = new();
+        List<(int Numero, string Titulo)> prs = gh.PullRequests()
+            .Where(pr => GitHub.ExtraerTP(pr.Titulo) == numeroTp)
+            .ToList();
+
+        if (prs.Count == 0) {
+            Log.Warning($"No se encontraron PRs abiertos para {carpetaTp.ToUpperInvariant()}.");
+            return;
+        }
+
+        foreach (var pr in prs) {
+            gh.BajarArchivosAlumno(pr.Numero, forzar);
+        }
+    }
+
+    static void RevisarPresentados(Alumnos alumnos, string[] args) {
+        if (args.Length < 2) {
+            Log.Error("Debe indicar el trabajo práctico a revisar. Ejemplo: revisar-presentados TP1");
+            return;
+        }
+
+        int numeroTp = ObtenerNumeroTP(args[1]);
+        if (numeroTp <= 0) {
+            Log.Error($"No se pudo interpretar el trabajo práctico '{args[1]}'. Use un valor como TP1 o 1.");
+            return;
+        }
+
+        const int minimoLineasAgregadas = 100;
+        string carpetaTp = $"tp{numeroTp}";
+        string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
+        int lineasEnunciado  = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
+
+        Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
+        int marcados = 0;
+
+        foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
+            string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
+            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
+            int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
+
+            Estado estado = Estado.Desaprobado;
+            if (lineasAgregadas >= minimoLineasAgregadas) {
+                estado = Estado.Aprobado;
+                marcados++;
+            }
+            alumno.Practico(numeroTp, estado);
+            Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
+        }
+
+        if (marcados > 0) {
+            AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        }
+
+        Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
+    }
+
+    static int ContarLineasPracticoLocal(string rutaPractico) {
+        return AppPaths.ContarLineasArchivos(rutaPractico, "*.cs", SearchOption.TopDirectoryOnly);
+    }
+
+    static int ObtenerNumeroTP(string valor) {
+        int numeroTp = GitHub.ExtraerTP(valor);
+        if (numeroTp == 0 && int.TryParse(valor, out int tpDesdeNumero)) {
+            numeroTp = tpDesdeNumero;
+        }
+
+        return numeroTp;
     }
 }

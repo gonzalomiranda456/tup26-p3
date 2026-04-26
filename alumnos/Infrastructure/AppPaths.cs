@@ -126,6 +126,22 @@ static class AppPaths {
         return Directory.GetFiles(rutaDirectorio);
     }
 
+    public static int ContarLineasArchivos(string rutaCarpeta, string patronArchivo, SearchOption opcionBusqueda = SearchOption.TopDirectoryOnly) {
+        if (!ExisteDirectorio(rutaCarpeta)) {
+            return 0;
+        }
+
+        int total = 0;
+        foreach (string rutaArchivo in Directory.EnumerateFiles(rutaCarpeta, patronArchivo, opcionBusqueda)) {
+            using StreamReader reader = new(rutaArchivo);
+            while (reader.ReadLine() is not null) {
+                total++;
+            }
+        }
+
+        return total;
+    }
+
     public static string[] ListarDirectorios(string rutaDirectorio) {
         if (!ExisteDirectorio(rutaDirectorio)) {
             return Array.Empty<string>();
@@ -221,6 +237,35 @@ static class AppPaths {
 
         File.WriteAllBytes(rutaArchivo, contenido);
         return rutaArchivo;
+    }
+
+    public static string GuardarArchivoDescargadoRelativo(string rutaDestinoBase, string rutaRelativa, byte[] contenido, bool forzar = false) {
+        string rutaNormalizada = rutaRelativa.Replace('\\', Path.DirectorySeparatorChar)
+                                            .Replace('/', Path.DirectorySeparatorChar)
+                                            .TrimStart(Path.DirectorySeparatorChar);
+
+        if (string.IsNullOrWhiteSpace(rutaNormalizada)) {
+            throw new IOException("La ruta relativa del archivo descargado no puede estar vacía.");
+        }
+
+        string rutaCompleta = Path.GetFullPath(Path.Combine(rutaDestinoBase, rutaNormalizada));
+        string rutaDestinoNormalizada = Path.GetFullPath(rutaDestinoBase);
+
+        if (!rutaCompleta.StartsWith(rutaDestinoNormalizada, StringComparison.Ordinal)) {
+            throw new IOException($"La ruta relativa '{rutaRelativa}' es inválida para el destino '{rutaDestinoBase}'.");
+        }
+
+        string? directorio = Path.GetDirectoryName(rutaCompleta);
+        if (!string.IsNullOrWhiteSpace(directorio)) {
+            AsegurarDirectorio(directorio);
+        }
+
+        if (!forzar && ExisteArchivo(rutaCompleta)) {
+            return rutaCompleta;
+        }
+
+        File.WriteAllBytes(rutaCompleta, contenido);
+        return rutaCompleta;
     }
 
     public static List<string> BuscarCarpetasMismoLegajo(string rutaBase, int legajo) {

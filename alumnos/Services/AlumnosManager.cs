@@ -1,5 +1,51 @@
 namespace Tup26.AlumnosApp;
 
+/*
+# AlumnosManager
+
+Servicio estático para leer, transformar y exportar la información de alumnos.
+
+## Funciones públicas
+
+- `Leer()`: carga el archivo principal de alumnos desde la ruta por defecto.
+
+- `Leer(rutaArchivo)`: carga alumnos desde un archivo Markdown.
+    - `rutaArchivo`: ruta del archivo a leer.
+
+- `Escribir(alumnos, rutaArchivo)`: guarda el listado de alumnos en formato Markdown.
+    - `alumnos`: colección a persistir.
+    - `rutaArchivo`: ruta destino.
+
+- `Listar(alumnos, titulo)`: muestra el listado en consola como tabla.
+    - `alumnos`: colección a mostrar.
+    - `titulo`: encabezado opcional del listado.
+
+- `CrearCarpetas(alumnos)`: crea o normaliza las carpetas de prácticos de cada alumno.
+    - `alumnos`: colección a procesar.
+
+- `CopiarFotoPerfil(alumnos, rutaFotos)`: copia fotos de perfil a las carpetas de alumnos cuando corresponde.
+    - `alumnos`: colección a procesar.
+    - `rutaFotos`: carpeta base de fotos origen.
+
+- `CopiarEnunciadoPracticos(alumnos, practico, forzar)`: copia el enunciado de un práctico a cada carpeta de alumno.
+    - `alumnos`: colección a procesar.
+    - `practico`: nombre del práctico.
+    - `forzar`: sobrescribe el destino si ya existe.
+
+- `ActualizarDesdePerfiles(alumnos, rutaPerfiles)`: actualiza datos de alumnos usando perfiles Markdown externos.
+    - `alumnos`: colección a actualizar.
+    - `rutaPerfiles`: carpeta con perfiles.
+
+- `EscribirJSON(alumnos, rutaArchivo)`: exporta el listado de alumnos en JSON.
+    - `alumnos`: colección a exportar.
+    - `rutaArchivo`: ruta destino.
+
+- `EscribirVCard(alumnos, rutaArchivo)`: exporta contactos de alumnos en formato vCard.
+    - `alumnos`: colección a exportar.
+    - `rutaArchivo`: ruta destino.
+
+*/
+
 static class AlumnosManager {
 
     public static Alumnos Leer() =>

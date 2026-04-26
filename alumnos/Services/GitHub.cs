@@ -2,6 +2,87 @@ using System.IO.Enumeration;
 
 namespace Tup26.AlumnosApp;
 
+/*
+# GitHub
+
+Servicio para interactuar con la API de GitHub mediante `gh api`.
+
+## Funciones públicas
+
+- `AgregarColaborador(usuario)`: agrega un colaborador con permisos de escritura.
+    - `usuario`: nombre de usuario de GitHub.
+
+- `Colaboradores()`: devuelve la lista de colaboradores con permiso de escritura.
+
+- `InvitacionesPendientes()`: devuelve los usuarios con invitaciones pendientes.
+
+- `PullRequests(soloAbiertos)`: lista pull requests del repositorio.
+    - `soloAbiertos`: cuando es `true`, devuelve solo PRs abiertos.
+
+- `PRSinLegajo()`: informa PRs cuyo título no contiene un legajo válido.
+
+- `PRConConflictos()`: informa PRs que no son mergeables.
+
+- `NormalizarTitulos(alumnos, simular)`: ajusta títulos de PRs al formato esperado.
+    - `alumnos`: colección usada para resolver nombre completo por legajo.
+    - `simular`: muestra cambios sin aplicarlos.
+
+- `ObtenerEstado(numeroPR)`: devuelve estado y mergeabilidad de un PR.
+    - `numeroPR`: número del pull request.
+
+- `ListarArchivos(numeroPR)`: devuelve los archivos modificados en un PR.
+    - `numeroPR`: número del pull request.
+
+- `ListarArchivosDirectorio(numeroPR, carpetaAlumnoRemota, directorioRemoto)`: devuelve los archivos modificados dentro de la carpeta de un alumno y un práctico del PR.
+    - `numeroPR`: número del pull request.
+    - `carpetaAlumnoRemota`: carpeta remota del alumno, por ejemplo `63341 - Carrer, Juan Cruz`.
+    - `directorioRemoto`: carpeta del repositorio a filtrar, por ejemplo `tp1`.
+
+- `CantidadLineasAgregadasDirectorio(numeroPR, carpetaAlumnoRemota, directorioRemoto)`: suma las líneas agregadas dentro de la carpeta de un alumno y un práctico del PR.
+    - `numeroPR`: número del pull request.
+    - `carpetaAlumnoRemota`: carpeta remota del alumno, por ejemplo `63341 - Carrer, Juan Cruz`.
+    - `directorioRemoto`: carpeta del repositorio a filtrar, por ejemplo `tp1`.
+
+- `CerrarPR(numeroPR)`: cierra un pull request.
+    - `numeroPR`: número del pull request.
+
+- `BajarArchivo(numeroPR, patron, rutaDestino, forzar)`: descarga archivos de un PR que coinciden con un patrón.
+    - `numeroPR`: número del pull request.
+    - `patron`: patrón simple de archivos a descargar.
+    - `rutaDestino`: carpeta destino.
+    - `forzar`: sobrescribe archivos existentes si corresponde.
+
+- `BajarDirectorio(numeroPR, directorioRemoto, rutaDestino, forzar)`: descarga todos los archivos de un directorio del PR a una carpeta destino.
+    - `numeroPR`: número del pull request.
+    - `directorioRemoto`: carpeta del repositorio a descargar, por ejemplo `tp1`.
+    - `rutaDestino`: carpeta destino local.
+    - `forzar`: sobrescribe archivos existentes si corresponde.
+
+- `BajarArchivosAlumno(numeroPR, forzar)`: descarga los archivos del práctico del alumno resuelto a partir del título del PR.
+    - `numeroPR`: número del pull request.
+    - `forzar`: sobrescribe archivos existentes si corresponde.
+
+- `Merge(numeroPR)`: intenta mergear un PR abierto.
+    - `numeroPR`: número del pull request.
+
+- `MergeTP(numeroTP)`: mergea todos los PRs abiertos de un trabajo práctico.
+    - `numeroTP`: número del trabajo práctico.
+
+- `CambiarTitulo(numeroPR, titulo)`: actualiza el título de un PR.
+    - `numeroPR`: número del pull request.
+    - `titulo`: nuevo título.
+
+- `Commits(numeroPR)`: lista commits de un PR con fecha y título.
+    - `numeroPR`: número del pull request.
+
+- `ExtraerTP(titulo)`: obtiene el número de TP a partir de un título.
+    - `titulo`: texto a analizar.
+
+- `ExtraerLegajo(titulo)`: obtiene el legajo a partir de un título.
+    - `titulo`: texto a analizar.
+
+*/
+
 class GitHub {
     readonly string owner;
     readonly string repo;
@@ -113,7 +194,7 @@ class GitHub {
 
 
     public int NormalizarTitulos(Alumnos alumnos, bool simular = false) {
-        List<(int Numero, string Titulo)> prs = PullRequests();
+        List<(int Numero, string Titulo)> prs = PullRequests(false);
         int count = 0;
 
         foreach ((int Numero, string Titulo) pr in prs) {
@@ -159,6 +240,22 @@ class GitHub {
         return (partes[0].ToLower(), partes[1].ToLower() == "true");
     }
 
+    public int CantidadLineas(int numeroPR) {
+        string? salida = Ejecutar($"Error al contar líneas del PR #{numeroPR}",
+            $"/pulls/{numeroPR}/files", "--paginate", "--jq", @".[] | .changes");
+
+        if (salida is null) { return 0; }
+
+        int total = 0;
+
+        foreach (string linea in Lineas(salida, pasarAMinusculas: false)) {
+            if (int.TryParse(linea, out int cambios)) {
+                total += cambios;
+            }
+        }
+
+        return total;
+    }
 
     public List<string> ListarArchivos(int numeroPR) {
         string? salida = Ejecutar( $"Error al listar archivos del PR #{numeroPR}",
@@ -169,6 +266,63 @@ class GitHub {
         return Lineas(salida);
     }
 
+    public List<string> ListarArchivosDirectorio(int numeroPR, string carpetaAlumnoRemota, string directorioRemoto) {
+        string carpetaAlumno = NormalizarRutaRemota(carpetaAlumnoRemota);
+        string carpetaRemota = NormalizarRutaRemota(directorioRemoto);
+        if (string.IsNullOrWhiteSpace(carpetaAlumno) || string.IsNullOrWhiteSpace(carpetaRemota)) {
+            return new();
+        }
+
+        return ListarArchivos(numeroPR)
+            .Select(NormalizarRutaRemota)
+            .Where(nombreRemoto => TryObtenerRutaRelativaDirectorio(nombreRemoto, carpetaAlumno, carpetaRemota, out _))
+            .ToList();
+    }
+
+    public int CantidadLineasAgregadasDirectorio(int numeroPR, string carpetaAlumnoRemota, string directorioRemoto) {
+        string carpetaAlumno = NormalizarRutaRemota(carpetaAlumnoRemota);
+        string carpetaRemota = NormalizarRutaRemota(directorioRemoto);
+        if (string.IsNullOrWhiteSpace(carpetaAlumno) || string.IsNullOrWhiteSpace(carpetaRemota)) {
+            return 0;
+        }
+
+        string? salida = Ejecutar($"Error al contar líneas agregadas del PR #{numeroPR}",
+            $"/pulls/{numeroPR}/files", "--paginate", "--jq", ".[] | \"\\(.filename)\\t\\(.additions)\"" );
+
+        if (salida is null) { return 0; }
+
+        int total = 0;
+
+        foreach (string linea in Lineas(salida, pasarAMinusculas: false)) {
+            string[] partes = linea.Split('\t', 2);
+            if (partes.Length != 2) { continue; }
+
+            string nombreRemoto = NormalizarRutaRemota(partes[0]);
+            if (!TryObtenerRutaRelativaDirectorio(nombreRemoto, carpetaAlumno, carpetaRemota, out _)) {
+                continue;
+            }
+
+            if (int.TryParse(partes[1], out int additions)) {
+                total += additions;
+            }
+        }
+
+        return total;
+    }
+
+    public void CerrarPRsAbiertos(){
+        List<(int Numero, string Titulo)> prsAbiertos = PullRequests(soloAbiertos: true);
+
+        if (prsAbiertos.Count == 0) {
+            Log.Info("No hay PRs abiertos para cerrar.");
+            return;
+        }
+
+        foreach ((int Numero, string Titulo) pr in prsAbiertos) {
+            CerrarPR(pr.Numero);
+        }   
+    }
+    
     public void CerrarPR(int numeroPR) {
         string? salida = Ejecutar( $"Error al cerrar el PR #{numeroPR}",
             $"/pulls/{numeroPR}", "--method", "PATCH", "-f", "state=closed" );
@@ -211,6 +365,84 @@ class GitHub {
                 Log.Error($"Error al descargar el archivo desde '{linea}': {ex.Message}");
             }
         }
+    }
+
+    public void BajarDirectorio(int numeroPR, string carpetaAlumnoRemota, string directorioRemoto, string rutaDestino, bool forzar = false) {
+        string carpetaAlumno = NormalizarRutaRemota(carpetaAlumnoRemota);
+        string carpetaRemota = NormalizarRutaRemota(directorioRemoto);
+        if (string.IsNullOrWhiteSpace(carpetaAlumno) || string.IsNullOrWhiteSpace(carpetaRemota)) {
+            Log.Error($"Error al bajar archivos del PR #{numeroPR}: debe indicar un directorio remoto válido.");
+            return;
+        }
+
+        List<string> archivosDirectorio = ListarArchivosDirectorio(numeroPR, carpetaAlumno, carpetaRemota);
+        if (archivosDirectorio.Count == 0) {
+            Log.Warning($"PR #{numeroPR}: no se encontraron archivos dentro de '{carpetaAlumno}/{carpetaRemota}/'.");
+            return;
+        }
+
+        string? salida = Ejecutar($"Error al bajar archivos del PR #{numeroPR}",
+            $"/pulls/{numeroPR}/files", "--paginate", "--jq", ".[] | \"\\(.filename)\\t\\(.raw_url)\"" );
+
+        if (salida is null) { return; }
+
+        List<string> urls = Lineas(salida, pasarAMinusculas: false);
+        int cantidadDescargas = 0;
+
+        foreach (string linea in urls) {
+            try {
+                string[] partes = linea.Split('\t', 2);
+                if (partes.Length != 2) { continue; }
+
+                string nombreRemoto = NormalizarRutaRemota(partes[0]);
+                string url = partes[1];
+
+                if (!archivosDirectorio.Contains(nombreRemoto, StringComparer.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                if (!TryObtenerRutaRelativaDirectorio(nombreRemoto, carpetaAlumno, carpetaRemota, out string rutaRelativa)) {
+                    continue;
+                }
+                
+                using HttpClient client = new();
+                byte[] contenido = client.GetByteArrayAsync(url).Result;
+                int cantidadLineas = ContarLineas(contenido);
+                string rutaArchivo = AppPaths.GuardarArchivoDescargadoRelativo(rutaDestino, rutaRelativa, contenido, forzar);
+                string rutaLocalRelativa = $"{carpetaRemota}/{rutaRelativa}";
+                Log.Info($"  - {rutaLocalRelativa} | L:{cantidadLineas,4}\n      {rutaArchivo}");
+                cantidadDescargas++;
+            } catch (Exception ex) {
+                Log.Error($"Error al descargar el archivo desde '{linea}': {ex.Message}");
+            }
+        }
+    }
+
+    public void BajarArchivosAlumno(int numeroPR, bool forzar = false) {
+        string? titulo = ObtenerTituloPR(numeroPR);
+        if (string.IsNullOrWhiteSpace(titulo)) {
+            return;
+        }
+
+        int legajo = ExtraerLegajo(titulo);
+        int numeroTp = ExtraerTP(titulo);
+        if (legajo <= 0 || numeroTp <= 0) {
+            Log.Warning($"Se omite PR #{numeroPR}: no se pudo resolver legajo o TP desde el título '{titulo}'.");
+            return;
+        }
+
+        string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(legajo);
+        if (!AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno)) {
+            Log.Warning($"Se omite PR #{numeroPR}: no se encontró carpeta única para legajo {legajo}.");
+            return;
+        }
+
+        string carpetaTp = $"tp{numeroTp}";
+        string carpetaAlumno = Path.GetFileName(rutaCarpetaAlumno!);
+        string rutaDestino = Path.Combine(rutaCarpetaAlumno!, carpetaTp);
+
+        Log.Info($"PR #{numeroPR:000} | {carpetaAlumno} | {carpetaTp}");
+        BajarDirectorio(numeroPR, carpetaAlumno, carpetaTp, rutaDestino, forzar);
     }
 
     public bool Merge(int numeroPR) {
@@ -321,6 +553,13 @@ class GitHub {
         return salida;
     }
 
+    string? ObtenerTituloPR(int numeroPR) {
+        string? salida = Ejecutar($"Error al obtener el título del PR #{numeroPR}",
+            $"/pulls/{numeroPR}", "--jq", ".title");
+
+        return string.IsNullOrWhiteSpace(salida) ? null : salida.Trim();
+    }
+
 
     static List<string> Lineas(string texto, bool pasarAMinusculas = true) {
         return texto.Split(["\r\n", "\n", "\r"], StringSplitOptions.RemoveEmptyEntries)
@@ -328,6 +567,50 @@ class GitHub {
                     .Select(linea => pasarAMinusculas ? linea.ToLower() : linea)
                     .Where(linea => !string.IsNullOrWhiteSpace(linea))
                     .ToList();
+    }
+
+    static string NormalizarRutaRemota(string ruta) {
+        return ruta.Trim().Replace('\\', '/').Trim('/');
+    }
+
+    static bool TryObtenerRutaRelativaDirectorio(string nombreRemoto, string carpetaAlumnoRemota, string directorioRemoto, out string rutaRelativa) {
+        rutaRelativa = string.Empty;
+
+        string nombreNormalizado = NormalizarRutaRemota(nombreRemoto);
+        string carpetaAlumnoNormalizada = NormalizarRutaRemota(carpetaAlumnoRemota);
+        string directorioNormalizado = NormalizarRutaRemota(directorioRemoto);
+        if (string.IsNullOrWhiteSpace(nombreNormalizado) || string.IsNullOrWhiteSpace(carpetaAlumnoNormalizada) || string.IsNullOrWhiteSpace(directorioNormalizado)) {
+            return false;
+        }
+
+        string[] segmentos = nombreNormalizado.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segmentos.Length < 3) {
+            return false;
+        }
+
+        int ultimoIndice = segmentos.Length - 1;
+        int indiceDirectorio = ultimoIndice - 1;
+        int indiceAlumno = ultimoIndice - 2;
+
+        if (!string.Equals(segmentos[indiceAlumno], carpetaAlumnoNormalizada, StringComparison.OrdinalIgnoreCase)) {
+            return false;
+        }
+
+        if (!string.Equals(segmentos[indiceDirectorio], directorioNormalizado, StringComparison.OrdinalIgnoreCase)) {
+            return false;
+        }
+
+        rutaRelativa = segmentos[ultimoIndice];
+        return !string.IsNullOrWhiteSpace(rutaRelativa);
+    }
+
+    static int ContarLineas(byte[] contenido) {
+        if (contenido.Length == 0) {
+            return 0;
+        }
+
+        int lineas = contenido.Count(b => b == (byte)'\n');
+        return contenido[^1] == (byte)'\n' ? lineas : lineas + 1;
     }
 
     public static int ExtraerTP(string titulo) {
