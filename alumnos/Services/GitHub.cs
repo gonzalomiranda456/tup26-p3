@@ -121,7 +121,7 @@ class GitHub {
     }
 
 
-    public List<(int Numero, string Titulo)> PullRequests(bool soloAbiertos = true) {
+    public List<(int Numero, string Titulo)> PullRequests(bool soloAbiertos = true, int tp=0) {
         string estado = soloAbiertos ? "open" : "all";
 
         string? salida = Ejecutar( "Error al listar PRs",
@@ -133,10 +133,12 @@ class GitHub {
         foreach (string linea in Lineas(salida, pasarAMinusculas: false)) {
             string[] partes = linea.Split('\t', 2);
             if (partes.Length != 2) { continue; }
+            string practico = partes[0];
+            string titulo   = partes[1];
+            if(tp != 0 && GitHub.ExtraerTP(titulo) != tp) { continue; }
+            if (!int.TryParse(practico, out int numero))  { continue; }
 
-            if (!int.TryParse(partes[0], out int numero)) { continue; }
-
-            prs.Add((numero, partes[1]));
+            prs.Add((numero, titulo));
         }
         prs.Sort((a, b) => a.Numero.CompareTo(b.Numero));
         return prs;

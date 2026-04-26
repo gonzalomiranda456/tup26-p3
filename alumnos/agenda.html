@@ -299,7 +299,7 @@
 
     /* ── Card body ────────────────────────────────────── */
     .card-body {
-      padding: 0 18px 18px;
+      padding: 0 18px 64px;
       position: relative;
       z-index: 1;
       display: flex;
@@ -341,6 +341,66 @@
     .detail-empty {
       font-style: italic;
       opacity: .5;
+    }
+
+    .practicos-status {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      max-width: calc(100% - 34px);
+    }
+
+    .practicos-label {
+      font-size: .58rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: color-mix(in oklab, var(--accent, #8c3b2a) 55%, var(--muted));
+    }
+
+    .practicos-track {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 1px;
+      font-size: .82rem;
+      line-height: 1;
+      max-width: 11.5rem;
+      text-shadow: 0 1px 0 rgba(255,255,255,.65);
+    }
+
+    .practico-dot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.02em;
+      height: 1.02em;
+    }
+
+    .practico-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: inherit;
+      text-decoration: none;
+      border-radius: 6px;
+      padding: 1px;
+      transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .practico-link:hover {
+      background: rgba(255, 255, 255, .55);
+      transform: translateY(-1px);
+    }
+
+    .practico-link:focus-visible {
+      outline: none;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent, #8c3b2a) 45%, white);
     }
 
     /* ── Loading / Error state ────────────────────────── */
@@ -438,6 +498,10 @@
       '#2b6671', '#3b5a8c', '#6e3b8c', '#8c3b6e',
     ];
 
+    const GITHUB_OWNER = 'AlejandroDiBattista';
+    const GITHUB_REPO = 'tup26-p3';
+    const GITHUB_BRANCH = 'main';
+
     function accentFor(legajo) {
       return ACCENTS[legajo % ACCENTS.length];
     }
@@ -469,7 +533,7 @@
 
         // split on 2+ consecutive spaces
         const cols = line.trim().split(/\s{2,}/);
-        if (cols.length < 5) continue;
+        if (cols.length < 7) continue;
 
         const legajo = parseInt(cols[0], 10);
         if (isNaN(legajo)) continue;
@@ -478,6 +542,7 @@
         const telefonoRaw    = cols[2].trim();
         const fotoRaw        = cols[3].trim();
         const gitHubRaw      = cols[4].trim();
+        const practicosRaw   = cols[5].trim();
 
         const comma    = apellidoNombre.indexOf(',');
         const apellido = comma >= 0 ? apellidoNombre.slice(0, comma).trim() : apellidoNombre;
@@ -494,7 +559,7 @@
           `../practicos/${carpetaNombre}/foto.jpg`,
         ];
 
-        alumnos.push({ legajo, apellido, nombre, apellidoNombre, telefono, gitHub, tieneFoto, comision, fotoPath: '', fotoPaths });
+        alumnos.push({ legajo, apellido, nombre, apellidoNombre, telefono, gitHub, tieneFoto, comision, practicosRaw, carpetaNombre, fotoPath: '', fotoPaths });
       }
 
       return alumnos;
@@ -505,7 +570,85 @@
       return (apellido.charAt(0) + (nombre.charAt(0) || '')).toUpperCase();
     }
 
-    function renderCard(alumno, idx) {
+    function extraerEstados(texto) {
+      return (texto.match(/[🟢🟡🟠🔴⚪]/gu) || []).map(emoji => emoji === '⚪' ? '⚪️' : emoji);
+    }
+
+    function contarEstados(texto) {
+      return extraerEstados(texto).length;
+    }
+
+    function calcularTotalPracticos(alumnos) {
+      const estadosPorAlumno = alumnos.map(alumno => extraerEstados(alumno.practicosRaw || ''));
+      const maxEstados = Math.max(...estadosPorAlumno.map(estados => estados.length), 0);
+
+      if (maxEstados === 0) {
+        return 0;
+      }
+
+      for (let indice = 0; indice < maxEstados; indice++) {
+        const columnaVacia = estadosPorAlumno.every(estados => (estados[indice] || '⚪️') === '⚪️');
+
+        if (columnaVacia) {
+          return indice;
+        }
+      }
+
+      return maxEstados;
+    }
+
+    function normalizarEstados(texto, total) {
+      const estados = extraerEstados(texto);
+
+      while (estados.length < total) {
+        estados.push('⚪️');
+      }
+
+      return estados.slice(0, total);
+    }
+
+    function nombreEstado(estado) {
+      switch (estado) {
+        case '🟢': return 'Aprobado';
+        case '🟡': return 'Pendiente';
+        case '🟠': return 'Revisión';
+        case '🔴': return 'Desaprobado';
+        default: return 'Sin estado';
+      }
+    }
+
+    function githubPracticoUrl(alumno, numeroPractico) {
+      const path = ['practicos', alumno.carpetaNombre, `tp${numeroPractico}`]
+        .map(segmento => encodeURIComponent(segmento))
+        .join('/');
+
+      return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/${path}`;
+    }
+
+    function renderPracticos(alumno, totalPracticos) {
+      if (totalPracticos <= 0) {
+        return '';
+      }
+
+      const estados = normalizarEstados(alumno.practicosRaw || '', totalPracticos);
+      const titulo = `Estado de ${totalPracticos} práctico${totalPracticos !== 1 ? 's' : ''}`;
+
+      return `
+        <div class="practicos-status" title="${escHtml(titulo)}" aria-label="${escHtml(titulo)}">
+          <span class="practicos-label">Prácticos</span>
+          <div class="practicos-track" aria-hidden="true">
+            ${estados.map((estado, indice) => {
+              const numeroPractico = indice + 1;
+              const href = githubPracticoUrl(alumno, numeroPractico);
+              const detalle = `Abrir TP${numeroPractico} en GitHub · ${nombreEstado(estado)}`;
+
+              return `<a class="practico-link" href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escHtml(detalle)}" aria-label="${escHtml(detalle)}"><span class="practico-dot">${escHtml(estado)}</span></a>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }
+
+    function renderCard(alumno, idx, totalPracticos) {
       const accent  = accentFor(alumno.legajo);
       const inits   = initials(alumno.apellido, alumno.nombre);
       const comBadge = `badge-comision-${alumno.comision.toLowerCase()}`;
@@ -558,6 +701,7 @@
               ${ghHtml}
             </div>
           </div>
+          ${renderPracticos(alumno, totalPracticos)}
         </article>`;
     }
 
@@ -597,6 +741,7 @@
     let allAlumnos = [];
     let activeFilter = 'todos';
     let searchQuery  = '';
+    let totalPracticos = 0;
 
     function parseSearchQuery(query) {
       const normalized = query.toLowerCase();
@@ -662,7 +807,7 @@
         return;
       }
 
-      grid.innerHTML = visible.map((a, i) => renderCard(a, i)).join('');
+      grid.innerHTML = visible.map((a, i) => renderCard(a, i, totalPracticos)).join('');
 
       const total = allAlumnos.filter(a => matchesFilter(a, activeFilter)).length;
 
@@ -694,6 +839,7 @@
       })
       .then(async text => {
         allAlumnos = await Promise.all(parseAlumnos(text).map(resolveAlumnoPhoto));
+        totalPracticos = calcularTotalPracticos(allAlumnos);
         render();
       })
       .catch(() => {

@@ -163,17 +163,9 @@ class Program {
             return;
         }
 
-        string carpetaTp = $"tp{numeroTp}";
         bool forzar = args.Any(arg => string.Equals(arg, "--forzar", StringComparison.OrdinalIgnoreCase));
         GitHub gh = new();
-        List<(int Numero, string Titulo)> prs = gh.PullRequests()
-            .Where(pr => GitHub.ExtraerTP(pr.Titulo) == numeroTp)
-            .ToList();
-
-        if (prs.Count == 0) {
-            Log.Warning($"No se encontraron PRs abiertos para {carpetaTp.ToUpperInvariant()}.");
-            return;
-        }
+        IEnumerable<(int Numero, string Titulo)> prs = gh.PullRequests().Where(pr => GitHub.ExtraerTP(pr.Titulo) == numeroTp);
 
         foreach (var pr in prs) {
             gh.BajarArchivosAlumno(pr.Numero, forzar);
