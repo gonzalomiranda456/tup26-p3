@@ -109,8 +109,8 @@ static class AlumnosManager {
                     comisionActual = comisionAlumno;
                     sb.AppendLine($"## {comisionActual}");
                     sb.AppendLine("```text");
-                    sb.AppendLine("Legajo  Nombre y Apellido                Teléfono         Foto  GitHub                   Prácticos          Exámenes        ");
-                    sb.AppendLine("------  -------------------------------  ---------------  ----  -----------------------  -----------------  -----------------");
+                    sb.AppendLine("Legajo  Nombre y Apellido                Teléfono         Foto  GitHub                     Prácticos          Exámenes           Pr   Nr");
+                    sb.AppendLine("------  -------------------------------  ---------------  ----  -------------------------  -----------------  -----------------  --   --");
                 }
 
                 sb.AppendLine(FormatearFila(alumno));
@@ -137,7 +137,7 @@ static class AlumnosManager {
         List<Alumno> alumnosOrdenados = new(alumnos);
         alumnosOrdenados.Sort(Alumno.Comparar);
 
-        string encabezado = FormatearFilaTabla("Legajo", "Nombre y Apellido", "Telefono", "Foto", "GitHub", "Comision", "Practicos", "Examenes");
+        string encabezado = FormatearFilaTabla("Legajo", "Nombre y Apellido", "Telefono", "Foto", "GitHub", "Comision", "Practicos", "Examenes", "Pr", "Nr");
         string separador = new string('-', encabezado.Length);
         ConsoleColor colorAnterior = Console.ForegroundColor;
 
@@ -150,7 +150,7 @@ static class AlumnosManager {
         Console.WriteLine(separador);
 
         foreach (Alumno alumno in alumnosOrdenados) {
-            Console.WriteLine(FormatearFilaTabla( alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.Telefono, alumno.ConFoto ? "Si" : "No", alumno.GitHub, alumno.Comision, FormatearEstados(alumno.practicos), FormatearEstados(alumno.examenes)));
+            Console.WriteLine(FormatearFilaTabla( alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.Telefono, alumno.ConFoto ? "Si" : "No", alumno.GitHub, alumno.Comision, FormatearEstados(alumno.practicos), FormatearEstados(alumno.examenes), alumno.Presente ? "Sí" : "No", alumno.Asistencias.ToString() ));
         }
 
         Console.WriteLine(separador);
@@ -365,35 +365,39 @@ static class AlumnosManager {
     static Alumno? ExtraerAlumnoFormatoMarkdown(string linea, string comisionActual) {
         List<string> columnas = Regex.Split(linea.TrimEnd(), @"\s{2,}").ToList();
 
-        while (columnas.Count < 7) {
+        while (columnas.Count < 9) {
             columnas.Add(string.Empty);
         }
 
-        if (!int.TryParse(columnas[0].Trim(), out int legajo)) {
+        var legajo = ExtraerInt(columnas[0]);
+
+        if (legajo == 0) {
             return null;
         }
 
         (string apellido, string nombre) = ExtraerApellidoNombre(columnas[1]);
 
-        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerFoto(columnas[3]));
+    Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]));
         CargarEstados(alumno.practicos, columnas[5]);
-        CargarEstados(alumno.examenes, columnas[6]);
+        CargarEstados(alumno.examenes,  columnas[6]);
 
         return alumno;
     }
 
 
-    static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes) {
-        string colLegajo         = AjustarColumna(legajo, 6);
+    static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
+        string colLegajo         = AjustarColumna(legajo,          6);
         string colNombreApellido = AjustarColumna(nombreApellido, 26);
-        string colTelefono       = AjustarColumna(telefono, 15);
-        string colFoto           = AjustarColumna(foto, 4);
-        string colGitHub         = AjustarColumna(gitHub, 25);
-        string colComision       = AjustarColumna(comision, 10);
-        string colPruebas        = AjustarColumna(pruebas, 20);
-        string colExamenes       = AjustarColumna(examenes, 20);
+        string colTelefono       = AjustarColumna(telefono,       15);
+        string colFoto           = AjustarColumna(foto,            4);
+        string colGitHub         = AjustarColumna(gitHub,         25);
+        string colComision       = AjustarColumna(comision,       10);
+        string colPruebas        = AjustarColumna(pruebas,        20);
+        string colExamenes       = AjustarColumna(examenes,       20);
+        string colPresente       = AjustarColumna(presente,        4);
+        string colAsistencias    = AjustarColumna(asistencias,     4);
 
-        return $"{colLegajo}  {colNombreApellido}  {colTelefono}  {colFoto}  {colGitHub}  {colComision}  {colPruebas}  {colExamenes}";
+        return $"{colLegajo}  {colNombreApellido}  {colTelefono}  {colFoto}  {colGitHub}  {colComision}  {colPruebas}  {colExamenes}  {colPresente}  {colAsistencias}";
     }
 
     static string ObtenerComision(Alumno alumno) {
@@ -401,15 +405,17 @@ static class AlumnosManager {
     }
 
     static string FormatearFila(Alumno alumno) {
-        string legajo         = AjustarColumna(alumno.Legajo.ToString(), 6);
-        string nombreApellido = AjustarColumna(alumno.NombreCompleto, 31);
-        string telefono       = AjustarColumna(alumno.Telefono, 15);
-        string foto           = AjustarColumna(alumno.TieneFoto ? "Si" : "No", 4);
-        string gitHub         = AjustarColumna(alumno.GitHub, 23);
+        string legajo         = AjustarColumna(alumno.Legajo.ToString(),           6);
+        string nombreApellido = AjustarColumna(alumno.NombreCompleto,             31);
+        string telefono       = AjustarColumna(alumno.Telefono,                   15);
+        string foto           = AjustarColumna(alumno.TieneFoto ? "Si" : "No",     4);
+        string gitHub         = AjustarColumna(alumno.GitHub,                     25);
         string pruebas        = AjustarColumna(FormatearEstados(alumno.practicos, 10));
         string examenes       = AjustarColumna(FormatearEstados(alumno.examenes, 10));
+        string presente       = AjustarColumna(alumno.Presente ? "Sí" : "No",     4);
+        string asistencias    = AjustarColumna(alumno.Asistencias.ToString(),     4);
 
-        return $"{legajo}  {nombreApellido}  {telefono}  {foto}  {gitHub}  {pruebas}  {examenes}";
+        return $"{legajo}  {nombreApellido}  {telefono}  {foto}  {gitHub}  {pruebas}  {examenes}  {presente}  {asistencias}";
     }
 
 
@@ -436,6 +442,11 @@ static class AlumnosManager {
 
     static string ExtraerTelefono(string texto) {
         return LimpiarCampo(texto);
+    }
+
+    static int ExtraerInt(string texto) {
+        string valor = LimpiarCampo(texto);
+        return int.TryParse(valor, out int resultado) ? resultado : 0;
     }
 
     static (string, string) ExtraerApellidoNombre(string nombreCompleto) {
@@ -476,9 +487,9 @@ static class AlumnosManager {
         return valor;
     }
 
-    static bool ExtraerFoto(string texto) {
+    static bool ExtraerBool(string texto) {
         texto = texto.Trim().ToLower();
-        return texto== "si" || texto == "true" || texto == "yes";
+        return texto== "si" || texto== "sí" || texto == "true" || texto == "yes";
     }
 
     static void CargarEstados(List<Estado> destino, string texto) {

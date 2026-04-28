@@ -12,6 +12,9 @@ class Alumnos : IEnumerable<Alumno> {
     public Alumno? BuscarPorLegajo(int legajo) =>
         Lista.FirstOrDefault(a => a.Legajo == legajo);
         
+    public Alumno? BuscarPorTelefono(string telefono) =>
+        Lista.FirstOrDefault(a => a.TelefonoId == telefono);
+
     public Alumnos ConGithub(bool tiene = true) =>
         new(Lista.Where(a => tiene == a.ConGithub));
 

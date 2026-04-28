@@ -108,11 +108,25 @@ class WAppService {
 
     void Sincronizar() {
         try {
-            Ejecutar(["groups", "refresh" ]);
+            Ejecutar([
+                "sync",
+                "--once",
+                "--idle-exit", "5s",
+                "--refresh-contacts",
+                "--refresh-groups"
+            ]);
         } catch (InvalidOperationException ex) when (EsErrorAutenticacionWacli(ex)) {
             Log.Warning("Aviso: wacli no está autenticado; se usa la base local para grupos y contactos.");
         } catch (InvalidOperationException ex) {
-            Log.Warning($"Aviso: no se pudo sincronizar wacli; se usa la base local para grupos y contactos. {ex.Message}");
+            Log.Warning($"Aviso: no se pudo sincronizar mensajes con wacli; se intenta refrescar grupos/contactos. {ex.Message}");
+
+            try {
+                Ejecutar(["groups", "refresh" ]);
+            } catch (InvalidOperationException ex2) when (EsErrorAutenticacionWacli(ex2)) {
+                Log.Warning("Aviso: wacli no está autenticado; se usa la base local para grupos y contactos.");
+            } catch (InvalidOperationException ex2) {
+                Log.Warning($"Aviso: no se pudo sincronizar wacli; se usa la base local para grupos y contactos. {ex2.Message}");
+            }
         }
     }
 
@@ -168,7 +182,7 @@ class WAppService {
         string nombre = mensaje.FromMe ? "yo" : ObtenerNombreAutorMensaje(mensaje);
         string telefono = ObtenerTelefonoAutorMensaje(mensaje);
 
-        return $"[{telefono}|{nombre}]";
+        return $"<{telefono}|{nombre}>";
     }
 
     void EnviarTexto(string destino, string mensaje) {
@@ -188,12 +202,7 @@ class WAppService {
             EnviarTexto(destino, mensaje);
         }
 
-        List<string> argumentos = [
-            "send", "file",
-            "--to", destino,
-            "--file", archivo,
-            "--filename", AppPaths.NombreArchivo(archivo)
-        ];
+        List<string> argumentos = [ "send", "file", "--to", destino, "--file", archivo, "--filename", AppPaths.NombreArchivo(archivo) ];
 
         string? mime = DetectarMime(archivo);
         if (!string.IsNullOrWhiteSpace(mime)) {
@@ -420,7 +429,7 @@ class WAppService {
         mensaje.Fecha.Month == 1 &&
         mensaje.Fecha.Day == 1;
 
-    string ObtenerTelefonoAutorMensaje(MensajeWhatsApp mensaje) {
+    public string ObtenerTelefonoAutorMensaje(MensajeWhatsApp mensaje) {
         ContactoWhatsApp? contacto = BuscarContactoAutorMensaje(mensaje);
         string telefono = TelefonoContactoValido(contacto, mensaje.SenderJid) ? contacto!.PhoneNumber : string.Empty;
 
@@ -435,7 +444,7 @@ class WAppService {
         return string.IsNullOrWhiteSpace(telefono) ? "desconocido" : telefono;
     }
 
-    string ObtenerNombreAutorMensaje(MensajeWhatsApp mensaje) {
+    public string ObtenerNombreAutorMensaje(MensajeWhatsApp mensaje) {
         ContactoWhatsApp? contacto = BuscarContactoAutorMensaje(mensaje);
         if (contacto is not null && EsNombreAutorValido(contacto.Name)) {
             return contacto.Name;

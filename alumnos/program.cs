@@ -3,7 +3,7 @@ namespace Tup26.AlumnosApp;
 class Program {
     static int Main(string[] args) {
         Alumnos alumnos = AlumnosManager.Leer();
-
+        Console.WriteLine($"Alumnos cargados: {alumnos.Count()}");
         if (args.Length == 0 || EsComando(args[0], "ayuda", "help", "-h", "--help")) {
             MostrarAyuda();
             return 0;
@@ -65,22 +65,31 @@ class Program {
                 RevisarPresentados(alumnos, args);
                 return 0;
 
+            case "registrar-asistencias":
+                var contar = 0;
+                foreach (Alumno alumno in alumnos) {
+                    if(alumno.Presente) {
+                        alumno.Asistencias++;
+                        contar++;
+                    }
+                    alumno.Presente = false;
+                }
+                AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+                Console.WriteLine($"Asistencias registradas: {contar}");
+                return 0;
+                
+            case "relevar-asistencias":
+                CargarAsistenciasHoy(alumnos);
+                AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+                return 0;
             
-            case "wapp":
+            case "wapp-grupos":
                 WAppService wapp = new();
                 foreach(var grupo in wapp.Grupos()) {
                     Console.WriteLine($"Grupo: {grupo.Group}");
-                    // foreach(var contacto in wapp.Participantes(grupo.Group)) {
-                    //     Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
-                    // }
-                }
-                const string grupoObjetivo = "c7";
-                Console.WriteLine($"\nMensajes del grupo: {grupoObjetivo}");
-
-                var mensajes = wapp.Mensajes(grupoObjetivo);
-                foreach (var mensaje in mensajes) {
-                    string autor = wapp.ObtenerAutorMensaje(mensaje);
-                    Console.WriteLine($"[{mensaje.Fecha:dd/MM/yyyy HH:mm}] {autor}: {mensaje.Content}");
+                    foreach(var contacto in wapp.Participantes(grupo.Group)) {
+                        Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
+                    }
                 }
                 return 0;
 
@@ -113,7 +122,8 @@ class Program {
             dotnet run -- bajar-prs TP1 [--forzar]
             dotnet run -- cerrar-prs TP1
             dotnet run -- revisar-presentados TP1
-            dotnet run -- wapp
+            dotnet run -- wapp-grupos
+            dotnet run -- wapp-asistencias
         """);
     }
 
@@ -169,6 +179,21 @@ class Program {
 
         foreach (var pr in prs) {
             gh.BajarArchivosAlumno(pr.Numero, forzar);
+        }
+    }
+
+    static void CargarAsistenciasHoy(Alumnos alumnos) {
+        WAppService wapp = new();
+        DateTime hoy = DateTime.Today;
+
+        DateTime desde = hoy.AddHours(8);
+        DateTime hasta = hoy.AddHours(12);
+    
+        foreach(var grupo in new[] { "C7", "C9" }) {
+            foreach (var mensaje in wapp.Mensajes(grupo, desde, hasta)) {
+                string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                alumnos.BuscarPorTelefono(telefono)?.Presente = true;
+            }
         }
     }
 

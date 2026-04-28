@@ -11,7 +11,9 @@ public class Alumno {
     public string Telefono = "";
     public string GitHub   = "";
     public bool   TieneFoto= false;
-
+    public bool   Presente = false;
+    public int    Asistencias = 0;
+    
     public List<Estado> practicos = new();
     public List<Estado> examenes  = new();
 
@@ -22,7 +24,7 @@ public class Alumno {
     public bool   ConGithub      => EsGitHubValido(GitHub);
     public bool   ConFoto        => TieneFoto;
 
-    public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto) {
+    public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto, bool presente = false, int asistencias = 0) {
         Legajo    = legajo;
         Comision  = NormalizarComision(comision);
         Nombre    = NormalizarNombre(nombre);
@@ -30,6 +32,8 @@ public class Alumno {
         Telefono  = NormalizarTelefono(telefono);
         GitHub    = NormalizarGitHub(github);
         TieneFoto = tieneFoto;
+        Presente  = presente;
+        Asistencias = asistencias;
     }
 
     public static int Comparar(Alumno a, Alumno b) {
