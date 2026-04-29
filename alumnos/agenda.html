@@ -361,6 +361,7 @@
     .practicos-status {
       display: flex;
       flex-wrap: nowrap;
+      width: 100%;
       justify-content: flex-end;
       align-items: center;
       align-self: start;
@@ -370,6 +371,7 @@
     .practicos-track {
       display: flex;
       flex-wrap: wrap;
+      width: 100%;
       justify-content: flex-end;
       gap: 1px;
       font-size: .82rem;
@@ -380,8 +382,10 @@
 
     .status-rail {
       min-width: 9.5rem;
+      width: 100%;
       display: flex;
       flex-direction: column;
+      justify-self: end;
       align-items: flex-end;
       justify-content: space-between;
       gap: 10px;
@@ -390,6 +394,7 @@
     .attendance-summary {
       display: flex;
       flex-wrap: wrap;
+      width: 100%;
       justify-content: flex-end;
       gap: 6px;
       margin-top: auto;
@@ -594,18 +599,23 @@
     }
 
     function fotoCandidates(carpetaNombre) {
-      const archivos = ['foto.png', 'foto.jpg'];
+      const archivos = ['foto.png', 'foto.jpg', 'foto.jpeg'];
+      const ubicaciones = ['', 'tp1/'];
       const paths = [];
       const localBase = localPracticosBasePath();
 
       if (localBase) {
-        for (const archivo of archivos) {
-          paths.push(`${localBase}/${carpetaNombre}/${archivo}`);
+        for (const ubicacion of ubicaciones) {
+          for (const archivo of archivos) {
+            paths.push(`${localBase}/${carpetaNombre}/${ubicacion}${archivo}`);
+          }
         }
       }
 
-      for (const archivo of archivos) {
-        paths.push(githubRawUrl('practicos', carpetaNombre, archivo));
+      for (const ubicacion of ubicaciones) {
+        for (const archivo of archivos) {
+          paths.push(githubRawUrl('practicos', carpetaNombre, `${ubicacion}${archivo}`));
+        }
       }
 
       return paths;
@@ -661,7 +671,7 @@
 
         const telefono = (telefonoRaw === '—' || telefonoRaw === '-') ? '' : telefonoRaw;
         const gitHub   = (gitHubRaw   === '—' || gitHubRaw   === '-') ? '' : gitHubRaw;
-        const tieneFoto = fotoRaw === 'Si';
+        const tieneFoto = /^(si|sí|true|yes)$/i.test(fotoRaw);
         const presente = /^(si|sí|true|yes)$/i.test(presenteRaw);
         const asistencias = Number.parseInt(asistenciasRaw, 10);
 

@@ -3,7 +3,7 @@ namespace Tup26.AlumnosApp;
 class Program {
     static int Main(string[] args) {
         Alumnos alumnos = AlumnosManager.Leer();
-        Console.WriteLine($"Alumnos cargados: {alumnos.Count()}");
+        Log.WriteLine($"Alumnos cargados: {alumnos.Count()}");
         if (args.Length == 0 || EsComando(args[0], "ayuda", "help", "-h", "--help")) {
             MostrarAyuda();
             return 0;
@@ -75,7 +75,7 @@ class Program {
                     alumno.Presente = false;
                 }
                 AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
-                Console.WriteLine($"Asistencias registradas: {contar}");
+                Log.WriteLine($"Asistencias registradas: {contar}");
                 return 0;
                 
             case "relevar-asistencias":
@@ -86,9 +86,9 @@ class Program {
             case "wapp-grupos":
                 WAppService wapp = new();
                 foreach(var grupo in wapp.Grupos()) {
-                    Console.WriteLine($"Grupo: {grupo.Group}");
+                    Log.WriteLine($"Grupo: {grupo.Group}");
                     foreach(var contacto in wapp.Participantes(grupo.Group)) {
-                        Console.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
+                        Log.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
                     }
                 }
                 return 0;
@@ -107,7 +107,7 @@ class Program {
         args.Length > index ? args[index] : rutaPorDefecto;
 
     static void MostrarAyuda() {
-        Console.WriteLine("""
+        Log.WriteLine("""
         Uso:
             dotnet run -- listar
             dotnet run -- sin-github
@@ -135,7 +135,7 @@ class Program {
             Alumno? alumno = alumnos.BuscarPorLegajo(legajo);
 
             if (alumno is null) {
-                Console.WriteLine($"Alumno con legajo {legajo} no encontrado en la lista de alumnos.");
+                Log.Error($"Alumno con legajo {legajo} no encontrado en la lista de alumnos.");
                 continue;
             }
 
@@ -153,9 +153,9 @@ class Program {
 
             Console.ForegroundColor = detallePr.EsMergeable ? ConsoleColor.Green : ConsoleColor.Red;
             Console.BackgroundColor = cantidadArchivos < 10 ? ConsoleColor.Black : ConsoleColor.DarkRed;
-            Console.WriteLine($"PR #{pr.Numero:000} | {legajo} | {alumno.NombreCompleto,-40} | A:{cantidadArchivos,4} | L:{cantidadLineas,4} | C:{cantidadCommits,2} | {estado} | {mergeable,-15} | TP{tp}");
+            Log.WriteLine($"PR #{pr.Numero:000} | {legajo} | {alumno.NombreCompleto,-40} | A:{cantidadArchivos,4} | L:{cantidadLineas,4} | C:{cantidadCommits,2} | {estado} | {mergeable,-15} | TP{tp}");
             foreach (string archivo in archivosTp) {
-                Console.WriteLine($"  - {archivo}");
+                Log.WriteLine($"  - {archivo}");
             }
             Console.ResetColor();
         }
@@ -195,6 +195,7 @@ class Program {
                 alumnos.BuscarPorTelefono(telefono)?.Presente = true;
             }
         }
+        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Presente), "Alumnos presentes hoy");
     }
 
     static void RevisarPresentados(Alumnos alumnos, string[] args) {

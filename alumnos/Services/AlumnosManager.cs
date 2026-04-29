@@ -86,7 +86,9 @@ static class AlumnosManager {
         return alumnos;
     }
 
-    public static void Escribir(Alumnos alumnos, string rutaArchivo) {
+    public static void Escribir(IEnumerable<Alumno> alumnos, string rutaArchivo) {
+        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Practicos", "Ex", "Pr", "Nr"];
+        var guiones = etiquetas.Select(e => new string('-', 40)).ToArray();
         try {
             List<Alumno> alumnosOrdenados = new(alumnos);
             alumnosOrdenados.Sort(Alumno.Comparar);
@@ -109,8 +111,8 @@ static class AlumnosManager {
                     comisionActual = comisionAlumno;
                     sb.AppendLine($"## {comisionActual}");
                     sb.AppendLine("```text");
-                    sb.AppendLine("Legajo  Nombre y Apellido                Teléfono         Foto  GitHub                     Prácticos          Exámenes           Pr   Nr");
-                    sb.AppendLine("------  -------------------------------  ---------------  ----  -------------------------  -----------------  -----------------  --   --");
+                        sb.AppendLine(FormatearFilaTabla(etiquetas));
+                        sb.AppendLine(FormatearFilaTabla(guiones));
                 }
 
                 sb.AppendLine(FormatearFila(alumno));
@@ -128,37 +130,35 @@ static class AlumnosManager {
         }
     }
 
-    public static void Listar(Alumnos alumnos, string titulo = "Listado de Alumnos") {
-        if (alumnos == null || !alumnos.Any()) {
+    public static void Listar(IEnumerable<Alumno> alumnos, string titulo = "Listado de Alumnos") {
+        string[] campos = ["Legajo", "Nombre y Apellido", "Telefono", "Foto", "GitHub", "Practicos", "Ex", "Pr", "Nr"];
+        string[] guiones = campos.Select(c => new string('-', 40)).ToArray();
+        
+        string comision = "";
+        if (!alumnos.Any()) {
             Log.Warning("No hay alumnos para mostrar.");
             return;
         }
 
-        List<Alumno> alumnosOrdenados = new(alumnos);
-        alumnosOrdenados.Sort(Alumno.Comparar);
+        List<Alumno> alumnosOrdenados = alumnos.OrderBy(a => a.Comision).ThenBy(a => a.NombreCompleto).ThenBy(a => a.Legajo).ToList();
+        
+        string encabezado = FormatearFilaTabla(campos);
 
-        string encabezado = FormatearFilaTabla("Legajo", "Nombre y Apellido", "Telefono", "Foto", "GitHub", "Comision", "Practicos", "Examenes", "Pr", "Nr");
-        string separador = new string('-', encabezado.Length);
-        ConsoleColor colorAnterior = Console.ForegroundColor;
+        Log.WriteLine($"[blue]=== {titulo.ToUpper()} ===");
+        Log.WriteLine();
 
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine(titulo.ToUpper());
-        Console.ForegroundColor = colorAnterior;
-
-        Console.WriteLine(separador);
-        Console.WriteLine(encabezado);
-        Console.WriteLine(separador);
-
-        foreach (Alumno alumno in alumnosOrdenados) {
-            Console.WriteLine(FormatearFilaTabla( alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.Telefono, alumno.ConFoto ? "Si" : "No", alumno.GitHub, alumno.Comision, FormatearEstados(alumno.practicos), FormatearEstados(alumno.examenes), alumno.Presente ? "Sí" : "No", alumno.Asistencias.ToString() ));
+        foreach (var a in alumnosOrdenados) {
+            if (a.Comision != comision) {
+                comision = a.Comision;
+                Log.WriteLine($"\n{FormatearFilaTabla(campos)}\n[blue]{FormatearFilaTabla(guiones)}");
+            }
+            Log.WriteLine(FormatearFila(a));
         }
 
-        Console.WriteLine(separador);
-        Console.WriteLine($"Total de alumnos: {alumnos.Count()}");
-        Console.WriteLine();
+        Log.WriteLine($"\n[green]Total de alumnos: {alumnos.Count()}\n");
     }
 
-    public static void CrearCarpetas(Alumnos alumnos) {
+    public static void CrearCarpetas(IEnumerable<Alumno> alumnos) {
         AppPaths.AsegurarDirectorioPracticos();
 
         foreach (Alumno alumno in alumnos) {
@@ -189,7 +189,7 @@ static class AlumnosManager {
         }
     }
 
-    public static void CopiarFotoPerfil(Alumnos alumnos, string rutaFotos) {
+    public static void CopiarFotoPerfil(IEnumerable<Alumno> alumnos, string rutaFotos) {
         if (!AppPaths.ExisteDirectorioPracticos()) {
             Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
             return;
@@ -223,7 +223,7 @@ static class AlumnosManager {
         }
     }
 
-    public static void CopiarEnunciadoPracticos(Alumnos alumnos, string practico, bool forzar = false) {
+    public static void CopiarEnunciadoPracticos(IEnumerable<Alumno> alumnos, string practico, bool forzar = false) {
         string nombrePractico    = practico.Trim();
 
         if (string.IsNullOrWhiteSpace(nombrePractico)) {
@@ -265,7 +265,7 @@ static class AlumnosManager {
         }
     }
 
-    public static void ActualizarDesdePerfiles(Alumnos alumnos, string rutaPerfiles) {
+    public static void ActualizarDesdePerfiles(IEnumerable<Alumno> alumnos, string rutaPerfiles) {
         Dictionary<int, Alumno> porLegajo = new();
 
         foreach (Alumno alumno in alumnos) {
@@ -317,7 +317,7 @@ static class AlumnosManager {
         }
     }
 
-    public static void EscribirJSON(Alumnos alumnos, string rutaArchivo) {
+    public static void EscribirJSON(IEnumerable<Alumno> alumnos, string rutaArchivo) {
         try {
             var datos = alumnos.Select(alumno => new {
                 alumno.Legajo,
@@ -345,7 +345,7 @@ static class AlumnosManager {
         }
     }
 
-    public static void EscribirVCard(Alumnos alumnos, string rutaArchivo) {
+    public static void EscribirVCard(IEnumerable<Alumno> alumnos, string rutaArchivo) {
         try {
             var alumnosConTelefono = alumnos.Where(a => a.ConTelefono)
                 .OrderBy(a => a.Comision).ThenBy(a => a.NombreCompleto).ThenBy(a => a.Legajo);
@@ -385,45 +385,43 @@ static class AlumnosManager {
     }
 
 
-    static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
-        string colLegajo         = AjustarColumna(legajo,          6);
-        string colNombreApellido = AjustarColumna(nombreApellido, 26);
-        string colTelefono       = AjustarColumna(telefono,       15);
-        string colFoto           = AjustarColumna(foto,            4);
-        string colGitHub         = AjustarColumna(gitHub,         25);
-        string colComision       = AjustarColumna(comision,       10);
-        string colPruebas        = AjustarColumna(pruebas,        20);
-        string colExamenes       = AjustarColumna(examenes,       20);
-        string colPresente       = AjustarColumna(presente,        4);
-        string colAsistencias    = AjustarColumna(asistencias,     4);
+    // static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
+    static string FormatearFilaTabla(params string?[] columnas) {
+        int[] anchos = [6, 30, 14, 4, 25, 20, 4, 4, 4];
+        return string.Join("  ", anchos.Zip(columnas, (ancho, valor) => AjustarColumna(valor ?? string.Empty, ancho)));
+        
+        //     if (valor.Length > ancho) {
+        //         Log.Warning($"Valor '{valor}' excede el ancho de columna ({ancho}). Se truncará en la visualización.");
+        //     }
+        // }
+        // string colLegajo         = AjustarColumna(legajo,          6);
+        // string colNombreApellido = AjustarColumna(nombreApellido, 26);
+        // string colTelefono       = AjustarColumna(telefono,       15);
+        // string colFoto           = AjustarColumna(foto,            4);
+        // string colGitHub         = AjustarColumna(gitHub,         25);
+        // string colComision       = AjustarColumna(comision,       10);
+        // string colPruebas        = AjustarColumna(pruebas,        20);
+        // string colExamenes       = AjustarColumna(examenes,        4);
+        // string colPresente       = AjustarColumna(presente,        4);
+        // string colAsistencias    = AjustarColumna(asistencias,     4);
 
-        return $"{colLegajo}  {colNombreApellido}  {colTelefono}  {colFoto}  {colGitHub}  {colComision}  {colPruebas}  {colExamenes}  {colPresente}  {colAsistencias}";
+        // return $"{colLegajo}  {colNombreApellido}  {colTelefono}  {colFoto}  {colGitHub}  {colComision}  {colPruebas}  {colExamenes}  {colPresente}  {colAsistencias}";
     }
 
     static string ObtenerComision(Alumno alumno) {
         return FormatearTexto(alumno.Comision);
     }
 
-    static string FormatearFila(Alumno alumno) {
-        string legajo         = AjustarColumna(alumno.Legajo.ToString(),           6);
-        string nombreApellido = AjustarColumna(alumno.NombreCompleto,             31);
-        string telefono       = AjustarColumna(alumno.Telefono,                   15);
-        string foto           = AjustarColumna(alumno.TieneFoto ? "Si" : "No",     4);
-        string gitHub         = AjustarColumna(alumno.GitHub,                     25);
-        string pruebas        = AjustarColumna(FormatearEstados(alumno.practicos, 10));
-        string examenes       = AjustarColumna(FormatearEstados(alumno.examenes, 10));
-        string presente       = AjustarColumna(alumno.Presente ? "Sí" : "No",     4);
-        string asistencias    = AjustarColumna(alumno.Asistencias.ToString(),     4);
+    static string ToSiNo(this bool valor) => valor ? "Sí" : "No";
 
-        return $"{legajo}  {nombreApellido}  {telefono}  {foto}  {gitHub}  {pruebas}  {examenes}  {presente}  {asistencias}";
+    static string FormatearFila(Alumno a) {
+        return FormatearFilaTabla( a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString() );
     }
 
 
     static string AjustarColumna(string texto, int ancho = 20) {
         string valor = FormatearTexto(texto);
-
-        if (valor.Length > ancho) { return valor.Substring(0, ancho); }
-
+        if (valor.Length > ancho) { valor = valor[..ancho]; }
         return valor.PadRight(ancho);
     }
 
@@ -435,7 +433,7 @@ static class AlumnosManager {
 
     static string LimpiarCampo(string texto) {
         string valor = texto.Trim();
-        if (valor is "—" or "-" or "(-)" or "(—)") { return string.Empty; }
+        if (valor is "—" or "(-)") { return string.Empty; }
 
         return valor;
     }
@@ -475,13 +473,22 @@ static class AlumnosManager {
         return string.IsNullOrWhiteSpace(gitHub) ? "-" : gitHub;
     }
 
-    static string FormatearEstados(List<Estado> estados, int maxEstados = 20) {
+    static string ToString(this List<Estado> estados, int ancho = 10) {
+        string valor = string.Join(string.Empty, estados.Select(e => e.ToEmoji()));
+        valor = valor.Replace(" ", "⚪️");
+        while (StringInfo.ParseCombiningCharacters(valor).Length < ancho) {
+            valor += "⚪️";
+        }
+        return valor[..ancho]; 
+    }
+
+    static string FormatearEstados(List<Estado> estados, int ancho = 20) {
         string valor = string.Empty;
         if (estados?.Count > 0) {
             valor = string.Join(string.Empty, estados.Select(e => e.ToEmoji()));
         }
         valor = valor.Replace(" ", "⚪️");
-        while (StringInfo.ParseCombiningCharacters(valor).Length < maxEstados) {
+        while (StringInfo.ParseCombiningCharacters(valor).Length < ancho) {
             valor += "⚪️";
         }
         return valor;
@@ -489,7 +496,7 @@ static class AlumnosManager {
 
     static bool ExtraerBool(string texto) {
         texto = texto.Trim().ToLower();
-        return texto== "si" || texto== "sí" || texto == "true" || texto == "yes";
+        return texto is "si" or "sí" or "true" or "yes";
     }
 
     static void CargarEstados(List<Estado> destino, string texto) {
@@ -514,7 +521,7 @@ static class AlumnosManager {
     }
 
     static bool EsEstadoVacio(string texto) =>
-        texto is "⚪" or "⚪️";
+        texto is "⚪" or " ";
 
     static void AppendVCardContacto(StringBuilder sb, Alumno alumno) {
         string apellido         = FormatearTextoVcard(alumno.Apellido);
