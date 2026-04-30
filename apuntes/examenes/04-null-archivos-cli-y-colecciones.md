@@ -7,7 +7,7 @@
 ### Tipos que aceptan null
 
 1) ¿Cuál de estas declaraciones es válida según el apunte?
-```cs
+```csharp
 string texto = null;
 int numero = null;
 int? edad = null;

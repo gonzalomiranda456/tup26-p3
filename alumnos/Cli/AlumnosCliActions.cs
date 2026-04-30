@@ -1,0 +1,253 @@
+namespace Tup26.AlumnosApp;
+
+static class AlumnosCliActions {
+    public static int Listar() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.Listar(alumnos);
+        return 0;
+    }
+
+    public static int ListarSinGithub() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.Listar(alumnos.ConGithub(false), "Alumnos sin GitHub");
+        return 0;
+    }
+
+    public static int ListarSinTelefono() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.Listar(alumnos.ConTelefono(false), "Alumnos sin telefono");
+        return 0;
+    }
+
+    public static int ListarSinFoto() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.Listar(alumnos.ConFotos(false), "Alumnos sin foto");
+        return 0;
+    }
+
+    public static int GuardarMarkdown(string? rutaDestino) {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.Escribir(alumnos, ResolverRuta(rutaDestino, AppPaths.ArchivoAlumnos));
+        return 0;
+    }
+
+    public static int GuardarJson(string? rutaDestino) {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.EscribirJSON(alumnos, ResolverRuta(rutaDestino, AppPaths.ArchivoJsonAlumnos));
+        return 0;
+    }
+
+    public static int GuardarVcf(string? rutaDestino) {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.EscribirVCard(alumnos, ResolverRuta(rutaDestino, AppPaths.ArchivoVcf));
+        return 0;
+    }
+
+    public static int CrearCarpetas() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.CrearCarpetas(alumnos);
+        return 0;
+    }
+
+    public static int RevisarPullRequests() {
+        Alumnos alumnos = CargarAlumnos();
+        GitHub gh = new();
+
+        foreach (var pr in gh.PullRequests()) {
+            int legajo = GitHub.ExtraerLegajo(pr.Titulo);
+            Alumno? alumno = alumnos.BuscarPorLegajo(legajo);
+
+            if (alumno is null) {
+                Log.Error($"Alumno con legajo {legajo} no encontrado en la lista de alumnos.");
+                continue;
+            }
+
+            var detallePr = gh.ObtenerEstado(pr.Numero);
+            int cantidadArchivos = gh.ListarArchivos(pr.Numero).Count;
+            int cantidadLineas = gh.CantidadLineas(pr.Numero);
+            int cantidadCommits = gh.Commits(pr.Numero).Count;
+            string estado = detallePr.Estado == "open" ? "abierto" : detallePr.Estado == "closed" ? "cerrado" : "sin dato";
+            string mergeable = detallePr.EsMergeable ? "mergeable" : "con conflictos";
+            int tp = GitHub.ExtraerTP(pr.Titulo);
+            string carpetaTp = tp > 0 ? $"tp{tp}" : string.Empty;
+            List<string> archivosTp = string.IsNullOrWhiteSpace(carpetaTp)
+                ? new()
+                : gh.ListarArchivosDirectorio(pr.Numero, alumno.CarpetaNombre, carpetaTp);
+
+            Console.ForegroundColor = detallePr.EsMergeable ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.BackgroundColor = cantidadArchivos < 10 ? ConsoleColor.Black : ConsoleColor.DarkRed;
+            Log.WriteLine($"PR #{pr.Numero:000} | {legajo} | {alumno.NombreCompleto,-40} | A:{cantidadArchivos,4} | L:{cantidadLineas,4} | C:{cantidadCommits,2} | {estado} | {mergeable,-15} | TP{tp}");
+            foreach (string archivo in archivosTp) {
+                Log.WriteLine($"  - {archivo}");
+            }
+            Console.ResetColor();
+        }
+
+        return 0;
+    }
+
+    public static int NormalizarPullRequests(bool simular) {
+        Alumnos alumnos = CargarAlumnos();
+        new GitHub().NormalizarTitulos(alumnos, simular);
+        return 0;
+    }
+
+    public static int BajarPullRequests(string trabajoPractico, bool forzar) {
+        int numeroTp = ObtenerNumeroTP(trabajoPractico);
+        if (numeroTp <= 0) {
+            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
+            return 1;
+        }
+
+        GitHub gh = new();
+        IEnumerable<(int Numero, string Titulo)> prs = gh.PullRequests(tp: numeroTp);
+
+        foreach (var pr in prs) {
+            gh.BajarArchivosAlumno(pr.Numero, forzar);
+        }
+
+        return 0;
+    }
+
+    public static int CerrarPullRequests(string? trabajoPractico) {
+        GitHub gh = new();
+
+        if (string.IsNullOrWhiteSpace(trabajoPractico)) {
+            gh.CerrarPRsAbiertos();
+            return 0;
+        }
+
+        int numeroTp = ObtenerNumeroTP(trabajoPractico);
+        if (numeroTp <= 0) {
+            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
+            return 1;
+        }
+
+        gh.CerrarPRsAbiertos(numeroTp);
+        return 0;
+    }
+
+    public static int RevisarPresentados(string trabajoPractico) {
+        Alumnos alumnos = CargarAlumnos();
+        int numeroTp = ObtenerNumeroTP(trabajoPractico);
+        if (numeroTp <= 0) {
+            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
+            return 1;
+        }
+
+        const int minimoLineasAgregadas = 100;
+        string carpetaTp = $"tp{numeroTp}";
+        string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
+        int lineasEnunciado = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
+
+        Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
+        int marcados = 0;
+
+        foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
+            string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
+            int lineasTotales = ContarLineasPracticoLocal(rutaPractico);
+            int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
+
+            Estado estado = Estado.Desaprobado;
+            if (lineasAgregadas >= minimoLineasAgregadas) {
+                estado = Estado.Aprobado;
+                marcados++;
+            }
+
+            alumno.Practico(numeroTp, estado);
+            Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
+        }
+
+        if (marcados > 0) {
+            AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        }
+
+        Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
+        return 0;
+    }
+
+    public static int RegistrarAsistencias() {
+        Alumnos alumnos = CargarAlumnos();
+        int contar = 0;
+
+        foreach (Alumno alumno in alumnos) {
+            if (alumno.Presente) {
+                alumno.Asistencias++;
+                contar++;
+            }
+
+            alumno.Presente = false;
+        }
+
+        AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        Log.WriteLine($"Asistencias registradas: {contar}");
+        return 0;
+    }
+
+    public static int RelevarAsistencias() {
+        Alumnos alumnos = CargarAlumnos();
+        CargarAsistenciasHoy(alumnos);
+        AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        return 0;
+    }
+
+    public static int WappGrupos() {
+        WAppService wapp = new();
+
+        foreach (var grupo in wapp.Grupos()) {
+            Log.WriteLine($"Grupo: {grupo.Group}");
+            foreach (var contacto in wapp.Participantes(grupo.Group)) {
+                Log.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
+            }
+        }
+
+        return 0;
+    }
+
+    public static int ObtenerNumeroTP(string? valor) {
+        if (string.IsNullOrWhiteSpace(valor)) {
+            return 0;
+        }
+
+        int numeroTp = GitHub.ExtraerTP(valor);
+        if (numeroTp == 0 && int.TryParse(valor, out int tpDesdeNumero)) {
+            numeroTp = tpDesdeNumero;
+        }
+
+        return numeroTp;
+    }
+
+    public static bool EsTrabajoPracticoValido(string? valor) => ObtenerNumeroTP(valor) > 0;
+
+    public static string MensajeTrabajoPracticoInvalido(string? valor) =>
+        $"No se pudo interpretar el trabajo práctico '{valor}'. Use un valor como TP1 o 1.";
+
+    static Alumnos CargarAlumnos() {
+        Alumnos alumnos = AlumnosManager.Leer();
+        Log.WriteLine($"Alumnos cargados: {alumnos.Count()}");
+        return alumnos;
+    }
+
+    static string ResolverRuta(string? ruta, string rutaPorDefecto) =>
+        string.IsNullOrWhiteSpace(ruta) ? rutaPorDefecto : ruta;
+
+    static void CargarAsistenciasHoy(Alumnos alumnos) {
+        WAppService wapp = new();
+        DateTime hoy = DateTime.Today;
+
+        DateTime desde = hoy.AddHours(8);
+        DateTime hasta = hoy.AddHours(12);
+
+        foreach (var grupo in new[] { "C7", "C9" }) {
+            foreach (var mensaje in wapp.Mensajes(grupo, desde, hasta)) {
+                string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                alumnos.BuscarPorTelefono(telefono)?.Presente = true;
+            }
+        }
+
+        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Presente), "Alumnos presentes hoy");
+    }
+
+    static int ContarLineasPracticoLocal(string rutaPractico) =>
+        AppPaths.ContarLineasArchivos(rutaPractico, "*.cs", SearchOption.TopDirectoryOnly);
+}

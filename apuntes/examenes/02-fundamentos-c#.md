@@ -16,7 +16,7 @@
 ### Tipado fuerte
 
 12) ¿Que muestra mejor la idea de tipado fuerte?
-```cs
+```csharp
 int numero = 10;
 string texto = "20";
 ```
@@ -77,7 +77,7 @@ string texto = "20";
 
 18) ¿Que representa `0xFF` en decimal?
 - [x] 255
-- [ ] 15
+- [ ]  15
 - [ ] 512
 
 ---
@@ -85,7 +85,7 @@ string texto = "20";
 ### Binario
 
 19) ¿Que valor decimal representa `0b1010`?
-- [ ] 8
+- [ ]  8
 - [ ] 12
 - [x] 10
 

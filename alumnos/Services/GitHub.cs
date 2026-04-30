@@ -324,6 +324,23 @@ class GitHub {
             CerrarPR(pr.Numero);
         }   
     }
+
+    public void CerrarPRsAbiertos(int numeroTP) {
+        if (numeroTP <= 0) {
+            Log.Error("Debe indicar un número de TP mayor a cero.");
+            return;
+        }
+
+        List<(int Numero, string Titulo)> prsAbiertos = PullRequests(soloAbiertos: true, tp: numeroTP);
+        if (prsAbiertos.Count == 0) {
+            Log.Info($"No hay PRs abiertos para cerrar en TP{numeroTP}.");
+            return;
+        }
+
+        foreach ((int Numero, string Titulo) pr in prsAbiertos) {
+            CerrarPR(pr.Numero);
+        }
+    }
     
     public void CerrarPR(int numeroPR) {
         string? salida = Ejecutar( $"Error al cerrar el PR #{numeroPR}",

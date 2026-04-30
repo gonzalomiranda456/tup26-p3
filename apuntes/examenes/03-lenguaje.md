@@ -1,6 +1,6 @@
 # Examen de lenguaje C#
 
-***
+---
 
 ## Funciones, delegados y eventos en C#
 
@@ -11,7 +11,7 @@
 - [ ] El valor queda disponible sólo dentro del constructor.
 - [x] Se copia el valor, así que la variable original no cambia afuera.
 
-***
+---
 
 ### Uso de `out`
 
@@ -20,7 +20,7 @@
 - [x] La variable no necesita estar inicializada antes de la llamada y el método debe asignarla.
 - [ ] El método no puede devolver además un `bool`.
 
-***
+---
 
 ### Parámetros variables
 
@@ -29,7 +29,7 @@
 - [ ] Para obligar a pasar los argumentos por referencia.
 - [ ] Para declarar parámetros opcionales con nombre.
 
-***
+---
 
 ### Función local estática
 
@@ -38,7 +38,7 @@
 - [x] Evita capturas accidentales del contexto externo y puede ser más eficiente.
 - [ ] Hace que la función sea visible desde toda la clase.
 
-***
+---
 
 ### Delegados multicast
 
@@ -47,7 +47,7 @@
 - [ ] Convierte el delegado en un evento automáticamente.
 - [x] Agrega otro método a la lista de invocación del delegado.
 
-***
+---
 
 ## Clases y objetos en C#
 
@@ -58,7 +58,7 @@
 - [ ] Se transforma automáticamente en `private`.
 - [x] Deja de generarse implícitamente y hay que declararlo a mano si se necesita.
 
-***
+---
 
 ### Delegación entre constructores
 
@@ -67,7 +67,7 @@
 - [ ] Para invocar un método estático antes de crear el objeto.
 - [ ] Para indicar que el constructor es opcional.
 
-***
+---
 
 ### Primary constructor
 
@@ -76,13 +76,13 @@
 - [x] Hace que los parámetros estén disponibles en todo el cuerpo de la clase, pero no crea propiedades por sí solo.
 - [ ] Sólo puede usarse en clases abstractas.
 
-***
+---
 
 ### Auto-propiedades
 
 9. ¿Qué significa esta propiedad?
 
-```cs
+```csharp
 public int Stock { get; private set; }
 ```
 
@@ -90,7 +90,7 @@ public int Stock { get; private set; }
 - [ ] Que `Stock` sólo puede asignarse en el constructor.
 - [x] Que puede leerse desde afuera, pero sólo escribirse desde dentro de la clase.
 
-***
+---
 
 ### Propiedades requeridas
 
@@ -99,7 +99,7 @@ public int Stock { get; private set; }
 - [x] Que la propiedad sea obligatoria en el inicializador del objeto y el compilador lo verifique.
 - [ ] Que la propiedad sólo pueda declararse en una interfaz.
 
-***
+---
 
 ## Interfaces y contratos en C#
 
@@ -110,7 +110,7 @@ public int Stock { get; private set; }
 - [ ] Cómo está implementada internamente una clase.
 - [x] Un contrato de comportamiento: qué puede hacer un tipo.
 
-***
+---
 
 ### Miembros permitidos
 
@@ -119,7 +119,7 @@ public int Stock { get; private set; }
 - [x] Campos o variables de instancia.
 - [ ] Propiedades.
 
-***
+---
 
 ### Implementación múltiple
 
@@ -128,7 +128,7 @@ public int Stock { get; private set; }
 - [ ] Una interfaz puede tener constructores con parámetros.
 - [ ] Una interfaz puede guardar estado compartido en campos.
 
-***
+---
 
 ### Métodos por defecto
 
@@ -137,7 +137,7 @@ public int Stock { get; private set; }
 - [ ] Sólo desde un constructor estático.
 - [x] A través de una referencia tipada como la interfaz.
 
-***
+---
 
 ### Interfaz vs clase abstracta
 
@@ -146,7 +146,7 @@ public int Stock { get; private set; }
 - [ ] Un `record struct`.
 - [x] Una interfaz.
 
-***
+---
 
 ## Tipos compuestos y colecciones en C#
 
@@ -157,7 +157,7 @@ public int Stock { get; private set; }
 - [x] Se crea un nuevo string y el original queda igual.
 - [ ] El resultado depende de si la variable fue declarada con `var`.
 
-***
+---
 
 ### StringBuilder
 
@@ -166,7 +166,7 @@ public int Stock { get; private set; }
 - [ ] Cuando necesito acceder a un carácter por índice.
 - [x] Cuando voy construyendo un texto de forma incremental y quiero evitar muchas asignaciones intermedias.
 
-***
+---
 
 ### List
 
@@ -175,7 +175,7 @@ public int Stock { get; private set; }
 - [x] Que la lista sólo podrá contener valores de tipo `string`.
 - [ ] Que la lista se ordenará automáticamente.
 
-***
+---
 
 ### Dictionary<TKey, TValue>
 
@@ -184,7 +184,7 @@ public int Stock { get; private set; }
 - [ ] Obliga a recorrer el diccionario completo antes de leer.
 - [x] Evita una excepción si la clave no existe y permite consultar de forma segura.
 
-***
+---
 
 ### Record
 
@@ -193,7 +193,7 @@ public int Stock { get; private set; }
 - [ ] `record` no puede tener métodos.
 - [ ] `class` siempre es inmutable y `record` siempre es mutable.
 
-***
+---
 
 ## Null y tipos anulables en C#
 
@@ -201,7 +201,7 @@ public int Stock { get; private set; }
 
 21. ¿Cuál de estas declaraciones es válida según el apunte?
 
-```cs
+```csharp
 string nombre = null;
 int edad = null;
 int? codigo = null;
@@ -211,7 +211,7 @@ int? codigo = null;
 - [x] La primera y la tercera.
 - [ ] Las tres.
 
-***
+---
 
 ### Nullable value type
 
@@ -220,7 +220,7 @@ int? codigo = null;
 - [ ] Un alias para `string`.
 - [x] Un tipo por valor que puede contener un `int` o `null`.
 
-***
+---
 
 ### Operador `?.`
 
@@ -229,13 +229,13 @@ int? codigo = null;
 - [ ] Fuerza al compilador a ignorar warnings de null.
 - [ ] Reemplaza automáticamente `null` por una cadena vacía.
 
-***
+---
 
 ### Operador `??`
 
 24. ¿Qué devuelve esta expresión si `nombre` es `null`?
 
-```cs
+```csharp
 string display = nombre ?? "Anónimo";
 ```
 
@@ -243,7 +243,7 @@ string display = nombre ?? "Anónimo";
 - [ ] Lanza una excepción
 - [x] `"Anónimo"`
 
-***
+---
 
 ### Buenas prácticas con null
 

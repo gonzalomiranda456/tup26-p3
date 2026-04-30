@@ -10,7 +10,17 @@ Herramienta de consola para administrar la lista de alumnos, exportar la informa
 ## Uso
 
 ```bash
-dotnet run -- ayuda
+dotnet run
+```
+
+Si ejecutás la app **sin argumentos**, se abre una interfaz interactiva construida con `Spectre.Console`.
+
+También podés usar la línea de comandos tradicional, ahora gestionada con `Spectre.Console.CLI`:
+
+```bash
+dotnet run -- --help
+dotnet run -- listar
+dotnet run -- revisar-presentados TP1
 ```
 
 ## Comandos
@@ -26,9 +36,11 @@ dotnet run -- ayuda
 - `prs`: revisa pull requests de alumnos
 - `normalizar-prs [--simular]`: ajusta títulos de pull requests
 - `bajar-prs TP1 [--forzar]`: descarga archivos del práctico desde los PRs
-- `cerrar-prs TP1`: cierra todos los PRs abiertos del práctico indicado
+- `cerrar-prs [TP1]`: cierra todos los PRs abiertos, o solo los del práctico indicado
 - `revisar-presentados TP1`: marca como presentado un TP si supera 200 líneas en los archivos locales de la carpeta del trabajo
-- `wapp`: muestra mensajes del grupo de WhatsApp
+- `registrar-asistencias`: consolida los presentes cargados como asistencias
+- `relevar-asistencias`: releva presentes del día desde WhatsApp
+- `wapp-grupos`: muestra grupos y participantes de WhatsApp
 
 ## Archivos de referencia
 
