@@ -106,12 +106,12 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "listar" => ["listar"],
-            "auditoria" => SolicitarMenuAuditoria(),
-            "exportar" => SolicitarMenuExportar(),
-            "crear-carpetas" => ["crear-carpetas"],
-            "prs" => SolicitarMenuPrs(),
-            "asistencias" => SolicitarMenuAsistencias(),
-            "salir" => null,
+            "auditoria"         => SolicitarMenuAuditoria(),
+            "exportar"          => SolicitarMenuExportar(),
+            "crear-carpetas"    => ["crear-carpetas"],
+            "prs"               => SolicitarMenuPrs(),
+            "asistencias"       => SolicitarMenuAsistencias(),
+            "salir"             => null,
             _ => Array.Empty<string>()
         };
     }
@@ -127,9 +127,9 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "sin-github" => ["sin-github"],
-            "sin-telefono" => ["sin-telefono"],
-            "sin-foto" => ["sin-foto"],
+            "sin-github"    => ["sin-github"],
+            "sin-telefono"  => ["sin-telefono"],
+            "sin-foto"      => ["sin-foto"],
             _ => Array.Empty<string>()
         };
     }
@@ -145,9 +145,9 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "guardar" => ConstruirArgumentosExportacion("guardar"),
-            "json" => ConstruirArgumentosExportacion("json"),
-            "vcf" => ConstruirArgumentosExportacion("vcf"),
+            "guardar"   => ConstruirArgumentosExportacion("guardar"),
+            "json"      => ConstruirArgumentosExportacion("json"),
+            "vcf"       => ConstruirArgumentosExportacion("vcf"),
             _ => Array.Empty<string>()
         };
     }
@@ -166,10 +166,10 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "prs" => ["prs"],
-            "normalizar-prs" => ConstruirArgumentosNormalizarPrs(),
-            "bajar-prs" => ConstruirArgumentosBajarPrs(),
-            "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
-            "revisar-presentados" => ["revisar-presentados", PedirTrabajoPractico()],
+            "normalizar-prs"        => ConstruirArgumentosNormalizarPrs(),
+            "bajar-prs"             => ConstruirArgumentosBajarPrs(),
+            "cerrar-prs"            => ConstruirArgumentosCerrarPrs(),
+            "revisar-presentados"   => ["revisar-presentados", PedirTrabajoPractico()],
             _ => Array.Empty<string>()
         };
     }
@@ -186,8 +186,8 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "registrar-asistencias" => ["registrar-asistencias"],
-            "relevar-asistencias" => ["relevar-asistencias"],
-            "wapp-grupos" => ["wapp-grupos"],
+            "relevar-asistencias"   => ["relevar-asistencias"],
+            "wapp-grupos"           => ["wapp-grupos"],
             _ => Array.Empty<string>()
         };
     }

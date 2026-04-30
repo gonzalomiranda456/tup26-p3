@@ -235,7 +235,7 @@ static class AlumnosCliActions {
         WAppService wapp = new();
         DateTime hoy = DateTime.Today;
 
-        DateTime desde = hoy.AddHours(8);
+        DateTime desde = hoy.AddHours(8).AddDays(-2);
         DateTime hasta = hoy.AddHours(12);
 
         foreach (var grupo in new[] { "C7", "C9" }) {

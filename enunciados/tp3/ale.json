@@ -1,0 +1,18 @@
+[
+  {
+    "nombre": "nnn",
+    "apellido": "aaa",
+    "domicilio": "ddd",
+    "telefonos": [
+      "222"
+    ]
+  },
+  {
+    "nombre": "bbb",
+    "apellido": "bbbb",
+    "domicilio": "bbbb",
+    "telefonos": [
+      "222"
+    ]
+  }
+]

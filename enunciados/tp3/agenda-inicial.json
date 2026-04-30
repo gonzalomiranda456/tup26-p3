@@ -1,0 +1,44 @@
+[
+  {
+    "nombre": "Ada",
+    "apellido": "Lovelace",
+    "domicilio": "St. James Square 12",
+    "telefonos": [
+      "+54 381 111-1111",
+      "+54 381 111-2222"
+    ]
+  },
+  {
+    "nombre": "Alan",
+    "apellido": "Turing",
+    "domicilio": "Wilmslow Road 42",
+    "telefonos": [
+      "+54 381 222-2222"
+    ]
+  },
+  {
+    "nombre": "Grace",
+    "apellido": "Hopper",
+    "domicilio": "Arlington Ave 9",
+    "telefonos": [
+      "+54 381 333-3333",
+      "+54 381 333-4444"
+    ]
+  },
+  {
+    "nombre": "Margaret",
+    "apellido": "Hamilton",
+    "domicilio": "Apollo Lane 120",
+    "telefonos": [
+      "+54 381 444-5555"
+    ]
+  },
+  {
+    "nombre": "Barbara",
+    "apellido": "Liskov",
+    "domicilio": "MIT Campus 77",
+    "telefonos": [
+      "+54 381 555-6666"
+    ]
+  }
+]
