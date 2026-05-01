@@ -43,6 +43,12 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int PublicarEstadoInformer() {
+        Alumnos alumnos = CargarAlumnos();
+        AlumnosManager.EscribirEstadoInformer(alumnos, AppPaths.ArchivoReadmeRepo);
+        return 0;
+    }
+
     public static int CrearCarpetas() {
         Alumnos alumnos = CargarAlumnos();
         AlumnosManager.CrearCarpetas(alumnos);
@@ -180,6 +186,7 @@ static class AlumnosCliActions {
         }
 
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Presente), "Alumnos presentes hoy");
         Log.WriteLine($"Asistencias registradas: {contar}");
         return 0;
     }
@@ -235,17 +242,47 @@ static class AlumnosCliActions {
         WAppService wapp = new();
         DateTime hoy = DateTime.Today;
 
-        DateTime desde = hoy.AddHours(8).AddDays(-2);
-        DateTime hasta = hoy.AddHours(12);
+        DateTime desde = new(hoy.Year, 4, 1);
+        DateTime hasta = hoy.AddHours(12).AddMinutes(30);
+        Dictionary<int, HashSet<DateTime>> asistenciasPorAlumno = alumnos
+            .ToDictionary(alumno => alumno.Legajo, _ => new HashSet<DateTime>());
 
         foreach (var grupo in new[] { "C7", "C9" }) {
             foreach (var mensaje in wapp.Mensajes(grupo, desde, hasta)) {
+                if (!EsMensajeDeAsistencia(mensaje, desde, hasta)) {
+                    continue;
+                }
+
                 string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
-                alumnos.BuscarPorTelefono(telefono)?.Presente = true;
+                Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
+
+                if (alumno is null) {
+                    continue;
+                }
+
+                asistenciasPorAlumno[alumno.Legajo].Add(mensaje.Fecha.Date);
             }
         }
 
-        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Presente), "Alumnos presentes hoy");
+        foreach (Alumno alumno in alumnos) {
+            alumno.Asistencias = asistenciasPorAlumno[alumno.Legajo].Count;
+        }
+
+        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Asistencias > 0), "Alumnos con asistencias desde el 01/04");
+        Log.WriteLine($"Asistencias detectadas: {alumnos.Sum(alumno => alumno.Asistencias)}");
+    }
+
+    static bool EsMensajeDeAsistencia(MensajeWhatsApp mensaje, DateTime desde, DateTime hasta) {
+        if (mensaje.FromMe || mensaje.Fecha < desde || mensaje.Fecha > hasta) {
+            return false;
+        }
+
+        DayOfWeek dia = mensaje.Fecha.DayOfWeek;
+        TimeSpan hora = mensaje.Fecha.TimeOfDay;
+        return dia >= DayOfWeek.Monday &&
+            dia <= DayOfWeek.Thursday &&
+            hora >= new TimeSpan(8, 0, 0) &&
+            hora <= new TimeSpan(12, 30, 0);
     }
 
     static int ContarLineasPracticoLocal(string rutaPractico) =>

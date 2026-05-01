@@ -130,6 +130,51 @@ static class AlumnosManager {
         }
     }
 
+    public static void EscribirEstadoInformer(IEnumerable<Alumno> alumnos, string rutaArchivo) {
+        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Practicos"];
+        var guiones = etiquetas.Select(_ => new string('-', 40)).ToArray();
+
+        try {
+            List<Alumno> alumnosOrdenados = new(alumnos);
+            alumnosOrdenados.Sort(Alumno.Comparar);
+
+            StringBuilder sb = new();
+            sb.AppendLine("# TUP 2026 - Programación III");
+            sb.AppendLine();
+
+            string? comisionActual = null;
+
+            foreach (Alumno alumno in alumnosOrdenados) {
+                string comisionAlumno = ObtenerComision(alumno);
+
+                if (comisionActual != comisionAlumno) {
+                    if (comisionActual != null) {
+                        sb.AppendLine("```");
+                        sb.AppendLine();
+                    }
+
+                    comisionActual = comisionAlumno;
+                    sb.AppendLine($"## {comisionActual}");
+                    sb.AppendLine("```text");
+                    sb.AppendLine(FormatearFilaTablaEstadoInformer(etiquetas));
+                    sb.AppendLine(FormatearFilaTablaEstadoInformer(guiones));
+                }
+
+                sb.AppendLine(FormatearFilaEstadoInformer(alumno));
+            }
+
+            if (comisionActual != null) {
+                sb.AppendLine("```");
+            }
+
+            AppPaths.EscribirTexto(rutaArchivo, sb.ToString().TrimEnd() + Environment.NewLine, Encoding.UTF8);
+            Log.Info($"Estado Informer publicado en: {rutaArchivo}");
+        }
+        catch (Exception ex) {
+            Log.Error($"Error al publicar el estado Informer: {ex.Message}");
+        }
+    }
+
     public static void Listar(IEnumerable<Alumno> alumnos, string titulo = "Listado de Alumnos") {
         string[] campos = ["Legajo", "Nombre y Apellido", "Telefono", "Foto", "GitHub", "Practicos", "Ex", "Pr", "Nr"];
         string[] guiones = campos.Select(c => new string('-', 40)).ToArray();
@@ -388,6 +433,15 @@ static class AlumnosManager {
     // static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
     static string FormatearFilaTabla(params string?[] columnas) {
         int[] anchos = [6, 30, 14, 4, 25, 20, 4, 4, 4];
+        return FormatearFilaConAnchos(anchos, columnas);
+    }
+
+    static string FormatearFilaTablaEstadoInformer(params string?[] columnas) {
+        int[] anchos = [6, 30, 10];
+        return FormatearFilaConAnchos(anchos, columnas);
+    }
+
+    static string FormatearFilaConAnchos(int[] anchos, params string?[] columnas) {
         return string.Join("  ", anchos.Zip(columnas, (ancho, valor) => AjustarColumna(valor ?? string.Empty, ancho)));
         
         //     if (valor.Length > ancho) {
@@ -416,6 +470,10 @@ static class AlumnosManager {
 
     static string FormatearFila(Alumno a) {
         return FormatearFilaTabla( a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString() );
+    }
+
+    static string FormatearFilaEstadoInformer(Alumno alumno) {
+        return FormatearFilaTablaEstadoInformer(alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.practicos.ToString(10));
     }
 
 

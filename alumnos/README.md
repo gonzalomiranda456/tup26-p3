@@ -32,6 +32,7 @@ dotnet run -- revisar-presentados TP1
 - `guardar [archivo.md]`: exporta la lista en Markdown
 - `json [archivo.json]`: exporta la lista en JSON
 - `vcf [archivo.vcf]`: exporta la lista en formato vCard
+- `informer-estado`: publica en `README.md` el listado completo con columnas de legajo, nombre y prácticos
 - `crear-carpetas`: crea la estructura de carpetas del curso
 - `prs`: revisa pull requests de alumnos
 - `normalizar-prs [--simular]`: ajusta títulos de pull requests

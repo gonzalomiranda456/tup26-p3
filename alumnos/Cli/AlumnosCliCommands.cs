@@ -64,6 +64,11 @@ sealed class VcfCommand : Command<RutaSalidaSettings> {
         AlumnosCliActions.GuardarVcf(settings.Ruta);
 }
 
+sealed class InformerEstadoCommand : Command<VacioSettings> {
+    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.PublicarEstadoInformer();
+}
+
 sealed class CrearCarpetasCommand : Command<VacioSettings> {
     protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.CrearCarpetas();

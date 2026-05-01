@@ -23,6 +23,8 @@ static class AlumnosCliApp {
                 .WithDescription("Exporta la lista a JSON.");
             config.AddCommand<VcfCommand>("vcf")
                 .WithDescription("Exporta la lista a vCard.");
+            config.AddCommand<InformerEstadoCommand>("informer-estado")
+                .WithDescription("Publica el estado resumido en el README.md del repositorio.");
             config.AddCommand<CrearCarpetasCommand>("crear-carpetas")
                 .WithDescription("Crea o normaliza las carpetas de prácticos.");
             config.AddCommand<PrsCommand>("prs")
@@ -139,15 +141,17 @@ static class AlumnosCliApp {
             "[bold cyan]Principal / Exportar[/] · Elegí un formato",
             [
                 new("guardar", "Markdown", "Guardar el listado en formato Markdown"),
-                new("json", "JSON", "Exportar el listado en JSON"),
-                new("vcf", "vCard", "Exportar contactos en formato vCard"),
-                new("volver", "Volver", "Regresar al menú principal")
+                new("json",    "JSON",     "Exportar el listado en JSON"),
+                new("vcf",     "vCard",     "Exportar contactos en formato vCard"),
+                new("informer-estado", "Informer estado", "Publicar en README.md legajo, nombre y prácticos"),
+                new("volver",  "Volver",    "Regresar al menú principal")
             ]);
 
         return opcion.Command switch {
             "guardar"   => ConstruirArgumentosExportacion("guardar"),
             "json"      => ConstruirArgumentosExportacion("json"),
             "vcf"       => ConstruirArgumentosExportacion("vcf"),
+            "informer-estado" => ["informer-estado"],
             _ => Array.Empty<string>()
         };
     }

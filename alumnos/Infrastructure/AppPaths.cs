@@ -10,6 +10,7 @@ static class AppPaths {
     public static string RepoRoot            => Directory.GetParent(DataDirectory)?.FullName ?? DataDirectory;
     public static string ArchivoAlumnos      => Path.Combine(DataDirectory, "alumnos.md");
     public static string ArchivoVcf          => Path.Combine(DataDirectory, "alumnos.vcf");
+    public static string ArchivoReadmeRepo   => Path.Combine(RepoRoot, "README.md");
     public static string PracticosDirectory  => Path.Combine(RepoRoot, "practicos");
     public static string EnunciadosDirectory => Path.Combine(RepoRoot, "enunciados");
     public static string ArchivoJsonAlumnos  => Path.Combine(DataDirectory, "alumnos.json");
