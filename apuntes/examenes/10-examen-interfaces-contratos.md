@@ -2,6 +2,8 @@
 
 ## Interfaces y contratos en C#
 
+---
+
 ### Concepto de interfaz
 
 1) ¿Qué define una interfaz en C#?

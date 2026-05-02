@@ -2,6 +2,8 @@
 
 ## Null y tipos anulables en C#
 
+---
+
 ### Significado de `null`
 
 1) ¿Qué representa `null` en C#?

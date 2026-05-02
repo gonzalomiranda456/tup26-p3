@@ -2,6 +2,8 @@
 
 ## Clases y objetos en C#
 
+---
+
 ### Concepto de clase
 
 1) ¿Qué describe una clase en C#?

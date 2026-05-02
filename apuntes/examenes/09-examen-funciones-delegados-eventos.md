@@ -2,6 +2,8 @@
 
 ## Funciones, Delegados y Eventos en C#
 
+---
+
 ### Funciones
 
 1) ¿Qué es una función o método en C#?

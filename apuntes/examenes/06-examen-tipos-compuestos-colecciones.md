@@ -2,6 +2,8 @@
 
 ## Tipos compuestos y colecciones en C#
 
+---
+
 ### Tipos compuestos
 
 1) ¿Para qué sirven los tipos compuestos en C#?

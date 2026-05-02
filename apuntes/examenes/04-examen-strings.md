@@ -2,6 +2,8 @@
 
 ## Strings en C#
 
+--- 
+
 ### Tipo `string`
 
 1) ¿Qué representa un `string` en C#?

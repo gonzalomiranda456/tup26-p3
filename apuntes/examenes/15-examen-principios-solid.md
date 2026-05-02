@@ -2,6 +2,8 @@
 
 ## Principios SOLID en C#
 
+---
+
 ### Propósito de SOLID
 
 1) ¿Cuál es el objetivo principal de los principios SOLID?

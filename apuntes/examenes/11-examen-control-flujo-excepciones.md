@@ -2,6 +2,8 @@
 
 ## Control de flujo y manejo de excepciones en C#
 
+---
+
 ### Control de flujo
 
 1) ¿Qué determina el control de flujo en un programa?

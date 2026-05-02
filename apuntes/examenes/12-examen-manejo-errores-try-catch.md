@@ -2,6 +2,8 @@
 
 ## Manejo de errores — `try / catch / finally`
 
+---
+
 ### Excepciones
 
 1) ¿Qué representan las excepciones en C#?

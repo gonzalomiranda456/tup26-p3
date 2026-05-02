@@ -1,8 +1,8 @@
 # Examen de null, archivos, CLI y colecciones en C#
 
----
-
 ## Null y tipos anulables en C#
+
+---
 
 ### Tipos que aceptan null
 

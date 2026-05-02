@@ -2,6 +2,8 @@
 
 ## Enumeraciones en C#
 
+---
+
 ### Concepto de enum
 
 1) ¿Qué representa un `enum` en C#?

@@ -2,6 +2,8 @@
 
 ## Iteradores en C#: `GetEnumerator`, `IEnumerable`, `IEnumerator` y `yield`
 
+---
+
 ### Motivación
 
 1) ¿Por qué no alcanza siempre con recorrer una colección usando `for` con índice?

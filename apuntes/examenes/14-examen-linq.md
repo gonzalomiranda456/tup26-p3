@@ -2,6 +2,8 @@
 
 ## LINQ — Language Integrated Query
 
+---
+
 ### Propósito de LINQ
 
 1) ¿Qué problema resuelve LINQ según el apunte?
