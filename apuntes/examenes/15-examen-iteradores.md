@@ -299,4 +299,3 @@
 - [ ] `ReadLines` carga todo el archivo en un `string[]`.
 - [x] `ReadLines` devuelve una secuencia diferida y permite leer línea por línea.
 - [ ] `ReadLines` solo funciona con archivos vacíos.
-

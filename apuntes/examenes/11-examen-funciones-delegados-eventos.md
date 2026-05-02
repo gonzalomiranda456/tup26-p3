@@ -290,4 +290,3 @@ Console.WriteLine(nums.Count);
 - [x] Un evento solo puede ser invocado por la clase que lo declara.
 - [ ] Un evento no permite `+=` ni `-=`.
 - [ ] Un delegado nunca puede ser `null`.
-

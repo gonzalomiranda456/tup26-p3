@@ -350,4 +350,3 @@ var query = productos
 - [ ] `where`
 - [ ] `select`
 - [x] `Take(5)`
-

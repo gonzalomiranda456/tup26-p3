@@ -319,4 +319,3 @@
 - [ ] Como dogmas obligatorios aunque el problema sea simple.
 - [x] Como guías, con criterio, cuando la complejidad del diseño lo justifica.
 - [ ] Solo después de eliminar todas las abstracciones.
-

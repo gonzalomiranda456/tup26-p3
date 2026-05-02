@@ -265,4 +265,3 @@ string categoria = edad >= 18 ? "adulto" : "menor";
 - [ ] Impiden usar `return`.
 
 ---
-

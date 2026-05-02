@@ -247,4 +247,3 @@ string display = pedido?.Cliente?.Direccion?.Ciudad ?? "Ciudad desconocida";
 - [ ] Conserva solo los valores `null`.
 - [x] Filtra y castea a `string`, descartando automáticamente los `null`.
 - [ ] Convierte todos los `null` en `string.Empty`.
-

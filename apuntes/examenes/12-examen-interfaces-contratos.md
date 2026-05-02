@@ -321,4 +321,3 @@ public static T Maximo<T>(T a, T b) where T : IComparable<T>
 - [x] Para trabajar con cualquier conjunto de notificadores que implementen el contrato, sin depender de clases concretas.
 - [ ] Para impedir que haya más de un canal de notificación.
 - [ ] Para obligar a que todos los notificadores hereden de la misma clase base.
-

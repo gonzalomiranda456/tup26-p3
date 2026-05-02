@@ -329,4 +329,3 @@ obj.A();
 - [ ] En cualquier clase de instancia, usando `base` en el primer parámetro.
 - [x] En clases estáticas, usando `this` en el primer parámetro.
 - [ ] Únicamente dentro de una clase abstracta.
-

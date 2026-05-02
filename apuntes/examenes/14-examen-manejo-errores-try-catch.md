@@ -235,4 +235,3 @@ string nombre = ObtenerNombre() ?? throw new InvalidOperationException("Nombre r
 - [ ] Acceder con `diccionario["clave"]` y capturar `KeyNotFoundException` como flujo normal.
 - [ ] Usar `finally` para inventar la clave faltante.
 - [x] Usar `TryGetValue` para manejar el caso esperado sin excepción.
-
