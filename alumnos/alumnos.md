@@ -57,7 +57,7 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 61641   Figueroa, Nahuel Ramón          (381) 353-2589  No    figueroanahuel16           🔴🔴⚪️⚪️⚪️            ⚪️⚪️  Sí    5   
 63737   Galván, Rocío Julieta           (381) 647-5597  No    rociogalvani               🟢🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    4   
 63345   García, Franco Tomás            (381) 207-5701  Sí    francotms                  🟢🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    2   
-61057   Getar, Thomas                   (381) 336-2147  Sí    thomasgetar                🔴🔴⚪️⚪️⚪️            ⚪️⚪️  Sí    6   
+61057   Getar, Thomas                   (381) 336-2147  Sí    thomasgetar                🔴🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    6   
 61489   Gómez, Tomás                    (381) 390-5024  Sí    tomasgomez18               🟢🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    5   
 63182   González Rojas, Emmanuel        (381) 612-5571  Sí    emmanuelgr-web             🟢🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    6   
 63717   González, Octavio               (381) 604-1868  Sí    owning01                   🟢🟢⚪️⚪️⚪️            ⚪️⚪️  Sí    5   

@@ -57,7 +57,7 @@ Legajo  Nombre y Apellido               Practicos
 61641   Figueroa, Nahuel Ramón          🔴🔴⚪️⚪️⚪️
 63737   Galván, Rocío Julieta           🟢🟢⚪️⚪️⚪️
 63345   García, Franco Tomás            🟢🟢⚪️⚪️⚪️
-61057   Getar, Thomas                   🔴🔴⚪️⚪️⚪️
+61057   Getar, Thomas                   🔴🟢⚪️⚪️⚪️
 61489   Gómez, Tomás                    🟢🟢⚪️⚪️⚪️
 63182   González Rojas, Emmanuel        🟢🟢⚪️⚪️⚪️
 63717   González, Octavio               🟢🟢⚪️⚪️⚪️
