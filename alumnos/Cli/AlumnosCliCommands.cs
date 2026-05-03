@@ -49,6 +49,11 @@ sealed class SinFotoCommand : Command<VacioSettings> {
         AlumnosCliActions.ListarSinFoto();
 }
 
+sealed class LimpiarProyectosPracticosCommand : Command<VacioSettings> {
+    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.LimpiarProyectosPracticos();
+}
+
 sealed class GuardarCommand : Command<RutaSalidaSettings> {
     protected override int Execute(CommandContext context, RutaSalidaSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.GuardarMarkdown(settings.Ruta);

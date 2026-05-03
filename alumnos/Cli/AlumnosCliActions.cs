@@ -25,6 +25,22 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int LimpiarProyectosPracticos() {
+        List<string> directoriosEliminados = AppPaths.LimpiarDirectoriosCompilacionPracticos();
+
+        if (directoriosEliminados.Count == 0) {
+            Log.Info("No se encontraron carpetas bin u obj dentro de prácticos.");
+            return 0;
+        }
+
+        foreach (string directorio in directoriosEliminados) {
+            Log.Info($"Eliminado: {AppPaths.RutaRelativaDesdePracticos(directorio)}");
+        }
+
+        Log.Info($"Total de carpetas eliminadas: {directoriosEliminados.Count}");
+        return 0;
+    }
+
     public static int GuardarMarkdown(string? rutaDestino) {
         Alumnos alumnos = CargarAlumnos();
         AlumnosManager.Escribir(alumnos, ResolverRuta(rutaDestino, AppPaths.ArchivoAlumnos));

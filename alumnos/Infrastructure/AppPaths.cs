@@ -158,6 +158,16 @@ static class AppPaths {
     public static bool ExisteDirectorioPracticos() =>
         ExisteDirectorio(PracticosDirectory);
 
+    public static List<string> LimpiarDirectoriosCompilacionPracticos() {
+        List<string> directorios = BuscarDirectoriosCompilacion(PracticosDirectory);
+
+        foreach (string directorio in directorios) {
+            Directory.Delete(directorio, recursive: true);
+        }
+
+        return directorios;
+    }
+
     public static bool ExisteEnunciadoPractico(string practico) =>
         ExisteDirectorio(EnunciadoPracticoDirectory(practico));
 
@@ -336,6 +346,21 @@ static class AppPaths {
             string subdirectorioDestino = Path.Combine(destino, nombreSubdirectorio);
             CopiarCarpeta(subdirectorioOrigen, subdirectorioDestino, forzar);
         }
+    }
+
+    static List<string> BuscarDirectoriosCompilacion(string rutaBase) {
+        if (!ExisteDirectorio(rutaBase)) {
+            return [];
+        }
+
+        return Directory.EnumerateDirectories(rutaBase, "*", SearchOption.AllDirectories)
+            .Where(ruta => {
+                string nombre = Path.GetFileName(ruta);
+                return string.Equals(nombre, "bin", StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(nombre, "obj", StringComparison.OrdinalIgnoreCase);
+            })
+            .OrderByDescending(ruta => ruta.Length)
+            .ToList();
     }
 
     static string ResolverDirectorioDatos() {

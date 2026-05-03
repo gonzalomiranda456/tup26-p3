@@ -17,6 +17,8 @@ static class AlumnosCliApp {
                 .WithDescription("Lista alumnos sin teléfono.");
             config.AddCommand<SinFotoCommand>("sin-foto")
                 .WithDescription("Lista alumnos sin foto.");
+            config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
+                .WithDescription("Elimina carpetas bin y obj dentro de prácticos.");
             config.AddCommand<GuardarCommand>("guardar")
                 .WithDescription("Exporta la lista a Markdown.");
             config.AddCommand<JsonCommand>("json")
@@ -125,6 +127,7 @@ static class AlumnosCliApp {
                 new("sin-github", "Sin GitHub", "Filtrar alumnos sin usuario GitHub"),
                 new("sin-telefono", "Sin teléfono", "Filtrar alumnos sin teléfono"),
                 new("sin-foto", "Sin foto", "Filtrar alumnos sin foto"),
+                new("limpiar-proyectos-practicos", "Limpiar Proyectos Prácticos", "Eliminar carpetas bin y obj dentro de prácticos"),
                 new("volver", "Volver", "Regresar al menú principal")
             ]);
 
@@ -132,6 +135,7 @@ static class AlumnosCliApp {
             "sin-github" => ["sin-github"],
             "sin-telefono" => ["sin-telefono"],
             "sin-foto" => ["sin-foto"],
+            "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
         };
     }
