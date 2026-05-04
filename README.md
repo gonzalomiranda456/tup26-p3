@@ -1,4 +1,4 @@
-﻿# 1er Parcial - martes 13 de mayo de 2026
+﻿# 1er Parcial - martes *12* de mayo de 2026
 
 El parcial consiste en un examen múltiple choice sobre los temas de teoría vistos en clase.
 
