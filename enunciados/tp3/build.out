@@ -1,5 +1,0 @@
-  Determinando los proyectos que se van a restaurar...
-  Todos los proyectos están actualizados para la restauración.
-/Users/adibattista/Documents/GitHub/tup26-p3/enunciados/tp3/agenda.cs(22,5): warning IL2026: Using member 'Terminal.Gui.App.IApplication.Init(String)' which has 'RequiresUnreferencedCodeAttribute' can break functionality when trimming application code. AOT.
-/Users/adibattista/Documents/GitHub/tup26-p3/enunciados/tp3/agenda.cs(22,5): warning IL3050: Using member 'Terminal.Gui.App.IApplication.Init(String)' which has 'RequiresDynamicCodeAttribute' can break functionality when AOT compiling. AOT.
-  agenda -> /Users/adibattista/Library/Application Support/dotnet/runfile/agenda-37dbc7a58364350738f05767d705dfc871f518f65bca192bab0f0068113b80c7/bin/debug/agenda.dll

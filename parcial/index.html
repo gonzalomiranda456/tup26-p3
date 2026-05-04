@@ -3,7 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Preguntas</title>
+  <title>1er Parcial</title>
+  <meta name="application-name" content="1er Parcial" />
+  <meta id="themeColorMeta" name="theme-color" content="#efe3d3" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="1er Parcial" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <style>
     :root {
       color-scheme: light;
@@ -5234,9 +5242,10 @@ var query = productos
   </script>
 
   <script>
+    const APP_NAME = "1er Parcial";
     const DEFAULT_MARKDOWN_FILE = "examen.md";
     const THEME_STORAGE_KEY = "examinador-theme";
-    const ANSWERS_STORAGE_KEY = "preguntas-respuestas::examen.md";
+    const ANSWERS_STORAGE_KEY = "primer-parcial-respuestas::examen.md";
 
     const state = {
       exam: null,
@@ -5253,9 +5262,14 @@ var query = productos
     const heroTitle = document.getElementById("heroTitle");
     const examContainer = document.getElementById("examContainer");
     const themeToggleButton = document.getElementById("themeToggleButton");
+    const themeColorMeta = document.getElementById("themeColorMeta");
     const progress = document.getElementById("progress");
     const fileName = document.getElementById("fileName");
     const preferredDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const THEME_COLORS = {
+      light: "#efe3d3",
+      dark: "#131110",
+    };
 
     initTheme();
 
@@ -5296,6 +5310,7 @@ var query = productos
         // Si localStorage no está disponible, usamos el tema del sistema.
       }
 
+      updateThemeColor();
       updateThemeToggle();
     }
 
@@ -5309,6 +5324,7 @@ var query = productos
       }
 
       updateThemeToggle();
+      updateThemeColor();
     }
 
     function getStoredTheme() {
@@ -5337,11 +5353,16 @@ var query = productos
       themeToggleButton.setAttribute("aria-pressed", String(isDark));
     }
 
+    function updateThemeColor() {
+      themeColorMeta.content = THEME_COLORS[getEffectiveTheme()];
+    }
+
     function handleSystemThemeChange() {
       if (getStoredTheme()) {
         return;
       }
 
+      updateThemeColor();
       updateThemeToggle();
       measureHeroHeights();
       syncHeroState();
@@ -5448,7 +5469,7 @@ var query = productos
       function pushQuestion() {
         if (!currentQuestion) return;
         if (!currentTheme) {
-          ensureTheme("Preguntas");
+          ensureTheme(APP_NAME);
         }
         currentQuestion.bodyMarkdown = currentQuestion.bodyLines.join("\n").trim();
         delete currentQuestion.bodyLines;
@@ -5607,9 +5628,21 @@ var query = productos
 
     function updateMeta() {
       const total = state.exam?.totalQuestions ?? 0;
-      // heroTitle.textContent = state.exam?.title || "Preguntas";
+      document.title = state.exam?.title || APP_NAME;
       progress.textContent = `${state.answers.size} / ${total}`;
       fileName.textContent = state.currentFileName || DEFAULT_MARKDOWN_FILE;
+    }
+
+    async function registerServiceWorker() {
+      if (!("serviceWorker" in navigator) || window.location.protocol === "file:") {
+        return;
+      }
+
+      try {
+        await navigator.serviceWorker.register("./sw.js");
+      } catch {
+        // Si el registro falla, la app sigue funcionando como sitio estatico.
+      }
     }
 
     function renderMarkdown(markdown) {
@@ -5761,6 +5794,7 @@ var query = productos
     boot();
     measureHeroHeights();
     syncHeroState();
+    registerServiceWorker();
   </script>
 </body>
 </html>
