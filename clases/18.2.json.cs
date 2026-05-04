@@ -41,6 +41,5 @@ var persona = """
     "apellido": "Battista",
     "edad": 30,
     "hobbies": ["programar", "leer", "viajar"]
-
 }
-"""
+""";
