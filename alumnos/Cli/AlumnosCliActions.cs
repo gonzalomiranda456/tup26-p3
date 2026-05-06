@@ -61,7 +61,7 @@ static class AlumnosCliActions {
 
     public static int PublicarEstadoInformer() {
         Alumnos alumnos = CargarAlumnos();
-        AlumnosManager.EscribirEstadoInformer(alumnos, AppPaths.ArchivoReadmeRepo);
+        AlumnosManager.EscribirEstadoInformer(alumnos, AppPaths.ArchivoEstadoRepo);
         return 0;
     }
 
@@ -199,6 +199,7 @@ static class AlumnosCliActions {
             }
 
             alumno.Presente = false;
+            alumno.Examen(1, alumno.Asistencias switch{ >= 8 => Estado.Aprobado, >= 4 => Estado.Pendiente, _ => Estado.Desaprobado });
         }
 
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);

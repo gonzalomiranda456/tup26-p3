@@ -1,14 +1,15 @@
+
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>1er Parcial</title>
-  <meta name="application-name" content="1er Parcial" />
+  <title>Demo examen</title>
+  <meta name="application-name" content="Demo examen" />
   <meta id="themeColorMeta" name="theme-color" content="#efe3d3" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="1er Parcial" />
+  <meta name="apple-mobile-web-app-title" content="Demo examen" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
@@ -476,7 +477,8 @@
       transform: translateY(-1px);
     }
 
-    .choice input[type="checkbox"] {
+    .choice input[type="checkbox"],
+    .choice input[type="radio"] {
       margin-top: 2px;
       width: 18px;
       height: 18px;
@@ -543,6 +545,96 @@
       color: var(--ink);
     }
 
+    .seed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.98rem;
+    }
+
+    .seed-control label {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .seed-control input {
+      width: 112px;
+      border: 1px solid var(--choice-border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: var(--choice-bg);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .seed-control input:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    .bottom-spacer {
+      flex: 1;
+    }
+
+    .bottom-bar button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: var(--paper-strong);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    .bottom-bar button.secondary {
+      background: var(--secondary-bg);
+      color: var(--secondary-ink);
+      border: 1px solid var(--choice-border);
+    }
+
+    .bottom-bar button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+      transform: none;
+    }
+
+    .result-summary {
+      margin: 18px 0 0;
+      padding: 16px;
+      border: 1px solid var(--result-border);
+      border-radius: 8px;
+      background: var(--result-bg);
+      font-weight: 700;
+    }
+
+    .question.correct {
+      background: var(--ok-soft);
+    }
+
+    .question.incorrect {
+      background: var(--bad-soft);
+    }
+
+    .choice.correct-answer {
+      border-color: var(--ok-answer-border);
+      background: var(--ok-answer-bg);
+    }
+
+    .choice.wrong-answer {
+      border-color: var(--bad-answer-border);
+      background: var(--bad-answer-bg);
+    }
+
+    .answer-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
     @media (max-width: 720px) {
       .hero,
       .paper-header,
@@ -575,17 +667,17 @@
   <div class="shell">
     <section id="hero" class="hero">
       <button id="themeToggleButton" class="theme-toggle" type="button" aria-label="Cambiar tema" aria-pressed="false">🌙</button>
-      <p class="eyebrow">Preguntas de repaso</p>
-      <h1 id="heroTitle">TUP26 - P3 : 1<sup>er</sup> Parcial</h1>
+      <p class="eyebrow">Examen aleatorio</p>
+      <h1 id="heroTitle">Demo examen</h1>
       <p class="lead">
       </p>
     </section>
 
     <main class="exam-paper">
       <header class="paper-header">
-        <h2 class="paper-title">Base de datos de preguntas</h2>
+        <h2 class="paper-title">Examen de 10 preguntas</h2>
         <p class="paper-subtitle">
-          Elegi una unica opcion por pregunta. Las respuestas se guardan automaticamente en tu navegador, asi podras repasar.
+          Elegi una unica opcion por pregunta. Al corregir vas a ver el puntaje y las respuestas correctas.
         </p>
       </header>
 
@@ -597,56 +689,51 @@
 
   <footer class="bottom-bar">
     <div class="bottom-status"><strong>Respondidas:</strong> <span id="progress">0 / 0</span></div>
+    <div class="bottom-status"><strong>Resultado:</strong> <span id="score">Sin corregir</span></div>
+    <div class="seed-control">
+      <label for="seedInput">Semilla</label>
+      <input id="seedInput" type="number" inputmode="numeric" value="12345" />
+    </div>
+    <div class="bottom-spacer"></div>
+    <button id="gradeButton" type="button">Corregir</button>
   </footer>
 
 
+  <script src="./generador.js"></script>
   <script>
-    const APP_NAME = "1er Parcial";
+    const APP_NAME = "Demo examen";
     const DEFAULT_MARKDOWN_FILE = "examen.md";
     const THEME_STORAGE_KEY = "examinador-theme";
-    const ANSWERS_STORAGE_KEY = "primer-parcial-respuestas::examen.md";
+    const EXAM_SEED_STORAGE_KEY = "examinador-seed";
+    const QUESTION_COUNT = 10;
 
     const state = {
       exam: null,
+      allQuestions: [],
+      currentQuestions: [],
       answers: new Map(),
-      currentFileName: DEFAULT_MARKDOWN_FILE,
-    };
-
-    const heroMetrics = {
-      expandedHeight: 0,
-      compactHeight: 0,
+      graded: false,
+      score: 0,
+      seed: 12345,
     };
 
     const hero = document.getElementById("hero");
-    const heroTitle = document.getElementById("heroTitle");
     const examContainer = document.getElementById("examContainer");
     const themeToggleButton = document.getElementById("themeToggleButton");
     const themeColorMeta = document.getElementById("themeColorMeta");
     const progress = document.getElementById("progress");
-    const fileName = document.getElementById("fileName");
+    const score = document.getElementById("score");
+    const gradeButton = document.getElementById("gradeButton");
+    const seedInput = document.getElementById("seedInput");
     const preferredDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    const THEME_COLORS = {
-      light: "#efe3d3",
-      dark: "#131110",
-    };
+    const THEME_COLORS = { light: "#efe3d3", dark: "#131110" };
 
     initTheme();
-
-    themeToggleButton.addEventListener("click", () => {
-      const currentTheme = getEffectiveTheme();
-      applyTheme(currentTheme === "dark" ? "light" : "dark");
-      measureHeroHeights();
-      syncHeroState();
-    });
-
-    window.addEventListener("scroll", syncHeroState, { passive: true });
-    window.addEventListener("resize", handleViewportChange, { passive: true });
-
-    if (typeof preferredDarkScheme.addEventListener === "function") {
-      preferredDarkScheme.addEventListener("change", handleSystemThemeChange);
-    } else if (typeof preferredDarkScheme.addListener === "function") {
-      preferredDarkScheme.addListener(handleSystemThemeChange);
-    }
+    initSeed();
+    themeToggleButton.addEventListener("click", toggleTheme);
+    gradeButton.addEventListener("click", handleActionButtonClick);
+    seedInput.addEventListener("change", handleSeedChange);
+    window.addEventListener("scroll", () => hero.classList.toggle("compact", window.scrollY > 72), { passive: true });
 
     async function boot() {
       try {
@@ -660,12 +747,16 @@
           throw new Error("Archivo vacio");
         }
 
-        loadExamFromMarkdown(markdown, DEFAULT_MARKDOWN_FILE);
+        state.exam = parseExam(markdown);
+        state.allQuestions = state.exam.themes
+          .flatMap((theme) => theme.questions.map((question) => ({ ...question, themeTitle: theme.title })))
+          .filter((question) => Number.isInteger(question.correctIndex));
+        startNewExam();
       } catch (error) {
         examContainer.className = "empty-state";
         examContainer.textContent = window.location.protocol === "file:"
           ? "No pude cargar examen.md. Abrí la página desde un servidor local para permitir la lectura del archivo."
-          : "No pude cargar examen.md. Verificá que el archivo exista junto a index.html.";
+          : "No pude cargar examen.md. Verificá que el archivo exista junto a demo-examen.html.";
       }
     }
 
@@ -675,172 +766,71 @@
         if (storedTheme === "light" || storedTheme === "dark") {
           document.documentElement.dataset.theme = storedTheme;
         }
-      } catch {
-        // Si localStorage no está disponible, usamos el tema del sistema.
-      }
-
-      updateThemeColor();
-      updateThemeToggle();
+      } catch {}
+      updateThemeUi();
     }
 
-    function applyTheme(theme) {
-      document.documentElement.dataset.theme = theme;
-
-      try {
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
-      } catch {
-        // Ignoramos errores de persistencia y seguimos con el tema actual.
-      }
-
-      updateThemeToggle();
-      updateThemeColor();
-    }
-
-    function getStoredTheme() {
-      try {
-        const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        return storedTheme === "light" || storedTheme === "dark" ? storedTheme : null;
-      } catch {
-        return null;
-      }
+    function toggleTheme() {
+      const nextTheme = getEffectiveTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      try { localStorage.setItem(THEME_STORAGE_KEY, nextTheme); } catch {}
+      updateThemeUi();
     }
 
     function getEffectiveTheme() {
       const explicitTheme = document.documentElement.dataset.theme;
-      if (explicitTheme === "light" || explicitTheme === "dark") {
-        return explicitTheme;
-      }
-
+      if (explicitTheme === "light" || explicitTheme === "dark") return explicitTheme;
       return preferredDarkScheme.matches ? "dark" : "light";
     }
 
-    function updateThemeToggle() {
+    function updateThemeUi() {
       const isDark = getEffectiveTheme() === "dark";
       themeToggleButton.textContent = isDark ? "☀️" : "🌙";
       themeToggleButton.setAttribute("aria-label", isDark ? "Activar modo claro" : "Activar modo oscuro");
       themeToggleButton.title = isDark ? "Modo claro" : "Modo oscuro";
       themeToggleButton.setAttribute("aria-pressed", String(isDark));
-    }
-
-    function updateThemeColor() {
       themeColorMeta.content = THEME_COLORS[getEffectiveTheme()];
     }
 
-    function handleSystemThemeChange() {
-      if (getStoredTheme()) {
-        return;
-      }
-
-      updateThemeColor();
-      updateThemeToggle();
-      measureHeroHeights();
-      syncHeroState();
-    }
-
-    function syncHeroState() {
-      const collapseY = getHeroCollapseThreshold();
-      const expandY = 4;
-      const shouldCompact = hero.classList.contains("compact")
-        ? window.scrollY > expandY
-        : window.scrollY > collapseY;
-
-      hero.classList.toggle("compact", shouldCompact);
-    }
-
-    function handleViewportChange() {
-      measureHeroHeights();
-      syncHeroState();
-    }
-
-    function measureHeroHeights() {
-      const scrollTop = window.scrollY;
-      const wasCompact = hero.classList.contains("compact");
-
-      hero.classList.add("measuring");
-      hero.classList.remove("compact");
-      heroMetrics.expandedHeight = hero.offsetHeight;
-      hero.classList.add("compact");
-      heroMetrics.compactHeight = hero.offsetHeight;
-      hero.classList.toggle("compact", wasCompact);
-      hero.classList.remove("measuring");
-      window.scrollTo(0, scrollTop);
-    }
-
-    function getHeroCollapseThreshold() {
-      const delta = Math.max(0, heroMetrics.expandedHeight - heroMetrics.compactHeight);
-      return Math.max(72, delta + 8);
-    }
-
-    function loadExamFromMarkdown(markdown, sourceName) {
-      state.exam = parseExam(markdown);
-      state.currentFileName = sourceName;
-      state.answers = restorePersistedAnswers(state.exam);
-      renderExam();
-      updateMeta();
-      measureHeroHeights();
-      syncHeroState();
-    }
-
-    function restorePersistedAnswers(exam) {
-      if (!exam) {
-        return new Map();
-      }
-
-      let parsed;
+    function initSeed() {
       try {
-        parsed = JSON.parse(localStorage.getItem(ANSWERS_STORAGE_KEY) || "{}");
-      } catch {
-        parsed = {};
-      }
-
-      const restored = new Map();
-      const questions = exam.themes.flatMap((theme) => theme.questions);
-
-      for (const question of questions) {
-        const value = parsed[question.id];
-        if (!Number.isInteger(value)) {
-          continue;
+        const storedSeed = localStorage.getItem(EXAM_SEED_STORAGE_KEY);
+        if (storedSeed) {
+          state.seed = leerSemilla(storedSeed);
         }
-
-        if (value < 0 || value >= question.options.length) {
-          continue;
-        }
-
-        restored.set(question.id, value);
-      }
-
-      return restored;
+      } catch {}
+      seedInput.value = String(state.seed);
     }
 
-    function persistAnswers() {
-      try {
-        const payload = Object.fromEntries(state.answers.entries());
-        localStorage.setItem(ANSWERS_STORAGE_KEY, JSON.stringify(payload));
-      } catch {
-        // Si falla localStorage, la app sigue funcionando en memoria.
-      }
+    function handleSeedChange() {
+      state.seed = leerSemilla(seedInput.value);
+      seedInput.value = String(state.seed);
+      try { localStorage.setItem(EXAM_SEED_STORAGE_KEY, String(state.seed)); } catch {}
+      startNewExam();
+    }
+
+    function leerSemilla(valor) {
+      const semilla = Number.parseInt(String(valor), 10);
+      return Number.isFinite(semilla) ? semilla : 1;
     }
 
     function parseExam(markdown) {
       const lines = markdown.replace(/\r\n/g, "\n").split("\n");
       const themes = [];
-      let examTitle = "Examen";
       let currentTheme = null;
       let currentQuestion = null;
       let questionId = 0;
 
       function ensureTheme(title) {
-        const theme = { title, questions: [] };
-        themes.push(theme);
-        currentTheme = theme;
+        currentTheme = { title, questions: [] };
+        themes.push(currentTheme);
       }
 
       function pushQuestion() {
         if (!currentQuestion) return;
-        if (!currentTheme) {
-          ensureTheme(APP_NAME);
-        }
+        if (!currentTheme) ensureTheme(APP_NAME);
         currentQuestion.bodyMarkdown = currentQuestion.bodyLines.join("\n").trim();
+        currentQuestion.number = extractQuestionNumber(currentQuestion.bodyMarkdown) ?? questionId;
         delete currentQuestion.bodyLines;
         currentTheme.questions.push(currentQuestion);
         currentQuestion = null;
@@ -849,171 +839,155 @@
       for (const rawLine of lines) {
         const line = rawLine ?? "";
         const trimmed = line.trim();
-
-        if (/^---+$/.test(trimmed)) {
-          continue;
-        }
-
-        if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
-          examTitle = trimmed.slice(2).trim() || "Examen";
-          continue;
-        }
-
+        if (/^---+$/.test(trimmed)) continue;
+        if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) continue;
         if (trimmed.startsWith("## ")) {
           pushQuestion();
           ensureTheme(trimmed.slice(3).trim());
           continue;
         }
-
         if (trimmed.startsWith("### ")) {
           pushQuestion();
           questionId += 1;
-          currentQuestion = {
-            id: `q${questionId}`,
-            title: trimmed.slice(4).trim(),
-            bodyLines: [],
-            options: [],
-          };
+          currentQuestion = { id: `q${questionId}`, title: trimmed.slice(4).trim(), bodyLines: [], options: [], correctIndex: null };
           continue;
         }
-
-        if (!currentQuestion) {
-          continue;
-        }
-
+        if (!currentQuestion) continue;
         const optionMatch = line.match(/^\s*-\s+\[([xX\s])\]\s+(.*)$/);
         if (optionMatch) {
-          currentQuestion.options.push({
-            text: optionMatch[2],
-            correct: optionMatch[1].toLowerCase() === "x",
-          });
+          if (optionMatch[1].toLowerCase() === "x") {
+            currentQuestion.correctIndex = currentQuestion.options.length;
+          }
+          currentQuestion.options.push({ text: optionMatch[2] });
           continue;
         }
-
         currentQuestion.bodyLines.push(line);
       }
-
       pushQuestion();
+      return { themes, totalQuestions: themes.reduce((acc, theme) => acc + theme.questions.length, 0) };
+    }
 
-      return {
-        title: examTitle,
-        themes,
-        totalQuestions: themes.reduce((acc, theme) => acc + theme.questions.length, 0),
-      };
+    function extractQuestionNumber(markdown) {
+      const match = markdown.match(/^\s*(\d+)[).]/m);
+      return match ? Number(match[1]) : null;
+    }
+
+    function startNewExam() {
+      state.seed = leerSemilla(seedInput.value);
+      seedInput.value = String(state.seed);
+      try { localStorage.setItem(EXAM_SEED_STORAGE_KEY, String(state.seed)); } catch {}
+      const cantidad = Math.min(QUESTION_COUNT, state.allQuestions.length);
+      state.currentQuestions = numerosSinRepetir(state.seed, state.allQuestions.length, cantidad)
+        .map((numero) => state.allQuestions[numero - 1]);
+      state.answers = new Map();
+      state.graded = false;
+      state.score = 0;
+      renderExam();
+      updateMeta();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function handleActionButtonClick() {
+      if (state.graded) {
+        startNewExam();
+        return;
+      }
+      gradeExam();
     }
 
     function renderExam() {
-      if (!state.exam || state.exam.totalQuestions === 0) {
+      if (state.currentQuestions.length === 0) {
         examContainer.className = "empty-state";
-        examContainer.textContent = "No encontré preguntas válidas en el archivo.";
+        examContainer.textContent = "No encontre preguntas con respuesta conocida.";
         return;
       }
 
       examContainer.className = "";
-      const html = state.exam.themes.map(renderTheme).join("");
-      examContainer.innerHTML = html;
-
-      examContainer.querySelectorAll('input[type="checkbox"]').forEach((input) => {
-        input.addEventListener("change", handleChoiceChange);
-      });
-
-      updateMeta();
-    }
-
-    function renderTheme(theme) {
-      return `
+      examContainer.innerHTML = `
         <section class="theme">
-          <h2 class="theme-title">${escapeHtml(theme.title)}</h2>
-          ${theme.questions.map(renderQuestion).join("")}
+          ${state.graded ? renderResultSummary() : ""}
+          ${state.currentQuestions.map(renderQuestion).join("")}
         </section>
       `;
+      examContainer.querySelectorAll('input[type="radio"]').forEach((input) => {
+        input.addEventListener("change", handleChoiceChange);
+      });
     }
 
-    function renderQuestion(question) {
-      const answeredIndex = state.answers.get(question.id);
-      const answered = Number.isInteger(answeredIndex);
-      const classes = [
-        "question",
-        answered ? "answered" : "",
-      ].filter(Boolean).join(" ");
+    function renderResultSummary() {
+      const total = state.currentQuestions.length;
+      const percentage = Math.round((state.score / total) * 100);
+      return `<div class="result-summary">Resultado: ${state.score} / ${total} (${percentage}%)</div>`;
+    }
 
+    function renderQuestion(question, index) {
+      const answeredIndex = state.answers.get(question.id);
+      const correctIndex = question.correctIndex;
+      const resultClass = state.graded ? (answeredIndex === correctIndex ? "correct" : "incorrect") : "";
+      const classes = ["question", Number.isInteger(answeredIndex) ? "answered" : "", resultClass].filter(Boolean).join(" ");
       return `
         <article class="${classes}" data-question-id="${question.id}">
-          <h3 class="question-title">${escapeHtml(question.title)}</h3>
+          <h3 class="question-title">${index + 1}. ${escapeHtml(question.title)}</h3>
           <div class="question-body">${renderMarkdown(question.bodyMarkdown)}</div>
           <div class="choices">
-            ${question.options.map((option, index) => renderChoice(question, option, index, answeredIndex)).join("")}
+            ${question.options.map((option, optionIndex) => renderChoice(question, option, optionIndex, answeredIndex, correctIndex)).join("")}
           </div>
+          ${state.graded ? renderAnswerNote(question, answeredIndex, correctIndex) : ""}
         </article>
       `;
     }
 
-    function renderChoice(question, option, index, answeredIndex) {
-      const checked = answeredIndex === index ? "checked" : "";
-      const extraClass = [
+    function renderChoice(question, option, index, answeredIndex, correctIndex) {
+      const classes = [
         "choice",
         answeredIndex === index ? "selected" : "",
+        state.graded && index === correctIndex ? "correct-answer" : "",
+        state.graded && answeredIndex === index && index !== correctIndex ? "wrong-answer" : "",
       ].filter(Boolean).join(" ");
-
       return `
-        <label class="${extraClass}">
-          <input
-            type="checkbox"
-            data-question-id="${question.id}"
-            data-option-index="${index}"
-            ${checked}
-          />
+        <label class="${classes}">
+          <input type="radio" name="${question.id}" data-question-id="${question.id}" data-option-index="${index}" ${answeredIndex === index ? "checked" : ""} ${state.graded ? "disabled" : ""} />
           <span class="choice-text">${renderInlineMarkdown(option.text)}</span>
         </label>
       `;
     }
 
+    function renderAnswerNote(question, answeredIndex, correctIndex) {
+      if (answeredIndex === correctIndex) return `<p class="answer-note">Correcta.</p>`;
+      return `<p class="answer-note">Respuesta correcta: ${renderInlineMarkdown(question.options[correctIndex]?.text ?? "No disponible")}</p>`;
+    }
+
     function handleChoiceChange(event) {
+      if (state.graded) return;
       const input = event.target;
       const questionId = input.dataset.questionId;
-      const optionIndex = Number(input.dataset.optionIndex);
-      const questionInputs = examContainer.querySelectorAll(`input[data-question-id="${CSS.escape(questionId)}"]`);
-
-      if (input.checked) {
-        questionInputs.forEach((other) => {
-          if (other !== input) {
-            other.checked = false;
-          }
-        });
-        state.answers.set(questionId, optionIndex);
-      } else {
-        state.answers.delete(questionId);
-      }
-
+      state.answers.set(questionId, Number(input.dataset.optionIndex));
       const article = input.closest(".question");
-      article.classList.toggle("answered", state.answers.has(questionId));
-      questionInputs.forEach((checkbox) => {
-        checkbox.closest(".choice")?.classList.toggle("selected", checkbox.checked);
+      article.classList.add("answered");
+      article.querySelectorAll(".choice").forEach((choice) => {
+        choice.classList.toggle("selected", choice.querySelector("input").checked);
       });
+      updateMeta();
+    }
 
-      persistAnswers();
+    function gradeExam() {
+      if (state.graded) return;
+      state.graded = true;
+      state.score = state.currentQuestions.reduce((total, question) => {
+        return total + (state.answers.get(question.id) === question.correctIndex ? 1 : 0);
+      }, 0);
+      renderExam();
       updateMeta();
     }
 
     function updateMeta() {
-      const total = state.exam?.totalQuestions ?? 0;
-      document.title = state.exam?.title || APP_NAME;
+      const total = state.currentQuestions.length;
+      document.title = APP_NAME;
       progress.textContent = `${state.answers.size} / ${total}`;
-      if (fileName) {
-        fileName.textContent = state.currentFileName || DEFAULT_MARKDOWN_FILE;
-      }
-    }
-
-    async function registerServiceWorker() {
-      if (!("serviceWorker" in navigator) || window.location.protocol === "file:") {
-        return;
-      }
-
-      try {
-        await navigator.serviceWorker.register("./sw.js");
-      } catch {
-        // Si el registro falla, la app sigue funcionando como sitio estatico.
-      }
+      score.textContent = state.graded ? `${state.score} / ${total}` : "Sin corregir";
+      gradeButton.textContent = state.graded ? "Nuevo examen" : "Corregir";
+      gradeButton.classList.toggle("secondary", state.graded);
+      gradeButton.disabled = !state.graded && state.answers.size < total;
     }
 
     function renderMarkdown(markdown) {
@@ -1027,19 +1001,16 @@
       function flushParagraph() {
         if (paragraph.length === 0) return;
         const text = paragraph.join(" ").trim();
-        if (text) {
-          parts.push(`<p>${renderInlineMarkdown(text)}</p>`);
-        }
+        if (text) parts.push(`<p>${renderInlineMarkdown(text)}</p>`);
         paragraph = [];
       }
 
       for (const line of lines) {
         const trimmed = line.trim();
-
         if (trimmed.startsWith("```")) {
           flushParagraph();
           if (inCode) {
-            parts.push(renderCodeBlock(codeLines.join("\n"), codeLanguage));
+            parts.push(`<pre><code class="language-${escapeHtml(codeLanguage || "plain")}">${escapeHtml(codeLines.join("\n"))}</code></pre>`);
             codeLines = [];
             codeLanguage = "";
             inCode = false;
@@ -1049,101 +1020,19 @@
           }
           continue;
         }
-
         if (inCode) {
           codeLines.push(line);
           continue;
         }
-
         if (!trimmed) {
           flushParagraph();
           continue;
         }
-
         paragraph.push(line);
       }
-
       flushParagraph();
-
-      if (inCode) {
-        parts.push(renderCodeBlock(codeLines.join("\n"), codeLanguage));
-      }
-
+      if (inCode) parts.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
       return parts.join("");
-    }
-
-    function renderCodeBlock(code, language) {
-      return `<pre><code class="language-${escapeHtml(language || "plain")}">${highlightCode(code, language)}</code></pre>`;
-    }
-
-    function highlightCode(code, language) {
-      const lang = (language || "").toLowerCase();
-
-      if (lang === "cs" || lang === "csharp") {
-        return highlightByPatterns(code, [
-          ["comment", /\/\/[^\n]*/g],
-          ["string", /"(?:\\.|[^"\\])*"/g],
-          ["char", /'(?:\\.|[^'\\])+'/g],
-          ["number", /\b\d+(?:\.\d+)?\b/g],
-          ["keyword", /\b(?:using|namespace|class|record|struct|interface|enum|public|private|protected|internal|static|void|int|string|bool|var|new|return|if|else|switch|case|default|break|continue|for|foreach|while|do|try|catch|finally|throw|null|true|false|this|base|out|ref|in|is|as|params)\b/g],
-          ["type", /\b(?:Console|List|File|Directory|Path|Environment|Exception|ConsoleKeyInfo|ConsoleKey)\b/g],
-        ]);
-      }
-
-      if (lang === "bash" || lang === "sh" || lang === "zsh" || lang === "shell") {
-        return highlightByPatterns(code, [
-          ["comment", /#[^\n]*/g],
-          ["string", /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g],
-          ["var", /\$[A-Za-z_][A-Za-z0-9_]*|\$\{[^}]+\}/g],
-          ["number", /\b\d+\b/g],
-          ["keyword", /\b(?:if|then|else|fi|for|in|do|done|case|esac|while|function)\b/g],
-          ["command", /^(?:\s*)(?:dotnet|git|cd|ls|cat|rg|sed|python3|bash|zsh|mkdir|cp|mv|rm)\b/gm],
-        ]);
-      }
-
-      return escapeHtml(code);
-    }
-
-    function highlightByPatterns(code, patterns) {
-      const tokens = [];
-
-      for (const [type, regex] of patterns) {
-        for (const match of code.matchAll(regex)) {
-          if (match.index == null || match[0].length === 0) continue;
-          tokens.push({
-            start: match.index,
-            end: match.index + match[0].length,
-            type,
-          });
-        }
-      }
-
-      tokens.sort((a, b) => a.start - b.start || b.end - a.end);
-
-      const filtered = [];
-      let lastEnd = -1;
-      for (const token of tokens) {
-        if (token.start < lastEnd) continue;
-        filtered.push(token);
-        lastEnd = token.end;
-      }
-
-      let result = "";
-      let cursor = 0;
-
-      for (const token of filtered) {
-        if (token.start > cursor) {
-          result += escapeHtml(code.slice(cursor, token.start));
-        }
-        result += `<span class="tok-${token.type}">${escapeHtml(code.slice(token.start, token.end))}</span>`;
-        cursor = token.end;
-      }
-
-      if (cursor < code.length) {
-        result += escapeHtml(code.slice(cursor));
-      }
-
-      return result;
     }
 
     function renderInlineMarkdown(text) {
@@ -1155,7 +1044,7 @@
     }
 
     function escapeHtml(text) {
-      return text
+      return String(text)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -1163,9 +1052,6 @@
     }
 
     boot();
-    measureHeroHeights();
-    syncHeroState();
-    registerServiceWorker();
   </script>
 </body>
 </html>

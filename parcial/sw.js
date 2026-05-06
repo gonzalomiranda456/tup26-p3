@@ -1,7 +1,8 @@
-const CACHE_NAME = "primer-parcial-v3";
+const CACHE_NAME = "primer-parcial-v4";
 const APP_ASSETS = [
   "./",
   "./index.html",
+  "./examen.md",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",

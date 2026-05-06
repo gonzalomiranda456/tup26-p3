@@ -17,9 +17,14 @@ let datos = {
     "booleano": true
 }
 
-
 let json = JSON.stringify(datos, null, 4);
 console.log(json);
 
 const fs = require('fs');
 fs.writeFileSync('datos.json', json);  
+
+// leer el archivo
+let contenido = fs.readFileSync('datos.json', 'utf-8');
+let datosLeidos = JSON.parse(contenido);
+console.log(datosLeidos);
+
