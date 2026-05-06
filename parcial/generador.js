@@ -37,7 +37,7 @@ function ConvertirBase(numero, origen = 10, destino = 32) {
         salida = resto.toString(destino) + salida;
     }
 
-    return salida;
+    return salida || "0";
 }
 
 function probarConversion(origen="1234443123134234123130012301234") {
@@ -60,5 +60,3 @@ function probarConversion(origen="1234443123134234123130012301234") {
 
     console.log(`\n¿Coincide con el original? ${origen === convertido ? "Sí" : "No"}`);
 }
-
-probarConversion("1234567890123456789012345678901234567890");

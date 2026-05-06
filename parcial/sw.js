@@ -1,8 +1,10 @@
-const CACHE_NAME = "primer-parcial-v4";
+const CACHE_NAME = "primer-parcial-v5";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./examen.md",
+  "./alumnos.md",
+  "./generador.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./icons/icon-192.png",
@@ -30,6 +32,29 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  const networkFirstFiles = [
+    "/",
+    "/index.html",
+    "/examen.md",
+    "/alumnos.md",
+    "/generador.js",
+  ];
+  const shouldUseNetworkFirst = networkFirstFiles.some((path) => url.pathname.endsWith(path));
+
+  if (shouldUseNetworkFirst) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200 && response.type === "basic") {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
     return;
   }
 

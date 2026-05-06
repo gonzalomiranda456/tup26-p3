@@ -7,7 +7,7 @@
         "editor.formatOnType": false,
         "editor.defaultFormatter": "ms-dotnettools.csharp"
     },
-    "editor.fontSize": 14,
+    "editor.fontSize": 24,
     "chat.promptFiles": true,
     "chat.useCustomizationsInParentRepositories": true,
     "chat.fontSize": 14,
