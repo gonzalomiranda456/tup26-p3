@@ -25,8 +25,9 @@ commando.CommandText = """
     """;
 commando.ExecuteNonQuery();
 
+var adri = new Contacto(){ Nombre = "Adrián",   Apellido = "Andrade",  Telefono = "555-0001", Email = "adrian@example.com"   };
+db.Insert(adri);
 
-db.Insert<Contacto>(new(){ Nombre = "Adrián",   Apellido = "Andrade",  Telefono = "555-0001", Email = "adrian@example.com"   });
 db.Insert<Contacto>(new(){ Nombre = "Betina",   Apellido = "Benites",  Telefono = "555-0002", Email = "betina@example.com"   });
 db.Insert<Contacto>(new(){ Nombre = "Carlos",   Apellido = "Cabrera",  Telefono = "555-0003", Email = "carlos@example.com"   });
 db.Insert<Contacto>(new(){ Nombre = "Diana",    Apellido = "Díaz",     Telefono = "555-0004", Email = "diana@example.com"    });
@@ -46,17 +47,25 @@ db.Delete(carlos);
 
 // Dapper (Convierte automáticamente entre filas de la base de datos y objetos C#)
 
-int contactos = db.QuerySingle<int>("SELECT COUNT(*) FROM Contactos;");
+int contactos = db.QuerySingle<int>("""
+    SELECT COUNT(*)
+    FROM Contactos;
+    """);
 Console.WriteLine($"Quedan {contactos} contactos en la base de datos.");
 
-var contactosServidor = db.Query<Contacto>("SELECT * FROM Contactos WHERE Nombre > @nombre", new { nombre = "Carlos" });
+var contactosServidor = db.Query<Contacto>("""
+    SELECT * FROM Contactos 
+    WHERE Nombre > @nombre
+    """, new { nombre = "Carlos" }).ToList();
+
 Console.WriteLine("\n== Contactos filtrados en el servidor ==");
 Console.WriteLine("ID Nombre               Apellido             Teléfono     Email");
 foreach (Contacto c in contactosServidor) {
     Console.WriteLine($"{c.Id,3}: {c.Nombre,-20} {c.Apellido,-20} - {c.Telefono} - {c.Email}");
 }
 
-var contactosClientes = db.GetAll<Contacto>().Where(c => string.Compare(c.Nombre, "Carlos") > 0);
+var contactosClientes = db.GetAll<Contacto>()
+                .Where(c => string.Compare(c.Nombre, "Carlos") > 0);
 
 Console.WriteLine("\n== Contactos filtrados en el cliente ==");
 Console.WriteLine("ID Nombre               Apellido             Teléfono     Email");

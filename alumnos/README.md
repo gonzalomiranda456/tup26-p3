@@ -29,6 +29,8 @@ dotnet run -- revisar-presentados TP1
 - `sin-github`: filtra alumnos sin cuenta de GitHub
 - `sin-telefono`: filtra alumnos sin teléfono
 - `sin-foto`: filtra alumnos sin foto
+- `tp1-no-presentado`: lista alumnos que no presentaron el trabajo práctico 1
+- `tp2-no-presentado`: lista alumnos que no presentaron el trabajo práctico 2
 - `guardar [archivo.md]`: exporta la lista en Markdown
 - `json [archivo.json]`: exporta la lista en JSON
 - `vcf [archivo.vcf]`: exporta la lista en formato vCard
@@ -42,6 +44,7 @@ dotnet run -- revisar-presentados TP1
 - `registrar-asistencias`: consolida los presentes cargados como asistencias
 - `relevar-asistencias`: releva presentes del día desde WhatsApp
 - `wapp-grupos`: muestra grupos y participantes de WhatsApp
+- `wapp-recuperar-tp1-tp2 [--simular]`: envía un aviso de recuperación por WhatsApp a alumnos que no presentaron TP1 ni TP2
 
 ## Archivos de referencia
 

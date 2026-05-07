@@ -397,6 +397,25 @@ static class AlumnosManager {
         }
     }
 
+    public static int SincronizarEstadoFotosDesdeCarpetas(IEnumerable<Alumno> alumnos) {
+        int actualizados = 0;
+
+        foreach (Alumno alumno in alumnos) {
+            string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(alumno.Legajo);
+            bool tieneFotoEnCarpeta = AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno) &&
+                                      AppPaths.ExisteFotoAlumno(rutaCarpetaAlumno!);
+
+            if (alumno.TieneFoto == tieneFotoEnCarpeta) {
+                continue;
+            }
+
+            alumno.TieneFoto = tieneFotoEnCarpeta;
+            actualizados++;
+        }
+
+        return actualizados;
+    }
+
     static Alumno? ExtraerAlumnoFormatoMarkdown(string linea, string comisionActual) {
         List<string> columnas = Regex.Split(linea.TrimEnd(), @"\s{2,}").ToList();
 

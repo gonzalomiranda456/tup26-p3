@@ -21,7 +21,32 @@ static class AlumnosCliActions {
 
     public static int ListarSinFoto() {
         Alumnos alumnos = CargarAlumnos();
+        int actualizados = AlumnosManager.SincronizarEstadoFotosDesdeCarpetas(alumnos);
+
+        if (actualizados > 0) {
+            AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+            Log.Info($"Estado de foto actualizado en alumnos.md: {actualizados} alumno(s).");
+        } else {
+            Log.Info("No hubo cambios en el estado de fotos al revisar carpetas.");
+        }
+
         AlumnosManager.Listar(alumnos.ConFotos(false), "Alumnos sin foto");
+        return 0;
+    }
+
+    public static int ListarTp1NoPresentado() {
+        Alumnos alumnos = CargarAlumnos();
+        IEnumerable<Alumno> noPresentaron = alumnos.Where(alumno => alumno.EstadoPractico(1) != Estado.Aprobado);
+
+        AlumnosManager.Listar(noPresentaron, "Alumnos que no presentaron TP1");
+        return 0;
+    }
+
+    public static int ListarTp2NoPresentado() {
+        Alumnos alumnos = CargarAlumnos();
+        IEnumerable<Alumno> noPresentaron = alumnos.Where(alumno => alumno.EstadoPractico(2) != Estado.Aprobado);
+
+        AlumnosManager.Listar(noPresentaron, "Alumnos que no presentaron TP2");
         return 0;
     }
 
@@ -228,6 +253,55 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int WappRecuperarTp1Tp2(bool simular) {
+        Alumnos alumnos = CargarAlumnos();
+        List<Alumno> destinatarios = alumnos
+            .Where(alumno => alumno.EstadoPractico(1) != Estado.Aprobado &&
+                             alumno.EstadoPractico(2) != Estado.Aprobado)
+            .OrderBy(alumno => alumno.Comision)
+            .ThenBy(alumno => alumno.NombreCompleto)
+            .ThenBy(alumno => alumno.Legajo)
+            .ToList();
+
+        if (destinatarios.Count == 0) {
+            Log.Info("No hay alumnos con TP1 y TP2 pendientes de presentación.");
+            return 0;
+        }
+
+        Log.Info($"{(simular ? "Simulación" : "Envío")} de WhatsApp a alumnos con TP1 y TP2 no presentados.");
+
+        WAppService? wapp = simular ? null : new WAppService();
+        int enviados = 0;
+        int omitidos = 0;
+
+        foreach (Alumno alumno in destinatarios) {
+            string mensaje = MensajeRecuperacionTp1Tp2(alumno);
+
+            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
+                omitidos++;
+                Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
+                continue;
+            }
+
+            if (simular) {
+                Log.Info($"SIMULAR {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
+                Log.WriteLine(mensaje);
+            } else {
+                try {
+                    wapp!.Enviar(alumno.TelefonoId, mensaje, null);
+                    enviados++;
+                    Log.Info($"Enviado: {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
+                } catch (Exception ex) {
+                    omitidos++;
+                    Log.Error($"No se pudo enviar a {alumno.Legajo} | {alumno.NombreCompleto}: {ex.Message}");
+                }
+            }
+        }
+
+        Log.Info($"Resumen WhatsApp TP1/TP2: destinatarios={destinatarios.Count}, enviados={enviados}, omitidos={omitidos}, simular={simular}");
+        return omitidos > 0 && !simular ? 1 : 0;
+    }
+
     public static int ObtenerNumeroTP(string? valor) {
         if (string.IsNullOrWhiteSpace(valor)) {
             return 0;
@@ -304,4 +378,21 @@ static class AlumnosCliActions {
 
     static int ContarLineasPracticoLocal(string rutaPractico) =>
         AppPaths.ContarLineasArchivos(rutaPractico, "*.cs", SearchOption.TopDirectoryOnly);
+
+    static string MensajeRecuperacionTp1Tp2(Alumno alumno) =>
+        $"""
+        Hola {alumno.Nombre}. Según mi registro, no has presentado el trabajo práctico 1 ni el trabajo práctico 2.
+
+        Tenés una oportunidad más para recuperar: presentalos ahora.
+        Tenés tiempo hasta el próximo miércoles {ProximoMiercoles():dd/MM}.
+        """;
+
+    static DateTime ProximoMiercoles() {
+        int dias = ((int)DayOfWeek.Wednesday - (int)DateTime.Today.DayOfWeek + 7) % 7;
+        if (dias == 0) {
+            dias = 7;
+        }
+
+        return DateTime.Today.AddDays(dias);
+    }
 }

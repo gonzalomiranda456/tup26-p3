@@ -63,20 +63,25 @@ command.CommandText = "UPDATE Personas SET Edad = @edad WHERE Nombre = @nombre";
 command.Parameters.Clear();
 command.Parameters.AddWithValue("@nombre", "María");
 command.Parameters.AddWithValue("@edad", 27);
+// new {nombre = "María", edad = 27} --- IGNORE ---
 command.ExecuteNonQuery();
 
 Console.WriteLine("\n=== Consultando datos... ===");
-command.CommandText = "SELECT Id, Nombre, Apellido, Edad FROM Personas WHERE Edad >= @edadMinima";
+command.CommandText = """
+    SELECT Id, Nombre, Apellido, Edad 
+    FROM Personas 
+    WHERE Edad >= @edadMinima
+""";
 command.Parameters.Clear();
 command.Parameters.AddWithValue("@edadMinima", 18);
 
 Console.WriteLine("\nPersonas mayores de 18 años:");
 using var reader = command.ExecuteReader();
 while (reader.Read()) {
-    var id = reader.GetInt32(0); // Índice de la columna (0 para Id, 1 para Nombre, etc.)
-    var nombre = reader.GetString(1);
+    var id       = reader.GetInt32(0); // Índice de la columna (0 para Id, 1 para Nombre, etc.)
+    var nombre   = reader.GetString(1);
     var apellido = reader.GetString(2);
-    var edad = reader.GetInt32(3);  
+    var edad     = reader.GetInt32(3);  
     Console.WriteLine($"Id: {id}, Nombre: {nombre}, Apellido: {apellido}, Edad: {edad}");
 }
 connection.Close();

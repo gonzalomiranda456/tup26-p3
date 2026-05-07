@@ -17,6 +17,10 @@ static class AlumnosCliApp {
                 .WithDescription("Lista alumnos sin teléfono.");
             config.AddCommand<SinFotoCommand>("sin-foto")
                 .WithDescription("Lista alumnos sin foto.");
+            config.AddCommand<Tp1NoPresentadoCommand>("tp1-no-presentado")
+                .WithDescription("Lista alumnos que no presentaron el trabajo práctico 1.");
+            config.AddCommand<Tp2NoPresentadoCommand>("tp2-no-presentado")
+                .WithDescription("Lista alumnos que no presentaron el trabajo práctico 2.");
             config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
                 .WithDescription("Elimina carpetas bin y obj dentro de prácticos.");
             config.AddCommand<GuardarCommand>("guardar")
@@ -45,6 +49,8 @@ static class AlumnosCliApp {
                 .WithDescription("Busca asistencias de hoy a partir de WhatsApp.");
             config.AddCommand<WappGruposCommand>("wapp-grupos")
                 .WithDescription("Lista grupos y participantes de WhatsApp.");
+            config.AddCommand<WappRecuperarTp1Tp2Command>("wapp-recuperar-tp1-tp2")
+                .WithDescription("Envía un WhatsApp a alumnos que no presentaron TP1 ni TP2.");
         });
 
         return app;
@@ -127,6 +133,8 @@ static class AlumnosCliApp {
                 new("sin-github",                  "Sin GitHub",                   "Filtrar alumnos sin usuario GitHub"),
                 new("sin-telefono",                "Sin teléfono",                 "Filtrar alumnos sin teléfono"),
                 new("sin-foto",                    "Sin foto",                     "Filtrar alumnos sin foto"),
+                new("tp1-no-presentado",           "TP1 no presentado",            "Listar alumnos que no presentaron el trabajo práctico 1"),
+                new("tp2-no-presentado",           "TP2 no presentado",            "Listar alumnos que no presentaron el trabajo práctico 2"),
                 new("limpiar-proyectos-practicos", "Limpiar Proyectos Prácticos", "Eliminar carpetas bin y obj dentro de prácticos"),
                 new("volver",                      "Volver",                       "Regresar al menú principal")
             ]);
@@ -135,6 +143,8 @@ static class AlumnosCliApp {
             "sin-github" => ["sin-github"],
             "sin-telefono" => ["sin-telefono"],
             "sin-foto" => ["sin-foto"],
+            "tp1-no-presentado" => ["tp1-no-presentado"],
+            "tp2-no-presentado" => ["tp2-no-presentado"],
             "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
         };
@@ -189,6 +199,7 @@ static class AlumnosCliApp {
                 new("registrar-asistencias", "Registrar asistencias", "Consolidar presentes del día"),
                 new("relevar-asistencias",   "Relevar asistencias",   "Detectar presentes desde WhatsApp"),
                 new("wapp-grupos",           "WhatsApp grupos",       "Listar grupos y participantes"),
+                new("wapp-recuperar-tp1-tp2", "Recuperar TP1/TP2",     "Enviar aviso a alumnos que no presentaron TP1 ni TP2"),
                 new("volver",                "Volver",                "Regresar al menú principal")
             ]);
 
@@ -196,6 +207,7 @@ static class AlumnosCliApp {
             "registrar-asistencias" => ["registrar-asistencias"],
             "relevar-asistencias" => ["relevar-asistencias"],
             "wapp-grupos" => ["wapp-grupos"],
+            "wapp-recuperar-tp1-tp2" => ConstruirArgumentosWappRecuperarTp1Tp2(),
             _ => Array.Empty<string>()
         };
     }
@@ -248,6 +260,14 @@ static class AlumnosCliApp {
         return filtrarPorTp
             ? ["cerrar-prs", PedirTrabajoPractico()]
             : ["cerrar-prs"];
+    }
+
+    static string[] ConstruirArgumentosWappRecuperarTp1Tp2() {
+        bool enviar = AnsiConsole.Confirm("¿Enviar WhatsApp reales ahora?", false);
+
+        return enviar
+            ? ["wapp-recuperar-tp1-tp2"]
+            : ["wapp-recuperar-tp1-tp2", "--simular"];
     }
 
     static string PedirTrabajoPractico() =>
