@@ -1,7 +1,8 @@
 ﻿# TUP 2026 - Programación III
 
 ## C7
-```text
+
+``` text
 Legajo  Nombre y Apellido               Prácticos     Asi
 ------  ------------------------------  ------------  ---
 63456   Ávila Lahr, Joaquín             🟢🟢⚪️⚪️⚪️    7  
@@ -37,7 +38,8 @@ Legajo  Nombre y Apellido               Prácticos     Asi
 ```
 
 ## C9
-```text
+
+``` text
 Legajo  Nombre y Apellido               Prácticos     Asi
 ------  ------------------------------  ------------  ---
 63385   Almaraz Sintora, Nahuel         🟢🟢⚪️⚪️⚪️    8  

@@ -1,7 +1,8 @@
 ﻿# TUP 2026 - Programación III
 
 ## C7
-```text
+
+``` text
 Legajo  Nombre y Apellido               Teléfono        Foto  GitHub                     Prácticos             Ex    Pr    Nr  
 ------  ------------------------------  --------------  ----  -------------------------  --------------------  ----  ----  ----
 63456   Ávila Lahr, Joaquín             (381) 527-6836  Sí    joacoavila9                🟢🟢⚪️⚪️⚪️            🟢⚪️  No    7   
@@ -37,7 +38,8 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 ```
 
 ## C9
-```text
+
+``` text
 Legajo  Nombre y Apellido               Teléfono        Foto  GitHub                     Prácticos             Ex    Pr    Nr  
 ------  ------------------------------  --------------  ----  -------------------------  --------------------  ----  ----  ----
 63385   Almaraz Sintora, Nahuel         (381) 502-5082  Sí    nahuelalmaraz957-ops       🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   

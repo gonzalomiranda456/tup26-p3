@@ -7,11 +7,12 @@
         "editor.formatOnType": false,
         "editor.defaultFormatter": "ms-dotnettools.csharp"
     },
-    "editor.fontSize": 24,
+    "editor.fontSize": 14,
     "chat.promptFiles": true,
     "chat.useCustomizationsInParentRepositories": true,
     "chat.fontSize": 14,
     "chat.editor.fontSize": 14,
     "terminal.integrated.fontSize": 14,
-    "notebook.lineNumbers": "on"
+    "notebook.lineNumbers": "on",
+    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true
 }
