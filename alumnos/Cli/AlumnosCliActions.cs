@@ -455,16 +455,43 @@ static class AlumnosCliActions {
     static void CargarCodigosDesdeWhatsApp(Alumnos alumnos, Action<string>? actualizarEstado = null) {
         actualizarEstado?.Invoke("Sincronizando WhatsApp...");
         WAppService wapp = new();
-        DateTime desde = DateTime.Today;
+        DateTime desde = DateTime.Today.AddDays(-1);
         DateTime hasta = DateTime.Today.AddDays(1);
 
+        foreach (string grupo in new[] { "C7", "C9" }) {
+            actualizarEstado?.Invoke($"Leyendo mensajes del grupo {grupo}...");
+            try {
+                foreach (MensajeWhatsApp mensaje in wapp.Mensajes(grupo, desde, hasta)) {
+                    if (mensaje.FromMe) {
+                        continue;
+                    }
+
+                    string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
+                    if (codigo is null) {
+                        continue;
+                    }
+
+                    string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                    Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
+                    if (alumno is null) {
+                        continue;
+                    }
+
+                    alumno.Codigo = codigo;
+                    alumno.Presente = true;
+                    Log.Info($"Código detectado ({grupo}) [{mensaje.Fecha:HH:mm}]: {alumno.NombreCompleto} → {codigo}");
+                }
+            } catch (Exception ex) {
+                Log.Warning($"No se pudieron leer mensajes del grupo {grupo}: {ex.Message}");
+            }
+        }
+
         foreach (Alumno alumno in alumnos) {
-            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
+            if (!string.IsNullOrWhiteSpace(alumno.Codigo) || string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
                 continue;
             }
 
-            actualizarEstado?.Invoke($"Leyendo respuestas de {alumno.NombreCompleto}...");
-
+            actualizarEstado?.Invoke($"Leyendo chat privado de {alumno.NombreCompleto}...");
             try {
                 foreach (MensajeWhatsApp mensaje in wapp.Mensajes(alumno.TelefonoId, desde, hasta)) {
                     if (mensaje.FromMe) {
@@ -474,7 +501,8 @@ static class AlumnosCliActions {
                     string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
                     if (codigo is not null) {
                         alumno.Codigo = codigo;
-                        break;
+                        alumno.Presente = true;
+                        Log.Info($"Código detectado (privado) [{mensaje.Fecha:HH:mm}]: {alumno.NombreCompleto} → {codigo}");
                     }
                 }
             } catch (Exception ex) {
@@ -486,7 +514,7 @@ static class AlumnosCliActions {
     }
 
     static string? ExtraerCodigoDesdeTexto(string texto) {
-        Match m = Regex.Match(texto, @"\d{6}\.\d{2}\.[a-zA-Z0-9]+");
+        Match m = Regex.Match(texto, @"\d+\.\d+\.[a-zA-Z0-9]+");
         return m.Success ? m.Value : null;
     }
 
