@@ -30,16 +30,12 @@ JsonAgendaIO json = new();
 using IApplication app = Application.Create().Init();
 app.Run(new AgendaWindow(store, json));
 
-static string SourceDirectory([CallerFilePath] string sourcePath = "") {
-    return Path.GetDirectoryName(sourcePath) ?? Directory.GetCurrentDirectory();
-}
-
 public sealed class AgendaWindow : Runnable {
     private readonly SqliteAgendaStore store;
     private readonly JsonAgendaIO json;
     private readonly TextField searchField = new();
     private readonly CheckBox favoritesOnly = new();
-    private readonly ListView contactsList = new();
+    private readonly ListView<Contacto> contactsList = new();
     private readonly Label detailsLabel = new();
     private readonly Label statusLabel = new();
 
@@ -230,7 +226,7 @@ public sealed class AgendaWindow : Runnable {
     }
 
     private void EditSelectedContact() {
-        Contacto? selected = GetSelectedContact();
+        Contacto? selected = contactsList.Value;
         if (selected is null) {
             MessageBox.Query(App!, "Editar", "Seleccioná un contacto.", "OK");
             return;
@@ -254,7 +250,7 @@ public sealed class AgendaWindow : Runnable {
     }
 
     private void DeleteSelectedContact() {
-        Contacto? selected = GetSelectedContact();
+        Contacto? selected = contactsList.Value;
         if (selected is null) {
             return;
         }
@@ -279,7 +275,7 @@ public sealed class AgendaWindow : Runnable {
         string? path = AskFilePath(
             "Importar JSON",
             "Ruta del archivo a importar:",
-            Path.Combine(SourceDirectory(), "agenda-tui.json"));
+            Path.Combine(AppContext.BaseDirectory, "agenda-tui.json"));
 
         if (string.IsNullOrWhiteSpace(path)) {
             return;
@@ -316,7 +312,7 @@ public sealed class AgendaWindow : Runnable {
         string? path = AskFilePath(
             "Exportar JSON",
             "Ruta de salida:",
-            Path.Combine(SourceDirectory(), "agenda-tui.json"));
+            Path.Combine(AppContext.BaseDirectory, "agenda-tui.json"));
 
         if (string.IsNullOrWhiteSpace(path)) {
             return;
@@ -384,7 +380,7 @@ public sealed class AgendaWindow : Runnable {
     }
 
     private void RefreshContacts(int? selectedId = null) {
-        int? idToKeep = selectedId ?? GetSelectedContact()?.Id;
+        selectedId ??= contactsList.Value?.Id;
         string search = searchField.Text?.ToString()?.Trim() ?? "";
         bool onlyFavorites = favoritesOnly.Value == CheckState.Checked;
 
@@ -394,30 +390,21 @@ public sealed class AgendaWindow : Runnable {
             .ThenBy(contact => contact.Nombre)
             .ToList();
 
-        contactsList.SetSource(ToObservable(filteredContacts.Select(ContactRow.Format)));
+        contactsList.SetSource(new ObservableCollection<Contacto>(filteredContacts));
 
-        if (filteredContacts.Count == 0) {
-            contactsList.SelectedItem = null;
-            RefreshDetails();
-            RefreshStatus();
-            return;
-        }
+        int index = filteredContacts.Count == 0
+            ? -1
+            : selectedId is null
+                ? 0
+                : Math.Max(filteredContacts.FindIndex(contact => contact.Id == selectedId.Value), 0);
 
-        int index = idToKeep is null
-            ? 0
-            : filteredContacts.FindIndex(contact => contact.Id == idToKeep.Value);
-
-        if (index < 0) {
-            index = 0;
-        }
-
-        contactsList.SelectedItem = index;
+        contactsList.Index = index;
         RefreshDetails();
         RefreshStatus();
     }
 
     private void RefreshDetails() {
-        Contacto? selected = GetSelectedContact();
+        Contacto? selected = contactsList.Value;
 
         if (selected is null) {
             detailsLabel.Text = "Sin contacto seleccionado.";
@@ -444,14 +431,6 @@ public sealed class AgendaWindow : Runnable {
         statusLabel.Text = $"{message} {statusLabel.Text}";
     }
 
-    private Contacto? GetSelectedContact() {
-        int index = contactsList.SelectedItem ?? -1;
-
-        return index >= 0 && index < filteredContacts.Count
-            ? filteredContacts[index]
-            : null;
-    }
-
     private static bool Matches(Contacto contact, string search, bool onlyFavorites) {
         if (onlyFavorites && !contact.Favorito) {
             return false;
@@ -473,10 +452,6 @@ public sealed class AgendaWindow : Runnable {
 
     private static string SinNotas(string notas) {
         return string.IsNullOrWhiteSpace(notas) ? "Sin notas." : notas;
-    }
-
-    private static ObservableCollection<string> ToObservable(IEnumerable<string> values) {
-        return new ObservableCollection<string>(values.ToList());
     }
 }
 
@@ -707,12 +682,10 @@ public sealed class Contacto {
             Favorito = Favorito
         };
     }
-}
 
-public static class ContactRow {
-    public static string Format(Contacto contact) {
-        string favorite = contact.Favorito ? "*" : " ";
-        return $"{favorite} {Cut(contact.Nombre, 22),-22} {Cut(contact.Telefono, 18),-18} {Cut(contact.Email, 28),-28}";
+    public override string ToString() {
+        string favorite = Favorito ? "*" : " ";
+        return $"{favorite} {Cut(Nombre, 22),-22} {Cut(Telefono, 18),-18} {Cut(Email, 28),-28}";
     }
 
     private static string Cut(string value, int width) {
@@ -727,47 +700,3 @@ public static class ContactRow {
         return value[..(width - 3)] + "...";
     }
 }
-
-*** Add File: /Users/adibattista/Documents/GitHub/tup26-p3/clases/agenda-tui.json
-[
-  {
-    "Id": 1,
-    "Nombre": "Ada Lovelace",
-    "Telefono": "+54 381 111-1111",
-    "Email": "ada@history.dev",
-    "Notas": "Pionera de la programación.",
-    "Favorito": true
-  },
-  {
-    "Id": 2,
-    "Nombre": "Alan Turing",
-    "Telefono": "+54 381 222-2222",
-    "Email": "alan@history.dev",
-    "Notas": "Contacto para ejemplos de importación JSON.",
-    "Favorito": false
-  },
-  {
-    "Id": 3,
-    "Nombre": "Grace Hopper",
-    "Telefono": "+54 381 333-3333",
-    "Email": "grace@history.dev",
-    "Notas": "COBOL, compiladores y una libreta muy ordenada.",
-    "Favorito": true
-  },
-  {
-    "Id": 4,
-    "Nombre": "Edsger Dijkstra",
-    "Telefono": "+54 381 444-4444",
-    "Email": "edsger@history.dev",
-    "Notas": "Prefiere mensajes cortos y precisos.",
-    "Favorito": false
-  },
-  {
-    "Id": 5,
-    "Nombre": "Barbara Liskov",
-    "Telefono": "+54 381 555-5555",
-    "Email": "barbara@history.dev",
-    "Notas": "Ideal para probar filtros y detalle de contacto.",
-    "Favorito": true
-  }
-]
