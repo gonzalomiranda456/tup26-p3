@@ -1,6 +1,6 @@
 # Trabajo Práctico 3 — Aplicación TUI con persistencia: `agenda`
 
-**Entrega:** 3 de JUNIO de 2026 a las 23:59hs
+**Entrega:** Lunes 18 de MAYO de 2026 a las 21:00hs
 
 ---
 
@@ -241,9 +241,4 @@ El orden sugerido dentro del archivo `agenda.cs` es:
 
 ## Entrega
 
-- Un único archivo `agenda.cs` en la carpeta `enunciados/tp3`.
-
-> [!NOTE]
-> Se entrega como aplicación file-based (sin `.csproj`). Las dependencias se declaran
-> con `#:package` al principio del archivo y se ejecuta con `dotnet run agenda.cs`.
-> Para pasar argumentos, usar `--`: `dotnet run agenda.cs -- mi-agenda.db`.
+- Un único archivo `agenda.cs` en la carpeta `/tp3`.
