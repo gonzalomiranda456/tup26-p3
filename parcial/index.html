@@ -2075,9 +2075,10 @@
 
       const snapshot = { ...result };
       const codeParts = String(snapshot.code || "").split(".");
-      if (codeParts.length === 3 && Number.isFinite(snapshot.grade)) {
+      if ((codeParts.length === 3 || codeParts.length === 4) && Number.isFinite(snapshot.grade)) {
         const encodedAttemptAndGrade = snapshot.attempt * 10 + (getCodeGrade(snapshot.grade) - 1);
-        snapshot.code = `${codeParts[0]}.${encodedAttemptAndGrade}.${codeParts[2]}`;
+        const base = `${codeParts[0]}.${encodedAttemptAndGrade}.${codeParts[2]}`;
+        snapshot.code = `${base}.${calcularSumaDeControl(base)}`;
       }
 
       return snapshot;
@@ -2616,7 +2617,10 @@
         attendanceCredits,
         credits,
         grade,
-        code: `${state.student.legajo}.${encodedAttemptAndGrade}.${encodedAnswers}`,
+        code: (() => {
+          const base = `${state.student.legajo}.${encodedAttemptAndGrade}.${encodedAnswers}`;
+          return `${base}.${calcularSumaDeControl(base)}`;
+        })(),
       };
 
       saveResultSnapshot(state.result);
@@ -2765,6 +2769,14 @@
 
     function getCodeGrade(value) {
       return clampNumber(Math.round(value), 1, 10);
+    }
+
+    function calcularSumaDeControl(codigo) {
+      let suma = 0;
+      for (let i = 0; i < codigo.length; i++) {
+        suma += codigo.charCodeAt(i) * (i + 1);
+      }
+      return String(suma % 97).padStart(2, "0");
     }
 
     function updateMeta() {
