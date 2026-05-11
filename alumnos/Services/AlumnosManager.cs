@@ -187,12 +187,12 @@ static class AlumnosManager {
         string encabezado = FormatearFilaTabla(campos);
 
         Log.WriteLine($"[blue]=== {titulo.ToUpper()} ===");
-        Log.WriteLine();
 
         foreach (var a in alumnosOrdenados) {
             if (a.Comision != comision) {
                 comision = a.Comision;
-                Log.WriteLine($"\n{FormatearFilaTabla(campos)}\n[blue]{FormatearFilaTabla(guiones)}");
+                Log.WriteLine($"\n[yellow]== {comision} ({alumnosOrdenados.Count(x => x.Comision == comision)}) ==");
+                Log.WriteLine($"{FormatearFilaTabla(campos)}\n[blue]{FormatearFilaTabla(guiones)}");
             }
             Log.WriteLine(FormatearFila(a));
         }

@@ -1,0 +1,4 @@
+Hola, mundo!
+
+var linea = Console.ReadLine();
+Console.WriteLine($"La línea ingresada es: {linea}");

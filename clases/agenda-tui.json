@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "Nombre": "Ada Lovelace",
+    "Telefono": "+54 381 111-1111",
+    "Email": "ada@history.dev",
+    "Notas": "Pionera de la programación.",
+    "Favorito": true
+  },
+  {
+    "Id": 2,
+    "Nombre": "Alan Turing",
+    "Telefono": "+54 381 222-2222",
+    "Email": "alan@history.dev",
+    "Notas": "Contacto para ejemplos de importación JSON.",
+    "Favorito": false
+  },
+  {
+    "Id": 3,
+    "Nombre": "Grace Hopper",
+    "Telefono": "+54 381 333-3333",
+    "Email": "grace@history.dev",
+    "Notas": "COBOL, compiladores y una libreta muy ordenada.",
+    "Favorito": true
+  },
+  {
+    "Id": 4,
+    "Nombre": "Edsger Dijkstra",
+    "Telefono": "+54 381 444-4444",
+    "Email": "edsger@history.dev",
+    "Notas": "Prefiere mensajes cortos y precisos.",
+    "Favorito": false
+  },
+  {
+    "Id": 5,
+    "Nombre": "Barbara Liskov",
+    "Telefono": "+54 381 555-5555",
+    "Email": "barbara@history.dev",
+    "Notas": "Ideal para probar filtros y detalle de contacto.",
+    "Favorito": true
+  }
+]

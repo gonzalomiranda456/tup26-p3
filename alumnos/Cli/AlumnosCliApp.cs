@@ -119,14 +119,14 @@ static class AlumnosCliApp {
             ObtenerOpcionesPrincipales());
 
         return opcion.Command switch {
-            "listar" => ["listar"],
-            "auditoria" => SolicitarMenuAuditoria(),
-            "exportar" => SolicitarMenuExportar(),
+            "listar"         => ["listar"],
+            "auditoria"      => SolicitarMenuAuditoria(),
+            "exportar"       => SolicitarMenuExportar(),
             "crear-carpetas" => ["crear-carpetas"],
-            "prs" => SolicitarMenuPrs(),
-            "asistencias" => SolicitarMenuAsistencias(),
-            "salir" => null,
-            _ => Array.Empty<string>()
+            "prs"            => SolicitarMenuPrs(),
+            "asistencias"    => SolicitarMenuAsistencias(),
+            "salir"          => null,
+            _                => Array.Empty<string>()
         };
     }
 
@@ -144,11 +144,11 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "sin-github" => ["sin-github"],
-            "sin-telefono" => ["sin-telefono"],
-            "sin-foto" => ["sin-foto"],
-            "tp-no-presentado" => ["tp-no-presentado", PedirTrabajoPractico()],
-            "sin-practicos" => ["sin-practicos"],
+            "sin-github"        => ["sin-github"],
+            "sin-telefono"      => ["sin-telefono"],
+            "sin-foto"          => ["sin-foto"],
+            "tp-no-presentado"  => ["tp-no-presentado", PedirTrabajoPractico()],
+            "sin-practicos"     => ["sin-practicos"],
             "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
         };
@@ -167,8 +167,8 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "guardar" => ConstruirArgumentosExportacion("guardar"),
-            "json" => ConstruirArgumentosExportacion("json"),
-            "vcf" => ConstruirArgumentosExportacion("vcf"),
+            "json"    => ConstruirArgumentosExportacion("json"),
+            "vcf"     => ConstruirArgumentosExportacion("vcf"),
             "informer-estado" => ["informer-estado"],
             _ => Array.Empty<string>()
         };

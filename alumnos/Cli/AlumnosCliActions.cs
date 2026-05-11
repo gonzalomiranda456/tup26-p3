@@ -200,7 +200,6 @@ static class AlumnosCliActions {
             return 1;
         }
 
-        const int minimoLineasAgregadas = 100;
         string carpetaTp = $"tp{numeroTp}";
         string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
         int lineasEnunciado = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
@@ -214,7 +213,7 @@ static class AlumnosCliActions {
             int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
             Estado estado = Estado.Desaprobado;
-            if (lineasAgregadas >= minimoLineasAgregadas) {
+            if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
                 estado = Estado.Aprobado;
                 marcados++;
             }
@@ -396,31 +395,38 @@ static class AlumnosCliActions {
 
         DayOfWeek dia = mensaje.Fecha.DayOfWeek;
         TimeSpan hora = mensaje.Fecha.TimeOfDay;
-        return dia >= DayOfWeek.Monday &&
-            dia <= DayOfWeek.Thursday &&
-            hora >= new TimeSpan(8, 0, 0) &&
-            hora <= new TimeSpan(12, 30, 0);
+        return 
+            dia  >= DayOfWeek.Monday      && dia  <= DayOfWeek.Thursday &&
+            hora >= new TimeSpan(8, 0, 0) && hora <= new TimeSpan(12, 30, 0);
     }
 
     static int ContarLineasPracticoLocal(string rutaPractico) =>
         AppPaths.ContarLineasArchivos(rutaPractico, "*.cs", SearchOption.TopDirectoryOnly);
+
+    static bool PracticoParecePresentado(int numeroTp, int lineasTotales, int lineasAgregadas) =>
+        numeroTp switch {
+            1 => lineasTotales   >= 100,
+            2 => lineasAgregadas >= 20,
+            _ => lineasTotales   >= 100
+        };
 
     static bool TieneAlgunPracticoPresentado(Alumno alumno) =>
         alumno.practicos.Any(estado => estado == Estado.Aprobado);
 
     static string MensajeRecuperacionTp1Tp2(Alumno alumno) =>
         $"""
-        Hola {alumno.Nombre}. Según mi registro, no has presentado el trabajo práctico 1 ni el trabajo práctico 2.
+        Hola *{alumno.Nombre}*.
+        
+        Según mi registro, no has presentado el trabajo práctico 1 ni el trabajo práctico 2.
 
         Tenés una oportunidad más para recuperar: presentalos ahora.
+
         Tenés tiempo hasta el próximo miércoles {ProximoMiercoles():dd/MM}.
         """;
 
     static DateTime ProximoMiercoles() {
         int dias = ((int)DayOfWeek.Wednesday - (int)DateTime.Today.DayOfWeek + 7) % 7;
-        if (dias == 0) {
-            dias = 7;
-        }
+        if (dias == 0) { dias = 7; }
 
         return DateTime.Today.AddDays(dias);
     }

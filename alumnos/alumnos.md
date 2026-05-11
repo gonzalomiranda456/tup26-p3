@@ -6,7 +6,7 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 ------  ------------------------------  --------------  ----  -------------------------  --------------------  ----  ----  ----
 63456   Ávila Lahr, Joaquín             (381) 527-6836  Sí    joacoavila9                🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
 63415   Chávez, Lucas Francisco         (381) 301-3490  Sí    lucaschavez10lc-ai         🔴🔴⚪️⚪️⚪️            🔴⚪️  No    1   
-63268   Condori, Karina Edith           (381) 412-4723  Sí    kariiedith9315             🟢🔴⚪️⚪️⚪️            🔴⚪️  No    0   
+63268   Condori, Karina Edith           (381) 412-4723  Sí    kariiedith9315             🟢🟢⚪️⚪️⚪️            🔴⚪️  No    0   
 63402   Condori, Nahuel Ariel           (381) 341-9689  No    nahuelc19                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7   
 63419   Coronel, Tomás                  (381) 678-0335  Sí    tomicor979-lgtm            🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
 63241   Cortez, Josías                  (381) 665-0808  No    josias57455                🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
@@ -22,7 +22,7 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63350   Páez Carabajal, Santiago        (381) 572-4096  Sí    santiagopaez-2             🟢🟢⚪️⚪️⚪️            🔴⚪️  No    3   
 61581   Paz, Naim Federico              (381) 353-0060  Sí    naimp074                   🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
 63647   Paz, Valentina                  (381) 599-6422  Sí    valepaz11                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    6   
-63389   Pereyra Petroni, Nicolas        (381) 332-4401  No    nicopereyra255-ship-it     🔴🟢⚪️⚪️⚪️            🟡⚪️  No    4   
+63389   Pereyra Petroni, Nicolas        (381) 332-4401  Sí    nicopereyra255-ship-it     🔴🟢⚪️⚪️⚪️            🟡⚪️  No    4   
 63420   Pereyra, Valentina Nazaret      (381) 552-8065  Sí    valentinapereyra03         🔴🟢⚪️⚪️⚪️            🔴⚪️  No    3   
 63354   Perondi, Luciano                (381) 350-0777  Sí    lucho-bot                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5   
 63393   Ritorto, Lucca                  (381) 627-2271  No    luccardp                   🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5   
@@ -30,10 +30,9 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63387   Sosa Gonella, Luca              (381) 355-5126  Sí    lucasosag1                 🟢🟢⚪️⚪️⚪️            🟡⚪️  No    6   
 63546   Sosa Paz, Jeremías              (381) 200-7473  No    jeerepazz                  🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
 63547   Sosa Paz, José Lisandro         (381) 675-3624  No    lisandropaz                🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
-63447   Suárez, Sofía Celeste           (381) 246-3725  No    suarezsofia541-alt         🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
-61490   Valdez Bustamante, Tomás        (381) 303-1034  No    tomas-valdez-bustamante    🟢🟢⚪️⚪️⚪️            🟢⚪️  No    10  
+63447   Suárez, Sofía Celeste           (381) 246-3725  Sí    suarezsofia541-alt         🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
+61490   Valdez Bustamante, Tomás        (381) 303-1034  Sí    tomas-valdez-bustamante    🟢🟢⚪️⚪️⚪️            🟢⚪️  No    10  
 63397   Vercellone, Tomás               (381) 676-6267  No    xtomi2456                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7   
-63696   Yael, Ramón Ezequiel            (381) 326-4777  No    —                          🔴🔴⚪️⚪️⚪️            🔴⚪️  No    1   
 ```
 
 ## C9
@@ -51,10 +50,10 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63341   Carrer, Juan Cruz               (381) 632-5727  Sí    juancarrer11               🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5   
 63461   Cativa, Facundo Simón           (381) 391-4222  Sí    cativafacundo9-gif         🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7   
 63218   Cortés, Guillermo Augusto       (381) 606-0586  Sí    guillecortes01             🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
-64016   Cura, Rocío Aylen               (381) 478-8799  No    rocura26                   🔴🟢⚪️⚪️⚪️            🟡⚪️  No    5   
+64016   Cura, Rocío Aylen               (381) 478-8799  Sí    rocura26                   🔴🟢⚪️⚪️⚪️            🟡⚪️  No    5   
 63266   Decima, Juan Cruz               (381) 558-9063  Sí    devjuancruz003-com         🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
 63137   Díaz, José Simón                (381) 617-9958  No    josesimondiaz              🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7   
-61641   Figueroa, Nahuel Ramón          (381) 353-2589  No    figueroanahuel16           🔴🔴⚪️⚪️⚪️            🟢⚪️  No    8   
+61641   Figueroa, Nahuel Ramón          (381) 353-2589  Sí    figueroanahuel16           🔴🔴⚪️⚪️⚪️            🟢⚪️  No    8   
 63737   Galván, Rocío Julieta           (381) 647-5597  No    rociogalvani               🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
 63345   García, Franco Tomás            (381) 207-5701  Sí    francotms                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5   
 61057   Getar, Thomas                   (381) 336-2147  Sí    thomasgetar                🔴🟢⚪️⚪️⚪️            🟢⚪️  No    10  
@@ -76,8 +75,8 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63412   Morán, Facundo Martín           (381) 301-0206  Sí    facumoran                  🟢🟢⚪️⚪️⚪️            🟢⚪️  No    10  
 63205   Navarro Aragón, Facundo         (381) 466-6665  Sí    facundonavarroaragon       🔴🔴⚪️⚪️⚪️            🟡⚪️  No    6   
 63220   Pérez Del Rien, Valentina       (381) 360-2873  No    vall19-git                 🟢🟢⚪️⚪️⚪️            🟢⚪️  No    10  
-63232   Roldan, Enzo Joaquín            (381) 565-4292  No    roldanebzo                 🔴🔴⚪️⚪️⚪️            🟢⚪️  No    8   
+63232   Roldan, Enzo Joaquín            (381) 565-4292  Sí    roldanebzo                 🔴🔴⚪️⚪️⚪️            🟢⚪️  No    8   
 63216   Sánchez, Sofía Micaela          (381) 342-9672  Sí    sofisanchez126             🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8   
 63207   Saravia, César Nahum            (381) 612-1173  Sí    nahum-saravia              🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7   
-61026   Thompson, María José            (381) 448-3445  Sí    mariajosethompson0-eng     🟢🔴⚪️⚪️⚪️            🟢⚪️  No    9   
+61026   Thompson, María José            (381) 448-3445  Sí    mariajosethompson0-eng     🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9   
 ```

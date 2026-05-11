@@ -13,6 +13,13 @@
     "chat.fontSize": 14,
     "chat.editor.fontSize": 14,
     "terminal.integrated.fontSize": 14,
+    "editor.wordWrap": "off",
     "notebook.lineNumbers": "on",
-    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true
+    "[markdown]": {
+        "editor.wordWrap": "off"
+    },
+    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+    "markdown.preview.lineHeight": 1.6,
+    "markdown.preview.fontSize": 14,
+    "markdown.preview.typographer": true
 }

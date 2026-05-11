@@ -1,283 +1,249 @@
-# Trabajo Práctico — Agenda TUI con Terminal.Gui
+# Trabajo Práctico 3 — Aplicación TUI con persistencia: `agenda`
 
-**Entrega:** a definir por la cátedra
+**Entrega:** 3 de JUNIO de 2026 a las 23:59hs
 
 ---
 
 ## Descripción
 
-Desarrollar una aplicación de terminal llamada **Agenda** que permita administrar contactos desde una interfaz TUI (*Text User Interface*) usando **Terminal.Gui v2**.
+Desarrollar una aplicación de terminal llamada **`agenda`** que permita **gestionar una agenda de contactos** desde una **interfaz de usuario en terminal (TUI)**, con persistencia en **SQLite** e intercambio de datos en **JSON**.
 
-La aplicación debe ser un único archivo `agenda.cs`, implementado como *file-based program* de C#. Debe persistir sus datos en JSON o SQLite según la extensión del archivo de trabajo.
+La aplicación debe ofrecer un CRUD completo de contactos (alta, baja, modificación, consulta) con búsqueda activa, además de importación y exportación a archivos JSON.
+
+El objetivo del trabajo es construir una aplicación interactiva separando claramente las responsabilidades de **interfaz visual**, **lógica de coordinación**, **persistencia en base de datos** e **interoperabilidad con archivos externos**.
+
+---
+
+## Formato de entrega
+
+El trabajo debe entregarse como **un único archivo `.cs`** usando el modo *file-based* de .NET 10 (sin `.csproj`). Las dependencias se declaran al principio del archivo:
+
+```csharp
+#:package Terminal.Gui@2.0.1
+#:package Microsoft.Data.Sqlite@9.0.0
+#:package Dapper@2.1.35
+#:package Dapper.Contrib@2.0.78
+#:property PublishAot=false
+```
+
+Y se ejecuta con:
+
+```bash
+dotnet run agenda.cs
+dotnet run agenda.cs -- mi-agenda.db
+```
+
+A pesar de estar en un solo archivo, **el código debe estar organizado en clases con responsabilidades separadas** (ver sección "Diseño requerido").
 
 ---
 
 ## Sintaxis
 
 ```bash
-dotnet run agenda.cs -- [archivo.json|archivo.db]
+agenda [archivo-db]
 ```
+
+### Argumentos posicionales
+
+| Argumento    | Descripción                                                                                              |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| `archivo-db` | Ruta opcional al archivo SQLite. Por defecto `agenda.db`. Si no existe, se crea con el schema necesario. |
 
 ---
 
-## Archivo de trabajo
+## Modelo de contacto
 
-- Si se ejecuta sin parámetros, la aplicación debe trabajar sobre `agenda.json`, ubicado en la misma carpeta que `agenda.cs`.
-- Si se pasa un argumento, ese argumento indica el archivo de trabajo.
-- Si el archivo termina en `.json`, la agenda debe persistir usando JSON.
-- Si el archivo termina en `.db`, la agenda debe persistir usando SQLite.
-- Si el archivo de trabajo no existe, la agenda debe empezar vacía y crearlo recién al guardar cambios.
+Cada contacto debe registrar al menos:
+
+- `Id` (entero, autogenerado por la base)
+- `Nombre` (texto, obligatorio)
+- `Telefono` (texto)
+- `Email` (texto)
+- `Notas` (texto multilínea)
+- `Favorito` (booleano)
+
+---
+
+## Funcionalidad requerida
+
+### Estructura visual
+
+La ventana principal debe contener:
+
+- **Barra de menú superior** con menús desplegables.
+- **Campo de búsqueda** activa.
+- **Panel de lista** de contactos, con indicador visual para favoritos.
+- **Panel de detalle** del contacto seleccionado.
+- **Barra de estado** con el mensaje de la última operación.
+
+### Menús
+
+| Menú         | Opciones                                            |
+| ------------ | --------------------------------------------------- |
+| `Archivo`    | Importar JSON, Exportar JSON, Recargar, Salir.      |
+| `Contactos`  | Nuevo, Editar, Eliminar.                            |
+| `Ver`        | Solo favoritos (toggle).                            |
+| `Ayuda`      | Acerca de.                                          |
+
+### Operaciones y atajos
+
+| Acción                    | Atajo              |
+| ------------------------- | ------------------ |
+| Nuevo contacto            | `F2` / `Ctrl+N`    |
+| Editar contacto           | `F3` / `Enter`     |
+| Eliminar contacto         | `Del` / `Ctrl+D`   |
+| Recargar desde la base    | `Ctrl+R`           |
+| Importar desde JSON       | `Ctrl+I`           |
+| Exportar a JSON           | `Ctrl+E`           |
+| Foco en búsqueda          | `F4`               |
+| Salir                     | `Ctrl+Q`           |
+
+### Búsqueda activa
+
+El campo de búsqueda debe filtrar la lista **en tiempo real** mientras el usuario tipea, comparando contra `Nombre`, `Telefono` y `Email`. El filtro debe combinarse con el toggle de **solo favoritos**.
+
+### Validaciones
+
+- El `Nombre` no puede estar vacío.
+- Si se ingresa `Email`, debe contener `@`.
+- Antes de **eliminar** un contacto, pedir confirmación.
+- Antes de **importar**, mostrar la cantidad de contactos a agregar y pedir confirmación.
+
+### Persistencia
+
+- Toda alta, modificación o eliminación debe quedar **persistida inmediatamente** en la base SQLite.
+- La acción **Recargar** debe descartar la lista en memoria y volver a leer desde la base.
+- Al **importar** un JSON, los contactos se agregan como registros nuevos con `Id` asignado por la base; no se conservan los ids del archivo.
+- Al **exportar**, se vuelcan todos los contactos a un archivo JSON legible (con tildes y `ñ` correctas).
+
+---
+
+## Comportamiento esperado
+
+Al iniciar el programa:
+
+1. Abrir (o crear) la base SQLite indicada por argumento, o `agenda.db` si no se indicó ninguna.
+2. Cargar los contactos existentes desde la base.
+3. Mostrar la interfaz visual.
+4. Mantenerse activo respondiendo a teclado y menús hasta que el usuario decida salir.
+
+### Errores
+
+Ante condiciones inválidas, el programa debe informar el error con un mensaje claro mediante un `MessageBox`. Casos esperables:
+
+- Archivo de base inaccesible o corrupto.
+- Archivo JSON inexistente al importar.
+- JSON con formato inválido.
+- Nombre vacío al guardar un contacto.
+- Email sin `@` al guardar un contacto.
+
+---
+
+## Ejemplos de uso
 
 ```bash
+# Iniciar la agenda con la base por defecto (agenda.db)
 dotnet run agenda.cs
-dotnet run agenda.cs -- clientes.json
-dotnet run agenda.cs -- /tmp/agenda-prueba.json
-dotnet run agenda.cs -- agenda.db
+
+# Iniciar con un archivo de base específico
+dotnet run agenda.cs -- contactos-2026.db
 ```
 
----
+Una vez dentro de la TUI:
 
-## Modelo de datos
-
-Cada contacto debe tener:
-
-| Campo       | Tipo     | Descripción                               |
-| ----------- | -------- | ------------------------------------------|
-| `id`        | `int`    | Identificador numérico único del contacto.|
-| `nombre`    | `string` | Nombre del contacto.                      |
-| `apellido`  | `string` | Apellido del contacto.                    |
-| `domicilio` | `string` | Domicilio del contacto.                   |
-| `telefonos` | `string` | Teléfonos separados por coma.             |
-
-El archivo JSON debe guardar una lista de contactos:
-
-```json
-[
-  {
-    "id": 1,
-    "nombre": "Ada",
-    "apellido": "Lovelace",
-    "domicilio": "St. James Square 12",
-    "telefonos": "+54 381 111-1111, +54 381 111-2222"
-  }
-]
-```
-
-En SQLite se debe usar una tabla `Contactos` con una columna `Id` como clave primaria numérica.
-
----
-
-## Interfaz requerida
-
-La aplicación debe usar Terminal.Gui y mostrar:
-
-- Una barra de menú superior.
-- Una ventana principal con marco visible.
-- Un campo de búsqueda.
-- Una lista de contactos.
-- Un encabezado de columnas.
-
-La lista debe mostrar columnas alineadas para:
-
-| Columna    | Contenido                                |
-| ---------- | -----------------------------------------|
-| Contacto   | Apellido y nombre visibles del contacto. |
-| Domicilio  | Domicilio del contacto.                  |
-| Teléfonos  | Teléfonos separados por coma.            |
-
-Los contactos deben ordenarse por `apellido` y luego por `nombre`.
-
----
-
-## Referencia visual
-
-La interfaz esperada debe parecerse a estas capturas:
-
-![Agenda con diálogo de edición de contacto](imagenes/agenda-editar.svg)
-
-![Agenda con menú Contacto desplegado](imagenes/agenda-menu.svg)
-
----
-
-## Menú
-
-La barra de menú debe tener al menos:
-
-| Menú                 | Acción                           | Tecla      |
-| -------------------- | -------------------------------- | ---------- |
-| Agenda -> Guardar    | Guarda los cambios pendientes.   | `Ctrl+S`   |
-| Agenda -> Salir      | Cierra la aplicación.            | `Ctrl+Q`   |
-| Contacto -> Agregar  | Agrega un contacto nuevo.        | `F2`       |
-| Contacto -> Editar   | Edita el contacto seleccionado.  | `Enter`    |
-| Contacto -> Borrar   | Borra el contacto seleccionado.  | `Delete`   |
-
-Los marcos de los menús desplegables deben verse correctamente.
-
----
-
-## Búsqueda
-
-El campo de búsqueda debe filtrar la lista en tiempo real.
-
-La búsqueda debe coincidir contra:
-
-- Nombre.
-- Apellido.
-- Domicilio.
-- Teléfonos.
-
-La comparación debe ignorar mayúsculas y minúsculas.
-
----
-
-## Alta, edición y baja
-
-### Agregar contacto
-
-Al agregar un contacto se debe abrir un diálogo con:
-
-- Nombre.
-- Apellido.
-- Domicilio.
-- Hasta cuatro teléfonos.
-
-Los teléfonos se ingresan en campos separados y se guardan como un texto separado por coma.
-
-### Editar contacto
-
-Al presionar `Enter` sobre la lista o elegir la opción del menú, se debe abrir el mismo diálogo con los datos del contacto seleccionado.
-
-Al aceptar, se deben actualizar los datos del contacto.
-
-### Borrar contacto
-
-Al presionar `Delete` sobre la lista o elegir la opción del menú, se debe pedir confirmación antes de borrar.
-
-Si la terminal envía `Backspace` para la tecla física de borrado, también se acepta como borrado del contacto seleccionado.
-
----
-
-## Guardado y cambios pendientes
-
-La aplicación debe trabajar con cambios pendientes en memoria:
-
-- Agregar, editar o borrar un contacto no debe guardar inmediatamente.
-- La opción `Agenda -> Guardar` o `Ctrl+S` debe persistir los cambios pendientes.
-- Si hay cambios pendientes, el título de la ventana debe mostrar un indicador visual, por ejemplo `*`.
-- Al salir con cambios pendientes, se debe preguntar si se desea guardar, salir sin guardar o cancelar.
-
----
-
-## Validaciones
-
-- No se debe permitir guardar un contacto sin nombre y sin apellido.
-- Si un contacto no tiene domicilio, la lista debe mostrar `(sin domicilio)`.
-- Si un contacto no tiene teléfonos, la lista debe mostrar `(sin teléfonos)`.
-- Si un contacto no tiene nombre visible, la lista debe mostrar `(sin nombre)`.
-- Si el archivo de trabajo no existe, la agenda debe empezar vacía.
-- Si el archivo JSON está vacío o no se puede leer como lista de contactos, la agenda debe empezar vacía.
+- `F2` abre el diálogo de nuevo contacto.
+- Tipear en el campo de búsqueda filtra la lista.
+- `Enter` sobre un contacto abre el diálogo de edición.
+- `Ctrl+E` exporta a JSON y pide la ruta de salida.
+- `Ctrl+Q` cierra la aplicación.
 
 ---
 
 ## Diseño requerido
 
-El programa debe organizarse con funciones locales para las operaciones principales de la interfaz:
+A pesar de estar todo en un único archivo, el código debe separar claramente las siguientes responsabilidades, **cada una en su propia clase**:
 
 ```text
-1. Resolver archivo de trabajo
-2. Crear unidad de trabajo según extensión del archivo
-3. Construir interfaz Terminal.Gui
-4. Refrescar lista y aplicar búsqueda
-5. Agregar contacto
-6. Editar contacto seleccionado
-7. Borrar contacto seleccionado
-8. Guardar cambios pendientes
+1. Procesar argumentos    → top-level code: leer args y arrancar la app
+2. Ventana principal      → AgendaWindow: layout, menús, eventos, coordinación
+3. Diálogo de edición     → ContactDialog: campos, validación, devolver contacto
+4. Persistencia           → SqliteAgendaStore: CRUD con Dapper.Contrib
+5. Interoperabilidad JSON → JsonAgendaIO: leer y escribir archivos JSON
+6. Modelo de datos        → Contacto: la clase con [Table] y [Key]
 ```
 
-Se sugiere separar la persistencia con estas abstracciones:
+### Modelo
+
+Se espera una clase de contacto con la siguiente forma general:
 
 ```csharp
-public interface IEntity {
-    int Id { get; set; }
-}
+[Table("Contactos")]
+public sealed class Contacto {
+    [Key] public int    Id        { get; set; }
+          public string Nombre    { get; set; } = "";
+          public string Telefono  { get; set; } = "";
+          public string Email     { get; set; } = "";
+          public string Notas     { get; set; } = "";
+          public bool   Favorito  { get; set; }
 
-public interface IRepository<T> where T : class, IEntity {
-    IReadOnlyList<T> ReadAll();
-    T? ReadOne(int id);
-    void Create(T item);
-    void Update(T item);
-    void Remove(int id);
-}
-
-public interface IUnitOfWork<T> : IRepository<T> where T : class, IEntity {
-    bool HasPendingChanges { get; }
-    void SaveChanges();
-}
-
-public interface IStore<T> where T : class, IEntity {
-    IReadOnlyList<T> Load();
-    void SaveChanges(IReadOnlyCollection<StoreChange<T>> changes);
+    public Contacto Clone();
 }
 ```
 
-La unidad de trabajo debe manejar el tracking de cambios en memoria. Los stores deben limitarse a cargar entidades y persistir operaciones de inserción, actualización y borrado.
+### Stack tecnológico requerido
 
----
+- **Terminal.Gui** v2 para la TUI.
+- **Microsoft.Data.Sqlite** para la conexión a SQLite.
+- **Dapper** + **Dapper.Contrib** para el CRUD.
+- **System.Text.Json** para la importación y exportación.
 
-## Archivo de prueba
+### Reglas de arquitectura
 
-Crear un archivo `agenda.json` en la misma carpeta que `agenda.cs`:
+- El diálogo de edición **no** toca la base de datos: sólo devuelve datos. La ventana principal decide si persistir.
+- Cada operación CRUD debe actualizar **primero** la base y **después** la lista en memoria.
+- La lista visible (`filteredContacts`) es derivada de la lista completa (`contacts`) más los filtros activos; nunca al revés.
+- El menú no debe contener lógica: cada `MenuItem` delega en un método de la ventana.
 
-```json
-[
-  {
-    "id": 1,
-    "nombre": "Ada",
-    "apellido": "Lovelace",
-    "domicilio": "St. James Square 12",
-    "telefonos": "+54 381 111-1111, +54 381 111-2222"
-  },
-  {
-    "id": 2,
-    "nombre": "Alan",
-    "apellido": "Turing",
-    "domicilio": "Wilmslow Road 42",
-    "telefonos": "+54 381 222-2222"
-  },
-  {
-    "id": 3,
-    "nombre": "Grace",
-    "apellido": "Hopper",
-    "domicilio": "Arlington Ave 9",
-    "telefonos": "+54 381 333-3333, +54 381 333-4444"
-  }
-]
+### Organización dentro del archivo
+
+El orden sugerido dentro del archivo `agenda.cs` es:
+
+```text
+1. directivas #:package y #:property
+2. usings
+3. top-level code (procesar args, crear store, arrancar la app)
+4. clase AgendaWindow
+5. clase ContactDialog
+6. clase SqliteAgendaStore
+7. clase JsonAgendaIO
+8. clase Contacto
 ```
 
 ---
 
 ## Casos de prueba mínimos
 
-| Caso                                             | Resultado esperado                                      |
-| ------------------------------------------------ | ------------------------------------------------------- |
-| `dotnet run agenda.cs` sin `agenda.json`         | Empieza con la agenda vacía.                            |
-| `dotnet run agenda.cs -- prueba.json`            | Usa `prueba.json` como archivo de trabajo.              |
-| `dotnet run agenda.cs -- prueba.db`              | Usa SQLite y crea la tabla `Contactos` si no existe.    |
-| Escribir en búsqueda                             | La lista se filtra en tiempo real.                      |
-| Seleccionar contacto y presionar `Enter`         | Abre el diálogo de edición.                             |
-| Seleccionar contacto y presionar `Delete`        | Pide confirmación y borra si se acepta.                 |
-| Agregar contacto con `F2`                        | Lo agrega, refresca la lista y marca cambios pendientes.|
-| Intentar aceptar contacto sin nombre ni apellido | Muestra error y no guarda.                              |
-| Presionar `Ctrl+S`                               | Persiste los cambios pendientes.                        |
-| Salir con cambios pendientes                     | Pregunta si se desea guardar, descartar o cancelar.     |
-| Salir y volver a abrir después de guardar        | Los cambios persisten.                                  |
+| Caso                                                                     | Resultado esperado                                                          |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `dotnet run agenda.cs`                                                   | Crea `agenda.db` si no existe y abre la TUI.                                |
+| `dotnet run agenda.cs -- otra.db`                                        | Usa `otra.db` como archivo de base.                                         |
+| Crear un contacto con nombre `"Ana"`                                     | Aparece en la lista y persiste tras reiniciar la app.                       |
+| Crear un contacto con nombre vacío                                       | Error de validación, el diálogo no se cierra.                               |
+| Crear un contacto con email `"ana"`                                      | Error de validación: el email debe contener `@`.                            |
+| Eliminar un contacto                                                     | Pide confirmación; al aceptar, desaparece y no vuelve tras `Recargar`.      |
+| Buscar `"ana"` en una agenda con `"Ana"`, `"Juan"` y `"Susana"`          | La lista muestra `"Ana"` y `"Susana"`.                                      |
+| Marcar `"Solo favoritos"` con dos favoritos en una lista de cinco        | La lista muestra solo los dos favoritos.                                    |
+| Exportar a `salida.json` y luego importar el mismo archivo               | Los contactos se duplican (ids nuevos), no chocan con los existentes.       |
+| Importar un archivo JSON inexistente                                     | Mensaje de error claro, la app sigue funcionando.                           |
+| Cerrar con `Ctrl+Q`                                                      | La aplicación finaliza limpiamente y restaura la terminal.                  |
 
 ---
 
 ## Entrega
 
-- Archivo `agenda.cs` completo.
-- Archivo `agenda.json` con datos de prueba o archivo `agenda.db` generado.
+- Un único archivo `agenda.cs` en la carpeta `enunciados/tp3`.
 
 > [!NOTE]
-> La entrega se ejecuta con `dotnet run agenda.cs -- [archivo.json|archivo.db]`. Si no se indica archivo, debe trabajar sobre `agenda.json`.
+> Se entrega como aplicación file-based (sin `.csproj`). Las dependencias se declaran
+> con `#:package` al principio del archivo y se ejecuta con `dotnet run agenda.cs`.
+> Para pasar argumentos, usar `--`: `dotnet run agenda.cs -- mi-agenda.db`.
