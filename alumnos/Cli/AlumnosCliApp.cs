@@ -55,6 +55,10 @@ static class AlumnosCliApp {
                 .WithDescription("Lista grupos y participantes de WhatsApp.");
             config.AddCommand<WappRecuperarTp1Tp2Command>("wapp-recuperar-tp1-tp2")
                 .WithDescription("Envía un WhatsApp a alumnos que no presentaron TP1 ni TP2.");
+            config.AddCommand<WappFotoParcialCommand>("wapp-foto-parcial")
+                .WithDescription("Envía un WhatsApp a alumnos sin foto pidiéndoles una selfie para el parcial.");
+            config.AddCommand<RegistrarRespuestasCommand>("registrar-respuestas")
+                .WithDescription("Lee respuestas de WhatsApp y registra el código de cada alumno.");
         });
 
         return app;
@@ -204,7 +208,9 @@ static class AlumnosCliApp {
                 new("relevar-asistencias",   "Relevar asistencias",   "Detectar presentes desde WhatsApp"),
                 new("wapp-grupos",           "WhatsApp grupos",       "Listar grupos y participantes"),
                 new("wapp-recuperar-tp1-tp2", "Recuperar TP1/TP2",     "Enviar aviso a alumnos que no presentaron TP1 ni TP2"),
-                new("volver",                "Volver",                "Regresar al menú principal")
+                new("wapp-foto-parcial",       "Foto para el parcial",    "Pedir selfie a alumnos sin foto de perfil"),
+                new("registrar-respuestas",   "Registrar respuestas",    "Leer respuestas de WhatsApp y registrar códigos"),
+                new("volver",                 "Volver",                  "Regresar al menú principal")
             ]);
 
         return opcion.Command switch {
@@ -212,6 +218,8 @@ static class AlumnosCliApp {
             "relevar-asistencias" => ["relevar-asistencias"],
             "wapp-grupos" => ["wapp-grupos"],
             "wapp-recuperar-tp1-tp2" => ConstruirArgumentosWappRecuperarTp1Tp2(),
+            "wapp-foto-parcial" => ConstruirArgumentosWappFotoParcial(),
+            "registrar-respuestas" => ["registrar-respuestas"],
             _ => Array.Empty<string>()
         };
     }
@@ -272,6 +280,14 @@ static class AlumnosCliApp {
         return enviar
             ? ["wapp-recuperar-tp1-tp2"]
             : ["wapp-recuperar-tp1-tp2", "--simular"];
+    }
+
+    static string[] ConstruirArgumentosWappFotoParcial() {
+        bool enviar = AnsiConsole.Confirm("¿Enviar WhatsApp reales ahora?", false);
+
+        return enviar
+            ? ["wapp-foto-parcial"]
+            : ["wapp-foto-parcial", "--simular"];
     }
 
     static string PedirTrabajoPractico() =>

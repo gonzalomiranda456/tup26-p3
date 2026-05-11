@@ -86,7 +86,7 @@ static class AlumnosManager {
     }
 
     public static void Escribir(IEnumerable<Alumno> alumnos, string rutaArchivo) {
-        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr"];
+        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Codigo"];
         var guiones = etiquetas.Select(e => new string('-', 40)).ToArray();
         try {
             List<Alumno> alumnosOrdenados = new(alumnos);
@@ -173,7 +173,7 @@ static class AlumnosManager {
     }
 
     public static void Listar(IEnumerable<Alumno> alumnos, string titulo = "Listado de Alumnos") {
-        string[] campos = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr"];
+        string[] campos = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Codigo"];
         string[] guiones = campos.Select(c => new string('-', 40)).ToArray();
 
         string comision = "";
@@ -363,6 +363,7 @@ static class AlumnosManager {
                 alumno.Telefono,
                 TieneFoto = alumno.ConFoto,
                 GitHub = alumno.GitHub,
+                alumno.Codigo,
                 Practicos = alumno.practicos.Select(e => e.ToEmoji()).ToList(),
                 Examenes = alumno.examenes.Select(e => e.ToEmoji()).ToList()
             });
@@ -419,7 +420,7 @@ static class AlumnosManager {
     static Alumno? ExtraerAlumnoFormatoMarkdown(string linea, string comisionActual) {
         List<string> columnas = Regex.Split(linea.TrimEnd(), @"\s{2,}").ToList();
 
-        while (columnas.Count < 9) {
+        while (columnas.Count < 10) {
             columnas.Add(string.Empty);
         }
 
@@ -428,7 +429,7 @@ static class AlumnosManager {
 
         (string apellido, string nombre) = ExtraerApellidoNombre(columnas[1]);
 
-        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]));
+        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]), LimpiarCampo(columnas[9]));
         CargarEstados(alumno.practicos, columnas[5]);
         CargarEstados(alumno.examenes, columnas[6]);
 
@@ -438,7 +439,7 @@ static class AlumnosManager {
 
     // static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
     static string FormatearFilaTabla(params string?[] columnas) {
-        int[] anchos = [6, 30, 14, 4, 25, 20, 4, 4, 4];
+        int[] anchos = [6, 30, 14, 4, 25, 20, 4, 4, 4, 20];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
@@ -458,7 +459,7 @@ static class AlumnosManager {
     static string ToSiNo(this bool valor) => valor ? "Sí" : "No";
 
     static string FormatearFila(Alumno a) {
-        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString());
+        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Codigo);
     }
 
     static string FormatearFilaEstadoInformer(Alumno alumno) {

@@ -148,3 +148,13 @@ sealed class WappRecuperarTp1Tp2Command : Command<SimularSettings> {
     protected override int Execute(CommandContext context, SimularSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.WappRecuperarTp1Tp2(settings.Simular);
 }
+
+sealed class WappFotoParcialCommand : Command<SimularSettings> {
+    protected override int Execute(CommandContext context, SimularSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.WappFotoParcial(settings.Simular);
+}
+
+sealed class RegistrarRespuestasCommand : Command<VacioSettings> {
+    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.RegistrarRespuestas();
+}

@@ -265,6 +265,22 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int RegistrarRespuestas() {
+        Alumnos alumnos = CargarAlumnos();
+
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("cyan"))
+            .Start("Registrando respuestas de WhatsApp...", contexto =>
+                CargarCodigosDesdeWhatsApp(alumnos, estado => contexto.Status(estado)));
+
+        IEnumerable<Alumno> conCodigo = alumnos.Where(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
+        AlumnosManager.Listar(conCodigo, "Alumnos con código registrado");
+        Log.WriteLine($"Códigos detectados: {conCodigo.Count()}");
+        AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
+        return 0;
+    }
+
     public static int WappGrupos() {
         WAppService wapp = new();
 
@@ -324,6 +340,54 @@ static class AlumnosCliActions {
         }
 
         Log.Info($"Resumen WhatsApp TP1/TP2: destinatarios={destinatarios.Count}, enviados={enviados}, omitidos={omitidos}, simular={simular}");
+        return omitidos > 0 && !simular ? 1 : 0;
+    }
+
+    public static int WappFotoParcial(bool simular) {
+        Alumnos alumnos = CargarAlumnos();
+        List<Alumno> destinatarios = alumnos
+            .Where(alumno => !alumno.ConFoto)
+            .OrderBy(alumno => alumno.Comision)
+            .ThenBy(alumno => alumno.NombreCompleto)
+            .ThenBy(alumno => alumno.Legajo)
+            .ToList();
+
+        if (destinatarios.Count == 0) {
+            Log.Info("No hay alumnos sin foto de perfil.");
+            return 0;
+        }
+
+        Log.Info($"{(simular ? "Simulación" : "Envío")} de WhatsApp a alumnos sin foto de perfil.");
+
+        WAppService? wapp = simular ? null : new WAppService();
+        int enviados = 0;
+        int omitidos = 0;
+
+        foreach (Alumno alumno in destinatarios) {
+            string mensaje = MensajeFotoParcial(alumno);
+
+            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
+                omitidos++;
+                Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
+                continue;
+            }
+
+            if (simular) {
+                Log.Info($"SIMULAR {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
+                Log.WriteLine(mensaje);
+            } else {
+                try {
+                    wapp!.Enviar(alumno.TelefonoId, mensaje, null);
+                    enviados++;
+                    Log.Info($"Enviado: {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
+                } catch (Exception ex) {
+                    omitidos++;
+                    Log.Error($"No se pudo enviar a {alumno.Legajo} | {alumno.NombreCompleto}: {ex.Message}");
+                }
+            }
+        }
+
+        Log.Info($"Resumen WhatsApp foto parcial: destinatarios={destinatarios.Count}, enviados={enviados}, omitidos={omitidos}, simular={simular}");
         return omitidos > 0 && !simular ? 1 : 0;
     }
 
@@ -388,6 +452,44 @@ static class AlumnosCliActions {
         }
     }
 
+    static void CargarCodigosDesdeWhatsApp(Alumnos alumnos, Action<string>? actualizarEstado = null) {
+        actualizarEstado?.Invoke("Sincronizando WhatsApp...");
+        WAppService wapp = new();
+        DateTime desde = DateTime.Today;
+        DateTime hasta = DateTime.Today.AddDays(1);
+
+        foreach (Alumno alumno in alumnos) {
+            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
+                continue;
+            }
+
+            actualizarEstado?.Invoke($"Leyendo respuestas de {alumno.NombreCompleto}...");
+
+            try {
+                foreach (MensajeWhatsApp mensaje in wapp.Mensajes(alumno.TelefonoId, desde, hasta)) {
+                    if (mensaje.FromMe) {
+                        continue;
+                    }
+
+                    string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
+                    if (codigo is not null) {
+                        alumno.Codigo = codigo;
+                        break;
+                    }
+                }
+            } catch (Exception ex) {
+                Log.Warning($"No se pudieron leer mensajes de {alumno.NombreCompleto}: {ex.Message}");
+            }
+        }
+
+        actualizarEstado?.Invoke("Consolidando códigos...");
+    }
+
+    static string? ExtraerCodigoDesdeTexto(string texto) {
+        Match m = Regex.Match(texto, @"\d{6}\.\d{2}\.[a-zA-Z0-9]+");
+        return m.Success ? m.Value : null;
+    }
+
     static bool EsMensajeDeAsistencia(MensajeWhatsApp mensaje, DateTime desde, DateTime hasta) {
         if (mensaje.FromMe || mensaje.Fecha < desde || mensaje.Fecha > hasta) {
             return false;
@@ -412,6 +514,15 @@ static class AlumnosCliActions {
 
     static bool TieneAlgunPracticoPresentado(Alumno alumno) =>
         alumno.practicos.Any(estado => estado == Estado.Aprobado);
+
+    static string MensajeFotoParcial(Alumno alumno) =>
+        $"""
+        Hola *{alumno.Nombre}*.
+
+        No tengo registrada una foto tuya en el sistema y mañana tenemos el parcial.
+
+        Respondé este mensaje con una *selfie simple* para que pueda identificarte durante el examen. 📸
+        """;
 
     static string MensajeRecuperacionTp1Tp2(Alumno alumno) =>
         $"""
