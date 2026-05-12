@@ -16,6 +16,7 @@
       --line:     rgba(33, 25, 18, .13);
       --radius:   22px;
       --avatar:   88px;
+      --grid-gap: 16px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -160,8 +161,9 @@
     /* ── Grid ─────────────────────────────────────────── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(350px, calc((100% - (2 * var(--grid-gap))) / 3)));
+      justify-content: center;
+      gap: var(--grid-gap);
     }
 
     /* ── Card ─────────────────────────────────────────── */
@@ -517,7 +519,7 @@
       :root { --avatar: 72px; }
       .page { padding: 16px 0 40px; }
       .header { padding: 18px 16px; }
-      .grid { gap: 12px; }
+      .grid { --grid-gap: 12px; }
       h1 { font-size: clamp(2rem, 10vw, 3rem); }
       .card-meta { grid-template-columns: 1fr; }
       .practicos-status {
@@ -535,12 +537,6 @@
       }
       .attendance-summary {
         justify-content: flex-start;
-      }
-    }
-
-    @media (min-width: 1040px) {
-      .grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
     }
 
@@ -567,14 +563,12 @@
             <circle cx="6.5" cy="6.5" r="5.2"/>
             <line x1="10.3" y1="10.3" x2="14" y2="14"/>
           </svg>
-          <input type="search" id="search" placeholder="Buscar nombre, legajo, GitHub… o sin-foto/sin-github/sin-telefono" autocomplete="off">
+          <input type="search" id="search" placeholder="Buscar nombre, legajo, GitHub… o sin-telefono" autocomplete="off">
         </div>
         <div class="tabs">
           <button class="tab active" data-filter="todos" data-filter-type="scope">Todos</button>
           <button class="tab" data-filter="C7" data-filter-type="scope">C7</button>
           <button class="tab" data-filter="C9" data-filter-type="scope">C9</button>
-          <button class="tab" data-filter="sin-foto" data-filter-type="toggle">Sin Foto</button>
-          <button class="tab" data-filter="sin-github" data-filter-type="toggle">Sin GitHub</button>
           <button class="tab" data-filter="presentes" data-filter-type="toggle">Presente 🔵</button>
         </div>
       </div>
@@ -598,6 +592,10 @@
     const GITHUB_OWNER = 'AlejandroDiBattista';
     const GITHUB_REPO = 'tup26-p3';
     const GITHUB_BRANCH = 'main';
+    const FILTERS_STORAGE_KEY = 'agenda-filters-state';
+    const LEGACY_PRESENTES_FILTER_STORAGE_KEY = 'agenda-filter-presentes';
+    const VALID_SCOPE_FILTERS = new Set(['todos', 'C7', 'C9']);
+    const VALID_TOGGLE_FILTERS = new Set(['presentes']);
 
     function encodedRepoPath(...segmentos) {
       return segmentos.map(segmento => encodeURIComponent(segmento)).join('/');
@@ -929,18 +927,59 @@
     let searchQuery  = '';
     let totalPracticos = 0;
 
+    function restoreFiltersState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(FILTERS_STORAGE_KEY) || 'null');
+
+        if (saved && typeof saved === 'object') {
+          if (VALID_SCOPE_FILTERS.has(saved.scope)) {
+            activeScope = saved.scope;
+          }
+
+          if (Array.isArray(saved.toggles)) {
+            saved.toggles
+              .filter(toggle => VALID_TOGGLE_FILTERS.has(toggle))
+              .forEach(toggle => activeToggles.add(toggle));
+          }
+
+          if (typeof saved.searchQuery === 'string') {
+            searchQuery = saved.searchQuery;
+          }
+
+          return;
+        }
+
+        if (localStorage.getItem(LEGACY_PRESENTES_FILTER_STORAGE_KEY) === '1') {
+          activeToggles.add('presentes');
+        }
+      } catch {
+        // Si localStorage no está disponible, seguimos con el estado en memoria.
+      }
+    }
+
+    function persistFiltersState() {
+      try {
+        localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
+          scope: activeScope,
+          toggles: [...activeToggles].filter(toggle => VALID_TOGGLE_FILTERS.has(toggle)),
+          searchQuery,
+        }));
+        localStorage.removeItem(LEGACY_PRESENTES_FILTER_STORAGE_KEY);
+      } catch {
+        // Si localStorage no está disponible, seguimos con el estado en memoria.
+      }
+    }
+
     function parseSearchQuery(query) {
       const normalized = query.toLowerCase();
       const terms = normalized.split(/[\s,]+/).filter(Boolean);
       const commissionTerms = ['c7', 'c9'].filter(term => terms.includes(term));
 
       return {
-        requireSinFoto: terms.includes('sin-foto'),
-        requireSinGithub: terms.includes('sin-github'),
         requireSinTelefono: terms.includes('sin-telefono'),
         commissions: commissionTerms,
         text: terms
-          .filter(term => term !== 'sin-foto' && term !== 'sin-github' && term !== 'sin-telefono' && term !== 'c7' && term !== 'c9')
+          .filter(term => term !== 'sin-telefono' && term !== 'c7' && term !== 'c9')
           .join(' ')
           .trim(),
       };
@@ -956,8 +995,6 @@
     }
 
     function matchesToggles(alumno) {
-      if (activeToggles.has('sin-foto') && alumno.tieneFoto) return false;
-      if (activeToggles.has('sin-github') && !!alumno.gitHub) return false;
       if (activeToggles.has('presentes') && !alumno.presente) return false;
       return true;
     }
@@ -982,8 +1019,6 @@
         if (!matchesScope(a, activeScope)) return false;
         if (!matchesToggles(a)) return false;
         if (parsed.commissions.length > 0 && !parsed.commissions.includes(a.comision.toLowerCase())) return false;
-        if (parsed.requireSinFoto && a.tieneFoto) return false;
-        if (parsed.requireSinGithub && !!a.gitHub) return false;
         if (parsed.requireSinTelefono && !!a.telefono) return false;
 
         if (!parsed.text) return true;
@@ -1020,8 +1055,14 @@
     }
 
     // ── Event listeners ───────────────────────────────────────────────────────
-    document.getElementById('search').addEventListener('input', e => {
+    const searchInput = document.getElementById('search');
+
+    restoreFiltersState();
+    searchInput.value = searchQuery;
+
+    searchInput.addEventListener('input', e => {
       searchQuery = e.target.value.trim();
+      persistFiltersState();
       render();
     });
 
@@ -1038,6 +1079,7 @@
           activeToggles.add(filter);
         }
 
+        persistFiltersState();
         updateTabStates();
         render();
       });

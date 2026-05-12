@@ -204,12 +204,12 @@ static class AlumnosCliApp {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Asistencias y WhatsApp[/] · Elegí una acción",
             [
-                new("registrar-asistencias",  "Registrar asistencias", "Consolidar presentes del día"),
+                new("registrar-respuestas",   "Registrar respuestas",  "Leer respuestas de WhatsApp y registrar códigos"),
                 new("contar-asistencias",     "Contar asistencias",    "Detectar presentes desde WhatsApp"),
+                new("registrar-asistencias",  "Registrar asistencias", "Consolidar presentes del día"),
                 new("wapp-grupos",            "WhatsApp grupos",       "Listar grupos y participantes"),
                 new("wapp-recuperar-tp1-tp2", "Recuperar TP1/TP2",     "Enviar aviso a alumnos que no presentaron TP1 ni TP2"),
                 new("wapp-foto-parcial",      "Foto para el parcial",  "Pedir selfie a alumnos sin foto de perfil"),
-                new("registrar-respuestas",   "Registrar respuestas",  "Leer respuestas de WhatsApp y registrar códigos"),
                 new("volver",                 "Volver",                "Regresar al menú principal")
             ]);
 
@@ -234,12 +234,12 @@ static class AlumnosCliApp {
 
     static IReadOnlyList<InteractiveChoice> ObtenerOpcionesPrincipales() =>
         [
+            new("asistencias",    "Asistencias y WhatsApp", "Acciones vinculadas a presentes y grupos"),
             new("listar",         "Listar",                 "Mostrar todos los alumnos"),
             new("auditoria",      "Auditoría",              "Revisar datos faltantes o incompletos"),
             new("exportar",       "Exportar",               "Guardar o exportar en distintos formatos"),
             new("crear-carpetas", "Crear carpetas",         "Crear o normalizar carpetas de alumnos"),
             new("prs",            "Presentaciones",         "Operaciones sobre pull requests y prácticos"),
-            new("asistencias",    "Asistencias y WhatsApp", "Acciones vinculadas a presentes y grupos"),
             new("salir",          "Salir",                  "Cerrar la aplicación")
         ];
 

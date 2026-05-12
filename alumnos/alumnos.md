@@ -10,11 +10,10 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63402   Condori, Nahuel Ariel           (381) 341-9689  Sí    nahuelc19                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7     —                   
 63419   Coronel, Tomás                  (381) 678-0335  Sí    tomicor979-lgtm            🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9     —                   
 63241   Cortez, Josías                  (381) 665-0808  Sí    josias57455                🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8     —                   
-66666   Di Battista, Alejandro          (381) 534-3458  No    alejandrodibattista        🟢🟢⚪️⚪️⚪️            🟡⚪️  Sí    2     66666.28.4d9eh278dmv
 63776   Fuensalida, Ulises Nahuel       (381) 334-9851  Sí    ulisesfuensalida-ui        🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5     —                   
 63396   Gil Garau, Atalía Trinidad      (381) 456-4405  Sí    ataliagg                   🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7     —                   
 63457   González Dupuy, Ignacio         (381) 683-1233  Sí    ignas11                    🟢🟢⚪️⚪️⚪️            🟢⚪️  No    10    —                   
-61577   González, Lucas Alfredo         (381) 669-4386  Sí    lucasgonzaa                🟢🔴⚪️⚪️⚪️            🟡⚪️  No    5     -
+61577   González, Lucas Alfredo         (381) 669-4386  Sí    lucasgonzaa                🟢🔴⚪️⚪️⚪️            🟡⚪️  No    5     -                   
 63174   Jerez, Luciano Germán           (381) 550-7143  Sí    luchex1525                 🟢🟢⚪️⚪️⚪️            🟢⚪️  No    11    —                   
 63700   Jiménez, Nelson Maximiliano     (381) 639-2861  Sí    maximilianojimnez          🟢🟢⚪️⚪️⚪️            🟡⚪️  No    6     —                   
 63399   Lazarte, Gonzalo Romeo          (381) 576-0069  Sí    tutu-04                    🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7     —                   
@@ -52,7 +51,8 @@ Legajo  Nombre y Apellido               Teléfono        Foto  GitHub           
 63218   Cortés, Guillermo Augusto       (381) 606-0586  Sí    guillecortes01             🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9     —                   
 64016   Cura, Rocío Aylen               (381) 478-8799  Sí    rocura26                   🔴🟢⚪️⚪️⚪️            🟡⚪️  No    5     —                   
 63266   Decima, Juan Cruz               (381) 558-9063  Sí    devjuancruz003-com         🟢🟢⚪️⚪️⚪️            🟢⚪️  No    9     —                   
-63137   Díaz, José Simón                (381) 617-9958  Sí    josesimondiaz              🟢🟢⚪️⚪️⚪️            🟡⚪️  No    7     —                   
+66666   Di Battista, Alejandro          (381) 534-3458  Sí    alejandrodibattista        🟢🟢⚪️⚪️⚪️            🔴⚪️  Sí    3     66666.29.4d9eh278dmv
+63137   Díaz, José Simón                (381) 617-9958  Sí    josesimondiaz              🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8     -                   
 61641   Figueroa, Nahuel Ramón          (381) 353-2589  Sí    figueroanahuel16           🔴🔴⚪️⚪️⚪️            🟢⚪️  No    8     —                   
 63737   Galván, Rocío Julieta           (381) 647-5597  Sí    rociogalvani               🟢🟢⚪️⚪️⚪️            🟢⚪️  No    8     —                   
 63345   García, Franco Tomás            (381) 207-5701  Sí    francotms                  🟢🟢⚪️⚪️⚪️            🟡⚪️  No    5     —                   
