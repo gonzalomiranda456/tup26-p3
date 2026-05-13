@@ -1807,9 +1807,9 @@
     const EXAM_DURATION_MS = 60 * 60 * 1000;
     const EXIT_DEDUPE_MS = 1500;
     const INTEGRITY_MESSAGE_TIMEOUT_MS = 6500;
-    const EXIT_WARNING_MESSAGE = "Se detectó que saliste de la pantalla. Si vuelve a ocurrir, se anulará este intento y comenzará uno nuevo.";
-    const EXIT_RESET_MESSAGE = "El intento anterior fue anulado por salir de la pantalla. Se inició un nuevo intento.";
-    const EXIT_BLOCKED_MESSAGE = "El intento fue anulado por salir de la pantalla y no quedan intentos disponibles.";
+    const EXIT_WARNING_MESSAGE = "Detectamos que saliste de la pantalla. Si vuelve a pasar, este intento se anulará y comenzará uno nuevo.";
+    const EXIT_RESET_MESSAGE = "El intento anterior se anuló porque saliste de la pantalla. Se inició un nuevo intento.";
+    const EXIT_BLOCKED_MESSAGE = "El intento se anuló porque saliste de la pantalla y ya no quedan intentos disponibles.";
     const CHEVRON_LEFT_ICON = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNoZXZyb24tbGVmdC1pY29uIGx1Y2lkZS1jaGV2cm9uLWxlZnQiPjxwYXRoIGQ9Im0xNSAxOC02LTYgNi02Ii8+PC9zdmc+";
 
     function getExamQuestionCount(now = new Date()) {
@@ -2238,7 +2238,7 @@
             <p id="legajoMessage" class="form-message">${escapeHtml(message)}</p>
             <div id="welcomeBox"></div>
             <div class="actions">
-              <button id="startButton" class="primary-button" type="submit" disabled>Comenzar examen</button>
+              <button id="startButton" class="primary-button" type="submit" disabled>Comenzar el examen</button>
             </div>
           </form>
         </section>
@@ -2297,11 +2297,10 @@
         messageNode.textContent = "";
         welcomeBox.innerHTML = `
           <div class="welcome-message">
-            Hola <strong>${escapeHtml(student.nombreSaludo)}</strong>.<br><br>
-            Tenés 1 hora para hacer el examen.<br><br>
-            Al terminar, vas a recibir un código.<br><br>
-            Copialo y envialo por WhatsApp al grupo de la comisión.<br><br>
-            <small>Podés repetir el examen dentro del tiempo disponible. Se tomará tu mejor resultado.</small>
+            Hola, <strong>${escapeHtml(student.nombreSaludo)}</strong>.<br><br>
+            Tenés 1 hora para completar el examen.<br><br>
+            Al finalizar, vas a recibir un código para compartir por WhatsApp en el grupo de la comisión.<br><br>
+            <small>Podés repetir el examen mientras siga disponible el tiempo. Se tomará tu mejor resultado.</small>
           </div>
         `;
         startButton.disabled = false;
@@ -2611,9 +2610,9 @@
         return total + (state.answers.get(question.id) === question.correctIndex ? 1 : 0);
       }, 0);
       
-      const attendanceCredits = Math.floor(state.student.asistencias / 3);
+      const attendanceCredits = Math.floor(state.student.asistencias / 3 + 0.5);
       const credits = correctCount + attendanceCredits - 20 + 3; // -20 son para anular el azar, + 3 para compensar errores en las preguntas.
-      const grade = clampNumber(credits / 40, 1, 10);
+      const grade = clampNumber(credits / 4.0 + 0.5, 1, 10);
       const encodedAttemptAndGrade = state.attempt * 10 + (getCodeGrade(grade) - 1);
       const answerDigits = state.currentQuestions.map((question) => state.answers.get(question.id));
       const encodedAnswers = ConvertirBase(answerDigits, 3, 32);

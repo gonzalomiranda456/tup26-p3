@@ -232,12 +232,16 @@ static class AlumnosCliActions {
 
     public static int RegistrarAsistencias() {
         Alumnos alumnos = CargarAlumnos();
-        int contar = 0;
+        Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
+        int contar = presentesHoy.Length;
+
+        if (contar > 0) {
+            AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
+        }
 
         foreach (Alumno alumno in alumnos) {
             if (alumno.Presente) {
                 alumno.Asistencias++;
-                contar++;
             }
 
             alumno.Presente = false;
@@ -245,7 +249,10 @@ static class AlumnosCliActions {
         }
 
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
-        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Presente), "Alumnos presentes hoy");
+        if (contar == 0) {
+            Log.WriteLine("No hay alumnos presentes para registrar.");
+        }
+
         Log.WriteLine($"Asistencias registradas: {contar}");
         return 0;
     }
@@ -259,8 +266,10 @@ static class AlumnosCliActions {
             .Start("Preparando relevamiento de asistencias...", contexto =>
                 CargarAsistenciasHastaHoy(alumnos, estado => contexto.Status(estado)));
 
-        AlumnosManager.Listar(alumnos.Where(alumno => alumno.Asistencias > 0), "Alumnos con asistencias desde el 01/04");
-        Log.WriteLine($"Asistencias detectadas: {alumnos.Sum(alumno => alumno.Asistencias)}");
+        Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
+        AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
+        Log.WriteLine($"Presentes detectados hoy: {presentesHoy.Length}");
+        Log.WriteLine($"Asistencias acumuladas hasta ayer: {alumnos.Sum(alumno => alumno.Asistencias)}");
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         return 0;
     }
@@ -488,15 +497,18 @@ static class AlumnosCliActions {
 
         actualizarEstado?.Invoke("Consolidando asistencias...");
         foreach (Alumno alumno in alumnos) {
-            alumno.Asistencias = asistenciasPorAlumno[alumno.Legajo].Count;
+            HashSet<DateTime> fechas = asistenciasPorAlumno[alumno.Legajo];
+            alumno.Presente = fechas.Contains(hoy.Date);
+            alumno.Asistencias = fechas.Count(fecha => fecha < hoy.Date);
         }
     }
 
     static void CargarCodigosDesdeWhatsApp(Alumnos alumnos, Action<string>? actualizarEstado = null) {
         actualizarEstado?.Invoke("Sincronizando WhatsApp...");
         WAppService wapp = new();
-        DateTime desde = DateTime.Today.AddDays(-1);
+        DateTime desde = DateTime.Today.AddDays(-30);
         DateTime hasta = DateTime.Today.AddDays(1);
+        Dictionary<int, (DateTime Fecha, string Codigo, string Origen)> codigosDetectados = new();
 
         foreach (string grupo in new[] { "C7", "C9" }) {
             actualizarEstado?.Invoke($"Leyendo mensajes del grupo {grupo}...");
@@ -511,15 +523,20 @@ static class AlumnosCliActions {
                         continue;
                     }
 
-                    string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
-                    Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
+                    Alumno? alumno = ExtraerLegajoDesdeCodigo(codigo) is int legajo
+                        ? alumnos.BuscarPorLegajo(legajo)
+                        : null;
+
+                    if (alumno is null) {
+                        string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                        alumno = alumnos.BuscarPorTelefono(telefono);
+                    }
+
                     if (alumno is null) {
                         continue;
                     }
 
-                    alumno.Codigo = codigo;
-                    alumno.Presente = true;
-                    Log.Info($"Código detectado ({grupo}) [{mensaje.Fecha:HH:mm}]: {alumno.NombreCompleto} → {codigo}");
+                    RegistrarCodigoDetectado(alumno, mensaje, codigo, grupo);
                 }
             } catch (Exception ex) {
                 Log.Warning($"No se pudieron leer mensajes del grupo {grupo}: {ex.Message}");
@@ -527,7 +544,7 @@ static class AlumnosCliActions {
         }
 
         foreach (Alumno alumno in alumnos) {
-            if (!string.IsNullOrWhiteSpace(alumno.Codigo) || string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
+            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
                 continue;
             }
 
@@ -540,9 +557,7 @@ static class AlumnosCliActions {
 
                     string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
                     if (codigo is not null) {
-                        alumno.Codigo = codigo;
-                        alumno.Presente = true;
-                        Log.Info($"Código detectado (privado) [{mensaje.Fecha:HH:mm}]: {alumno.NombreCompleto} → {codigo}");
+                        RegistrarCodigoDetectado(alumno, mensaje, codigo, "privado");
                     }
                 }
             } catch (Exception ex) {
@@ -551,11 +566,34 @@ static class AlumnosCliActions {
         }
 
         actualizarEstado?.Invoke("Consolidando códigos...");
+
+        foreach (Alumno alumno in alumnos) {
+            if (!codigosDetectados.TryGetValue(alumno.Legajo, out var detectado)) {
+                continue;
+            }
+
+            alumno.Codigo = detectado.Codigo;
+            alumno.Presente = true;
+            Log.Info($"Código detectado ({detectado.Origen}) [{detectado.Fecha:HH:mm}]: {alumno.NombreCompleto} → {detectado.Codigo}");
+        }
+
+        void RegistrarCodigoDetectado(Alumno alumno, MensajeWhatsApp mensaje, string codigo, string origen) {
+            if (codigosDetectados.TryGetValue(alumno.Legajo, out var anterior) && anterior.Fecha > mensaje.Fecha) {
+                return;
+            }
+
+            codigosDetectados[alumno.Legajo] = (mensaje.Fecha, codigo, origen);
+        }
     }
 
     static string? ExtraerCodigoDesdeTexto(string texto) {
-        Match m = Regex.Match(texto, @"\d+\.\d+\.[a-zA-Z0-9]+");
+        Match m = Regex.Match(texto, @"\b\d+\.\d+\.[a-zA-Z0-9]+(?:\.\d{2})?\b");
         return m.Success ? m.Value : null;
+    }
+
+    static int? ExtraerLegajoDesdeCodigo(string codigo) {
+        string primerParte = codigo.Split('.')[0];
+        return int.TryParse(primerParte, out int legajo) ? legajo : null;
     }
 
     static bool EsMensajeDeAsistencia(MensajeWhatsApp mensaje, DateTime desde, DateTime hasta) {

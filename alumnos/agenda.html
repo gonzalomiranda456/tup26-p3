@@ -128,6 +128,16 @@
       gap: 6px;
     }
 
+    .tabs-divider {
+      align-self: center;
+      color: rgba(33, 25, 18, .35);
+      font-size: .9rem;
+      font-weight: 700;
+      padding: 0 2px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
     .tab {
       padding: .45rem .9rem;
       border: 1.5px solid rgba(33, 25, 18, .18);
@@ -563,13 +573,14 @@
             <circle cx="6.5" cy="6.5" r="5.2"/>
             <line x1="10.3" y1="10.3" x2="14" y2="14"/>
           </svg>
-          <input type="search" id="search" placeholder="Buscar nombre, legajo, GitHub… o sin-telefono" autocomplete="off">
+          <input type="search" id="search" placeholder="Buscar por nombre, legajo, GitHub o la clave sin-telefono" autocomplete="off">
         </div>
         <div class="tabs">
-          <button class="tab active" data-filter="todos" data-filter-type="scope">Todos</button>
-          <button class="tab" data-filter="C7" data-filter-type="scope">C7</button>
-          <button class="tab" data-filter="C9" data-filter-type="scope">C9</button>
-          <button class="tab" data-filter="presentes" data-filter-type="toggle">Presente 🔵</button>
+          <button class="tab active" data-filter="C7" data-filter-group="commission" data-label="C7">C7</button>
+          <button class="tab active" data-filter="C9" data-filter-group="commission" data-label="C9">C9</button>
+          <span class="tabs-divider" aria-hidden="true">|</span>
+          <button class="tab active" data-filter="presentes" data-filter-group="attendance" data-label="Presentes">Presentes</button>
+          <button class="tab active" data-filter="ausentes" data-filter-group="attendance" data-label="Ausentes">Ausentes</button>
         </div>
       </div>
     </header>
@@ -594,8 +605,16 @@
     const GITHUB_BRANCH = 'main';
     const FILTERS_STORAGE_KEY = 'agenda-filters-state';
     const LEGACY_PRESENTES_FILTER_STORAGE_KEY = 'agenda-filter-presentes';
-    const VALID_SCOPE_FILTERS = new Set(['todos', 'C7', 'C9']);
-    const VALID_TOGGLE_FILTERS = new Set(['presentes']);
+    const COMMISSION_FILTER_DEFINITIONS = [
+      { value: 'C7', label: 'C7' },
+      { value: 'C9', label: 'C9' },
+    ];
+    const ATTENDANCE_FILTER_DEFINITIONS = [
+      { value: 'presentes', label: 'Presentes' },
+      { value: 'ausentes', label: 'Ausentes' },
+    ];
+    const VALID_COMMISSION_FILTERS = new Set(COMMISSION_FILTER_DEFINITIONS.map(filter => filter.value));
+    const VALID_ATTENDANCE_FILTERS = new Set(ATTENDANCE_FILTER_DEFINITIONS.map(filter => filter.value));
 
     function encodedRepoPath(...segmentos) {
       return segmentos.map(segmento => encodeURIComponent(segmento)).join('/');
@@ -853,7 +872,7 @@
               ${avatarHtml}
             </div>
             <div class="identity">
-              <p class="card-eyebrow">Tarjeta personal</p>
+              <p class="card-eyebrow">Perfil del alumno</p>
               <h2 class="card-name">${escHtml(alumno.apellidoNombre)}</h2>
               <div class="badges">
                 <span class="badge">${alumno.legajo}</span>
@@ -922,8 +941,8 @@
 
     // ── State ─────────────────────────────────────────────────────────────────
     let allAlumnos = [];
-    let activeScope = 'todos';
-    const activeToggles = new Set();
+    const activeCommissionFilters = new Set(COMMISSION_FILTER_DEFINITIONS.map(filter => filter.value));
+    const activeAttendanceFilters = new Set(ATTENDANCE_FILTER_DEFINITIONS.map(filter => filter.value));
     let searchQuery  = '';
     let totalPracticos = 0;
 
@@ -932,14 +951,29 @@
         const saved = JSON.parse(localStorage.getItem(FILTERS_STORAGE_KEY) || 'null');
 
         if (saved && typeof saved === 'object') {
-          if (VALID_SCOPE_FILTERS.has(saved.scope)) {
-            activeScope = saved.scope;
+          if (Array.isArray(saved.commissions)) {
+            activeCommissionFilters.clear();
+            saved.commissions
+              .filter(filter => VALID_COMMISSION_FILTERS.has(filter))
+              .forEach(filter => activeCommissionFilters.add(filter));
+          } else if (saved.scope === 'C7' || saved.scope === 'C9') {
+            activeCommissionFilters.clear();
+            activeCommissionFilters.add(saved.scope);
           }
 
-          if (Array.isArray(saved.toggles)) {
-            saved.toggles
-              .filter(toggle => VALID_TOGGLE_FILTERS.has(toggle))
-              .forEach(toggle => activeToggles.add(toggle));
+          if (Array.isArray(saved.attendance)) {
+            activeAttendanceFilters.clear();
+            saved.attendance
+              .filter(filter => VALID_ATTENDANCE_FILTERS.has(filter))
+              .forEach(filter => activeAttendanceFilters.add(filter));
+          } else if (Array.isArray(saved.toggles)) {
+            activeAttendanceFilters.clear();
+
+            if (saved.toggles.includes('presentes')) {
+              activeAttendanceFilters.add('presentes');
+            } else {
+              ATTENDANCE_FILTER_DEFINITIONS.forEach(filter => activeAttendanceFilters.add(filter.value));
+            }
           }
 
           if (typeof saved.searchQuery === 'string') {
@@ -950,7 +984,8 @@
         }
 
         if (localStorage.getItem(LEGACY_PRESENTES_FILTER_STORAGE_KEY) === '1') {
-          activeToggles.add('presentes');
+          activeAttendanceFilters.clear();
+          activeAttendanceFilters.add('presentes');
         }
       } catch {
         // Si localStorage no está disponible, seguimos con el estado en memoria.
@@ -960,8 +995,8 @@
     function persistFiltersState() {
       try {
         localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
-          scope: activeScope,
-          toggles: [...activeToggles].filter(toggle => VALID_TOGGLE_FILTERS.has(toggle)),
+          commissions: [...activeCommissionFilters].filter(filter => VALID_COMMISSION_FILTERS.has(filter)),
+          attendance: [...activeAttendanceFilters].filter(filter => VALID_ATTENDANCE_FILTERS.has(filter)),
           searchQuery,
         }));
         localStorage.removeItem(LEGACY_PRESENTES_FILTER_STORAGE_KEY);
@@ -985,69 +1020,89 @@
       };
     }
 
-    function matchesScope(alumno, filter) {
-      switch (filter) {
-        case 'todos':
-          return true;
-        default:
-          return alumno.comision === filter;
-      }
+    function matchesSearch(alumno, parsed) {
+      if (parsed.commissions.length > 0 && !parsed.commissions.includes(alumno.comision.toLowerCase())) return false;
+      if (parsed.requireSinTelefono && !!alumno.telefono) return false;
+
+      if (!parsed.text) return true;
+
+      const q = parsed.text;
+      return (
+        alumno.apellido.toLowerCase().includes(q) ||
+        alumno.nombre.toLowerCase().includes(q) ||
+        alumno.apellidoNombre.toLowerCase().includes(q) ||
+        String(alumno.legajo).includes(q) ||
+        alumno.gitHub.toLowerCase().includes(q) ||
+        alumno.telefono.toLowerCase().includes(q)
+      );
     }
 
-    function matchesToggles(alumno) {
-      if (activeToggles.has('presentes') && !alumno.presente) return false;
-      return true;
+    function matchesCommissionFilters(alumno, selectedFilters = activeCommissionFilters) {
+      return selectedFilters.has(alumno.comision);
     }
 
-    function updateTabStates() {
+    function matchesAttendanceFilters(alumno, selectedFilters = activeAttendanceFilters) {
+      return alumno.presente
+        ? selectedFilters.has('presentes')
+        : selectedFilters.has('ausentes');
+    }
+
+    function matchesFilters(alumno, parsed, commissionFilters = activeCommissionFilters, attendanceFilters = activeAttendanceFilters) {
+      return matchesCommissionFilters(alumno, commissionFilters)
+        && matchesAttendanceFilters(alumno, attendanceFilters)
+        && matchesSearch(alumno, parsed);
+    }
+
+    function countMatchingAlumnos(parsed, commissionFilters = activeCommissionFilters, attendanceFilters = activeAttendanceFilters) {
+      return allAlumnos.filter(alumno => matchesFilters(alumno, parsed, commissionFilters, attendanceFilters)).length;
+    }
+
+    function countBaseSelection() {
+      return allAlumnos.filter(alumno => (
+        matchesCommissionFilters(alumno)
+        && matchesAttendanceFilters(alumno)
+      )).length;
+    }
+
+    function updateTabStates(parsed) {
       document.querySelectorAll('.tab').forEach(btn => {
-        const type = btn.dataset.filterType;
+        const group = btn.dataset.filterGroup;
         const filter = btn.dataset.filter;
-        const isActive = type === 'scope'
-          ? filter === activeScope
-          : activeToggles.has(filter);
+        const isActive = group === 'commission'
+          ? activeCommissionFilters.has(filter)
+          : activeAttendanceFilters.has(filter);
+        const label = btn.dataset.label || filter;
+        const count = group === 'commission'
+          ? countMatchingAlumnos(parsed, new Set([filter]), activeAttendanceFilters)
+          : countMatchingAlumnos(parsed, activeCommissionFilters, new Set([filter]));
 
         btn.classList.toggle('active', isActive);
         btn.setAttribute('aria-pressed', String(isActive));
+        btn.textContent = `${label} (${count})`;
       });
     }
 
-    function getVisible() {
-      const parsed = parseSearchQuery(searchQuery);
-
-      return allAlumnos.filter(a => {
-        if (!matchesScope(a, activeScope)) return false;
-        if (!matchesToggles(a)) return false;
-        if (parsed.commissions.length > 0 && !parsed.commissions.includes(a.comision.toLowerCase())) return false;
-        if (parsed.requireSinTelefono && !!a.telefono) return false;
-
-        if (!parsed.text) return true;
-        const q = parsed.text;
-        return (
-          a.apellido.toLowerCase().includes(q) ||
-          a.nombre.toLowerCase().includes(q) ||
-          a.apellidoNombre.toLowerCase().includes(q) ||
-          String(a.legajo).includes(q) ||
-          a.gitHub.toLowerCase().includes(q) ||
-          a.telefono.toLowerCase().includes(q)
-        );
-      });
+    function getVisible(parsed) {
+      return allAlumnos.filter(alumno => matchesFilters(alumno, parsed));
     }
 
     function render() {
-      const visible = getVisible();
+      const parsed = parseSearchQuery(searchQuery);
+      const visible = getVisible(parsed);
       const grid    = document.getElementById('grid');
       const counter = document.getElementById('counter');
 
+      updateTabStates(parsed);
+
       if (visible.length === 0) {
         grid.innerHTML = '<div class="state">Sin resultados para la búsqueda.</div>';
-        counter.textContent = '';
+        counter.textContent = '0 alumnos';
         return;
       }
 
       grid.innerHTML = visible.map((a, i) => renderCard(a, i, totalPracticos)).join('');
 
-      const total = allAlumnos.filter(a => matchesScope(a, activeScope) && matchesToggles(a)).length;
+      const total = countBaseSelection();
 
       counter.textContent = visible.length === total
         ? `${total} alumno${total !== 1 ? 's' : ''}`
@@ -1068,19 +1123,19 @@
 
     document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
-        const type = btn.dataset.filterType;
+        const group = btn.dataset.filterGroup;
         const filter = btn.dataset.filter;
+        const activeFilters = group === 'commission'
+          ? activeCommissionFilters
+          : activeAttendanceFilters;
 
-        if (type === 'scope') {
-          activeScope = filter;
-        } else if (activeToggles.has(filter)) {
-          activeToggles.delete(filter);
+        if (activeFilters.has(filter)) {
+          activeFilters.delete(filter);
         } else {
-          activeToggles.add(filter);
+          activeFilters.add(filter);
         }
 
         persistFiltersState();
-        updateTabStates();
         render();
       });
     });
@@ -1094,7 +1149,6 @@
       .then(async text => {
         allAlumnos = await Promise.all(parseAlumnos(text).map(resolveAlumnoPhoto));
         totalPracticos = calcularTotalPracticos(allAlumnos);
-        updateTabStates();
         render();
       })
       .catch(() => {

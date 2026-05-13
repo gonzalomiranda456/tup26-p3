@@ -86,8 +86,8 @@ static class AlumnosManager {
     }
 
     public static void Escribir(IEnumerable<Alumno> alumnos, string rutaArchivo) {
-        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Codigo"];
-        var guiones = etiquetas.Select(e => new string('-', 40)).ToArray();
+        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Nota", "Código"];
+        var guiones = etiquetas.Select(e => new string('-', 80)).ToArray();
         try {
             List<Alumno> alumnosOrdenados = new(alumnos);
             alumnosOrdenados.Sort(Alumno.Comparar);
@@ -130,7 +130,7 @@ static class AlumnosManager {
 
     public static void EscribirEstadoInformer(IEnumerable<Alumno> alumnos, string rutaArchivo) {
         string[] etiquetas = ["Legajo", "Nombre y Apellido", "Prácticos", "Asistencias"];
-        var guiones = etiquetas.Select(_ => new string('-', 40)).ToArray();
+        var guiones = etiquetas.Select(_ => new string('-', 80)).ToArray();
 
         try {
             List<Alumno> alumnosOrdenados = new(alumnos);
@@ -173,7 +173,7 @@ static class AlumnosManager {
     }
 
     public static void Listar(IEnumerable<Alumno> alumnos, string titulo = "Listado de Alumnos") {
-        string[] campos = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Codigo"];
+        string[] campos = ["Legajo", "Nombre y Apellido", "Teléfono", "Foto", "GitHub", "Prácticos", "Ex", "Pr", "Nr", "Nota", "Codigo"];
         string[] guiones = campos.Select(c => new string('-', 40)).ToArray();
 
         string comision = "";
@@ -363,9 +363,10 @@ static class AlumnosManager {
                 alumno.Telefono,
                 TieneFoto = alumno.ConFoto,
                 GitHub = alumno.GitHub,
+                alumno.Nota,
                 alumno.Codigo,
                 Practicos = alumno.practicos.Select(e => e.ToEmoji()).ToList(),
-                Examenes = alumno.examenes.Select(e => e.ToEmoji()).ToList()
+                Examenes  = alumno.examenes.Select(e => e.ToEmoji()).ToList()
             });
 
             JsonSerializerOptions opciones = new() {
@@ -419,8 +420,9 @@ static class AlumnosManager {
 
     static Alumno? ExtraerAlumnoFormatoMarkdown(string linea, string comisionActual) {
         List<string> columnas = Regex.Split(linea.TrimEnd(), @"\s{2,}").ToList();
+        bool incluyeP1 = columnas.Count >= 11;
 
-        while (columnas.Count < 10) {
+        while (columnas.Count < 11) {
             columnas.Add(string.Empty);
         }
 
@@ -429,22 +431,23 @@ static class AlumnosManager {
 
         (string apellido, string nombre) = ExtraerApellidoNombre(columnas[1]);
 
-        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]), LimpiarCampo(columnas[9]));
+        int nota = incluyeP1 ? ExtraerInt(columnas[9]) : 0;
+        string codigo = LimpiarCampo(columnas[incluyeP1 ? 10 : 9]);
+
+        Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]), nota, codigo);
         CargarEstados(alumno.practicos, columnas[5]);
         CargarEstados(alumno.examenes, columnas[6]);
 
         return alumno;
     }
 
-
-    // static string FormatearFilaTabla(string legajo, string nombreApellido, string telefono, string foto, string gitHub, string comision, string pruebas, string examenes, string presente, string asistencias) {
     static string FormatearFilaTabla(params string?[] columnas) {
-        int[] anchos = [6, 30, 14, 4, 25, 20, 4, 4, 4, 20];
+        int[] anchos = [6, 30, 13, 3, 25, 20, 4, 4, -4, -4, 32];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
     static string FormatearFilaTablaEstadoInformer(params string?[] columnas) {
-        int[] anchos = [6, 30, 12, 3];
+        int[] anchos = [6, 30, 13, -3];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
@@ -459,7 +462,7 @@ static class AlumnosManager {
     static string ToSiNo(this bool valor) => valor ? "Sí" : "No";
 
     static string FormatearFila(Alumno a) {
-        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Codigo);
+        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Nota.ToString(), a.Codigo);
     }
 
     static string FormatearFilaEstadoInformer(Alumno alumno) {
@@ -469,8 +472,10 @@ static class AlumnosManager {
 
     static string AjustarColumna(string texto, int ancho = 20) {
         string valor = FormatearTexto(texto);
+        bool derecha = ancho < 0;
+        ancho = Math.Abs(ancho);
         if (valor.Length > ancho) { valor = valor[..ancho]; }
-        return valor.PadRight(ancho);
+        return derecha ? valor.PadLeft(ancho) : valor.PadRight(ancho);
     }
 
     static string FormatearTexto(string texto) {
