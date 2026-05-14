@@ -134,7 +134,7 @@ static class AlumnosManager {
     }
 
     public static void EscribirEstadoInformer(IEnumerable<Alumno> alumnos, string rutaArchivo) {
-        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Prácticos", "Asistencias"];
+        string[] etiquetas = ["Legajo", "Nombre y Apellido", "Prácticos", "Asistencias", "Nota"];
         var guiones = etiquetas.Select(_ => new string('-', 80)).ToArray();
 
         try {
@@ -502,7 +502,7 @@ static class AlumnosManager {
     }
 
     static string FormatearFilaTablaEstadoInformer(params string?[] columnas) {
-        int[] anchos = [6, 30, 13, -3];
+        int[] anchos = [6, 30, 13, -3, -4];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
@@ -521,7 +521,7 @@ static class AlumnosManager {
     }
 
     static string FormatearFilaEstadoInformer(Alumno alumno) {
-        return FormatearFilaTablaEstadoInformer(alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.practicos.ToString(10), alumno.Asistencias.ToString());
+        return FormatearFilaTablaEstadoInformer(alumno.Legajo.ToString(), alumno.NombreCompleto, alumno.practicos.ToString(10), alumno.Asistencias.ToString(), alumno.Nota.ToString());
     }
 
 
