@@ -721,7 +721,7 @@ hr {
   font-family: var(--font-sans);
   font-size: 0.9em;
   line-height: 1.38;
-  padding-left: 1.4em;
+    padding-left: 2.4em;
 }
 .toc-list li {
   border-bottom: 1px solid #e1e4dd;

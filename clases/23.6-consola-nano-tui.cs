@@ -65,7 +65,7 @@ void AgregarContacto() {
     agenda.Add(nuevo);
     WriteLine();
     MostrarContacto(nuevo);
-    Pausa("Contacto agregado. Presione una tecla para continuar...");
+    Pausa("Contacto agregado. \n\nPresione una tecla para continuar...");
 }
 
 void EditarContacto() {
@@ -132,7 +132,7 @@ void Pausa(string mensaje = "Presione una tecla para continuar...") {
     Write(mensaje);
     ResetColor();
     ReadKey(true);
-    Write("                                                \r");
+    LimpiarLinea();
 }
 
 T Leer<T>(string mensaje, Convertidor<T> convertir) {
@@ -140,29 +140,18 @@ T Leer<T>(string mensaje, Convertidor<T> convertir) {
     Write($"{mensaje.PadLeft(12)}: ");
     ResetColor();
 
-    int x = CursorLeft, y = CursorTop;
-
-    Console.SetCursorPosition(0, y + 1);
-    Write(new string(' ', WindowWidth - 1));
+    int y = CursorTop;
 
     while (true) {
-        Console.SetCursorPosition(x, y);
+        Console.SetCursorPosition(14, y);
         LimpiarLinea();
 
         var linea = ReadLine() ?? "";
         if (convertir(linea, out var valor)) {
-            Console.SetCursorPosition(0, y + 1);
-            Write(new string(' ', WindowWidth - 1));
-            Console.SetCursorPosition(0, y + 1);
+            LimpiarLinea();
             return valor;
         }
     }
-}
-
-void LimpiarLinea() {
-    int x = CursorLeft, y = CursorTop;
-    Write(new string(' ', WindowWidth - 1));
-    Console.SetCursorPosition(x, y);
 }
 
 void MostrarError(string mensaje = "") {
@@ -171,6 +160,12 @@ void MostrarError(string mensaje = "") {
     ForegroundColor = ConsoleColor.Red;
     Write(mensaje);
     ResetColor();
+}
+
+void LimpiarLinea() {
+    int x = CursorLeft, y = CursorTop;
+    Write(new string(' ', WindowWidth - 1));
+    Console.SetCursorPosition(x, y);
 }
 
 bool TryParseNombre(string texto, out string valor) {
