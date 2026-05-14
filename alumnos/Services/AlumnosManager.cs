@@ -23,6 +23,11 @@ Servicio estático para leer, transformar y exportar la información de alumnos.
 - `CrearCarpetas(alumnos)`: crea o normaliza las carpetas de prácticos de cada alumno.
     - `alumnos`: colección a procesar.
 
+- `PublicarPractico(alumnos, practico, forzar)`: normaliza carpetas de alumnos y copia el enunciado de un práctico.
+    - `alumnos`: colección a procesar.
+    - `practico`: nombre del práctico.
+    - `forzar`: sobrescribe el destino si ya existe.
+
 - `CopiarFotoPerfil(alumnos, rutaFotos)`: copia fotos de perfil a las carpetas de alumnos cuando corresponde.
     - `alumnos`: colección a procesar.
     - `rutaFotos`: carpeta base de fotos origen.
@@ -204,30 +209,25 @@ static class AlumnosManager {
         AppPaths.AsegurarDirectorioPracticos();
 
         foreach (Alumno alumno in alumnos) {
-            string nombreCarpeta = alumno.CarpetaNombre;
-            string rutaCarpeta = AppPaths.RutaCarpetaAlumnoEsperada(alumno);
-            try {
-                List<string> carpetasConLegajo = AppPaths.BuscarCarpetasMismoLegajo(alumno.Legajo);
+            AsegurarCarpetaAlumnoNormalizada(alumno);
+        }
+    }
 
-                if (!carpetasConLegajo.Any()) {
-                    AppPaths.AsegurarCarpetaAlumno(alumno);
-                    Log.Debug($" ➕ {rutaCarpeta,-40}");
-                } else if (carpetasConLegajo.Count == 1) {
-                    string rutaCarpetaExistente = carpetasConLegajo[0];
-                    string rutaRelativa = AppPaths.RutaRelativaDesdePracticos(rutaCarpetaExistente);
-                    if (string.Equals(rutaCarpetaExistente, rutaCarpeta, StringComparison.OrdinalIgnoreCase)) {
-                        Log.Info($" ✅ {rutaRelativa,-40}");
-                    } else {
-                        AppPaths.RenombrarCarpetaAlumno(rutaCarpetaExistente, alumno);
-                        Log.Warning($" 🔄 {rutaRelativa,-40} → {nombreCarpeta}");
-                    }
-                } else {
-                    Log.Warning($" ⚠️  {alumno.Legajo}. Revisar manualmente las duplicadas.");
-                }
-            } catch (Exception ex) {
-                Log.Error($"Error al crear la carpeta para {nombreCarpeta}: {ex.Message}");
+    public static void PublicarPractico(IEnumerable<Alumno> alumnos, string practico, bool forzar = false) {
+        string nombrePractico = practico.Trim();
+
+        if (!PuedeCopiarEnunciadoPractico(nombrePractico, crearBasePracticos: true)) {
+            return;
+        }
+
+        List<Alumno> alumnosPublicables = new();
+        foreach (Alumno alumno in alumnos) {
+            if (AsegurarCarpetaAlumnoNormalizada(alumno)) {
+                alumnosPublicables.Add(alumno);
             }
         }
+
+        CopiarEnunciadoPracticosEnCarpetasNormalizadas(alumnosPublicables, nombrePractico, forzar);
     }
 
     public static void CopiarFotoPerfil(IEnumerable<Alumno> alumnos, string rutaFotos) {
@@ -266,40 +266,95 @@ static class AlumnosManager {
     public static void CopiarEnunciadoPracticos(IEnumerable<Alumno> alumnos, string practico, bool forzar = false) {
         string nombrePractico = practico.Trim();
 
-        if (string.IsNullOrWhiteSpace(nombrePractico)) {
-            Log.Error("Debe indicar el nombre del práctico a copiar.");
-            return;
-        }
-
-        if (!AppPaths.ExisteEnunciadoPractico(nombrePractico)) {
-            Log.Error($"No existe la carpeta del enunciado: {AppPaths.EnunciadoPracticoDirectory(nombrePractico)}");
-            return;
-        }
-
-        if (!AppPaths.ExisteDirectorioPracticos()) {
-            Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
+        if (!PuedeCopiarEnunciadoPractico(nombrePractico, crearBasePracticos: false)) {
             return;
         }
 
         foreach (Alumno alumno in alumnos) {
-            string rutaAlumno = AppPaths.RutaCarpetaAlumnoEsperada(alumno);
-
-            if (!AppPaths.ExisteDirectorio(rutaAlumno)) {
-                try {
-                    AppPaths.AsegurarCarpetaAlumno(alumno);
-                    Log.Debug($" ➕ {rutaAlumno,-40}");
-                } catch (Exception ex) {
-                    Log.Error($"No se pudo crear la carpeta del alumno {rutaAlumno}: {ex.Message}");
-                    continue;
-                }
+            if (!AsegurarCarpetaAlumnoNormalizada(alumno)) {
+                continue;
             }
 
+            CopiarEnunciadoPractico(alumno, nombrePractico, forzar);
+        }
+    }
+
+    static bool PuedeCopiarEnunciadoPractico(string nombrePractico, bool crearBasePracticos) {
+        if (string.IsNullOrWhiteSpace(nombrePractico)) {
+            Log.Error("Debe indicar el nombre del práctico a copiar.");
+            return false;
+        }
+
+        if (!AppPaths.ExisteEnunciadoPractico(nombrePractico)) {
+            Log.Error($"No existe la carpeta del enunciado: {AppPaths.EnunciadoPracticoDirectory(nombrePractico)}");
+            return false;
+        }
+
+        if (crearBasePracticos) {
             try {
-                CopiaRuta copia = AppPaths.CopiarEnunciadoPractico(alumno, nombrePractico, forzar);
-                Log.Info($"Enunciado copiado: {copia.Origen} -> {copia.Destino}");
+                AppPaths.AsegurarDirectorioPracticos();
             } catch (Exception ex) {
-                Log.Error($"Error al copiar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
+                Log.Error($"No se pudo crear la carpeta base de prácticos {AppPaths.PracticosDirectory}: {ex.Message}");
+                return false;
             }
+
+            return true;
+        }
+
+        if (!AppPaths.ExisteDirectorioPracticos()) {
+            Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
+            return false;
+        }
+
+        return true;
+    }
+
+    static bool AsegurarCarpetaAlumnoNormalizada(Alumno alumno) {
+        string nombreCarpeta = alumno.CarpetaNombre;
+        string rutaCarpeta = AppPaths.RutaCarpetaAlumnoEsperada(alumno);
+
+        try {
+            List<string> carpetasConLegajo = AppPaths.BuscarCarpetasMismoLegajo(alumno.Legajo);
+
+            if (!carpetasConLegajo.Any()) {
+                AppPaths.AsegurarCarpetaAlumno(alumno);
+                Log.Debug($" ➕ {rutaCarpeta,-40}");
+                return true;
+            }
+
+            if (carpetasConLegajo.Count == 1) {
+                string rutaCarpetaExistente = carpetasConLegajo[0];
+                string rutaRelativa = AppPaths.RutaRelativaDesdePracticos(rutaCarpetaExistente);
+                if (string.Equals(rutaCarpetaExistente, rutaCarpeta, StringComparison.OrdinalIgnoreCase)) {
+                    Log.Info($" ✅ {rutaRelativa,-40}");
+                } else {
+                    AppPaths.RenombrarCarpetaAlumno(rutaCarpetaExistente, alumno);
+                    Log.Warning($" 🔄 {rutaRelativa,-40} → {nombreCarpeta}");
+                }
+
+                return true;
+            }
+
+            Log.Warning($" ⚠️  {alumno.Legajo}. Revisar manualmente las duplicadas.");
+            return false;
+        } catch (Exception ex) {
+            Log.Error($"Error al crear la carpeta para {nombreCarpeta}: {ex.Message}");
+            return false;
+        }
+    }
+
+    static void CopiarEnunciadoPracticosEnCarpetasNormalizadas(IEnumerable<Alumno> alumnos, string nombrePractico, bool forzar) {
+        foreach (Alumno alumno in alumnos) {
+            CopiarEnunciadoPractico(alumno, nombrePractico, forzar);
+        }
+    }
+
+    static void CopiarEnunciadoPractico(Alumno alumno, string nombrePractico, bool forzar) {
+        try {
+            CopiaRuta copia = AppPaths.CopiarEnunciadoPractico(alumno, nombrePractico, forzar);
+            Log.Info($"Enunciado copiado: {copia.Origen} -> {copia.Destino}");
+        } catch (Exception ex) {
+            Log.Error($"Error al copiar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
         }
     }
 

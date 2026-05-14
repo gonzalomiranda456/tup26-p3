@@ -114,6 +114,25 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int PublicarPractico(string trabajoPractico, bool forzar) {
+        int numeroTp = ObtenerNumeroTP(trabajoPractico);
+        if (numeroTp <= 0) {
+            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
+            return 1;
+        }
+
+        string carpetaTp = CarpetaTrabajoPractico(numeroTp);
+        if (!AppPaths.ExisteEnunciadoPractico(carpetaTp)) {
+            Log.Error($"No existe la carpeta del enunciado: {AppPaths.EnunciadoPracticoDirectory(carpetaTp)}");
+            return 1;
+        }
+
+        Alumnos alumnos = CargarAlumnos();
+        Log.Info($"Publicando {carpetaTp.ToUpperInvariant()} desde {AppPaths.EnunciadoPracticoDirectory(carpetaTp)}");
+        AlumnosManager.PublicarPractico(alumnos, carpetaTp, forzar);
+        return 0;
+    }
+
     public static int RevisarPullRequests() {
         Alumnos alumnos = CargarAlumnos();
         GitHub gh = new();
@@ -200,7 +219,7 @@ static class AlumnosCliActions {
             return 1;
         }
 
-        string carpetaTp = $"tp{numeroTp}";
+        string carpetaTp = CarpetaTrabajoPractico(numeroTp);
         string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
         int lineasEnunciado = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
 
@@ -466,6 +485,8 @@ static class AlumnosCliActions {
 
     static string ResolverRuta(string? ruta, string rutaPorDefecto) =>
         string.IsNullOrWhiteSpace(ruta) ? rutaPorDefecto : ruta;
+
+    static string CarpetaTrabajoPractico(int numeroTp) => $"tp{numeroTp}";
 
     static void CargarAsistenciasHastaHoy(Alumnos alumnos, Action<string>? actualizarEstado = null) {
         actualizarEstado?.Invoke("Sincronizando WhatsApp...");

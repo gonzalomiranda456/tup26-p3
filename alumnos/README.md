@@ -38,6 +38,7 @@ dotnet run -- revisar-presentados TP1
 - `vcf [archivo.vcf]`: exporta la lista en formato vCard
 - `informer-estado`: publica en `README.md` el listado completo con columnas de legajo, nombre y prácticos
 - `crear-carpetas`: crea la estructura de carpetas del curso
+- `publicar TP1 [--forzar]`: normaliza carpetas de alumnos y copia el enunciado del práctico indicado
 - `prs`: revisa pull requests de alumnos
 - `normalizar-prs [--simular]`: ajusta títulos de pull requests
 - `bajar-prs TP1 [--forzar]`: descarga archivos del práctico desde los PRs

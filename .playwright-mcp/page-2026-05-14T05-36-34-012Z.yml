@@ -1,0 +1,47 @@
+- main [ref=e3]:
+  - region "Agenda de contactos" [ref=e4]:
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - paragraph [ref=e7]: Agenda
+        - heading "Contactos" [level=1] [ref=e8]
+      - navigation "Lista de contactos" [ref=e9]:
+        - button "Lucia Fernandez Estudio Norte" [ref=e10] [cursor=pointer]:
+          - generic [ref=e11]: LF
+          - generic [ref=e12]:
+            - strong [ref=e13]: Lucia Fernandez
+            - generic [ref=e14]: Estudio Norte
+        - button "Mateo Gimenez Andes Software" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: MG
+          - generic [ref=e17]:
+            - strong [ref=e18]: Mateo Gimenez
+            - generic [ref=e19]: Andes Software
+        - button "Valentina Rojas Clinica Central" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: VR
+          - generic [ref=e22]:
+            - strong [ref=e23]: Valentina Rojas
+            - generic [ref=e24]: Clinica Central
+        - button "Santiago Diaz Logistica NOA" [ref=e25] [cursor=pointer]:
+          - generic [ref=e26]: SD
+          - generic [ref=e27]:
+            - strong [ref=e28]: Santiago Diaz
+            - generic [ref=e29]: Logistica NOA
+    - region "Lucia Fernandez" [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: LF
+        - generic [ref=e33]:
+          - paragraph [ref=e34]: Disenadora UX
+          - heading "Lucia Fernandez" [level=2] [ref=e35]
+          - generic [ref=e36]: Estudio Norte
+      - generic [ref=e37]:
+        - article [ref=e38]:
+          - generic [ref=e39]: Telefono
+          - strong [ref=e40]: +54 381 421-7845
+        - article [ref=e41]:
+          - generic [ref=e42]: Email
+          - strong [ref=e43]: lucia.fernandez@example.com
+        - article [ref=e44]:
+          - generic [ref=e45]: Direccion
+          - strong [ref=e46]: San Miguel de Tucuman, Tucuman
+        - article [ref=e47]:
+          - generic [ref=e48]: Notas
+          - strong [ref=e49]: Prefiere contacto por WhatsApp durante la manana.

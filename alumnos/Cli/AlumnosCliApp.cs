@@ -37,6 +37,8 @@ static class AlumnosCliApp {
                 .WithDescription("Publica el estado resumido en el README.md del repositorio.");
             config.AddCommand<CrearCarpetasCommand>("crear-carpetas")
                 .WithDescription("Crea o normaliza las carpetas de prácticos.");
+            config.AddCommand<PublicarCommand>("publicar")
+                .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
             config.AddCommand<PrsCommand>("prs")
                 .WithDescription("Revisa pull requests de los alumnos.");
             config.AddCommand<NormalizarPrsCommand>("normalizar-prs")
@@ -127,6 +129,7 @@ static class AlumnosCliApp {
             "auditoria"      => SolicitarMenuAuditoria(),
             "exportar"       => SolicitarMenuExportar(),
             "crear-carpetas" => ["crear-carpetas"],
+            "publicar"       => ConstruirArgumentosPublicarPractico(),
             "prs"            => SolicitarMenuPrs(),
             "asistencias"    => SolicitarMenuAsistencias(),
             "salir"          => null,
@@ -185,6 +188,7 @@ static class AlumnosCliApp {
                 new("prs",                 "Revisar PRs",          "Mostrar estado de pull requests"),
                 new("normalizar-prs",      "Normalizar PRs",       "Ajustar títulos de pull requests"),
                 new("bajar-prs",           "Bajar PRs",            "Descargar archivos de un trabajo práctico"),
+                new("publicar",            "Publicar práctico",    "Copiar el enunciado de un TP a cada alumno"),
                 new("cerrar-prs",          "Cerrar PRs",           "Cerrar pull requests abiertos"),
                 new("revisar-presentados", "Revisar presentados",  "Marcar TPs presentados según líneas locales"),
                 new("volver",              "Volver",               "Regresar al menú principal")
@@ -194,6 +198,7 @@ static class AlumnosCliApp {
             "prs" => ["prs"],
             "normalizar-prs"        => ConstruirArgumentosNormalizarPrs(),
             "bajar-prs"             => ConstruirArgumentosBajarPrs(),
+            "publicar"              => ConstruirArgumentosPublicarPractico(),
             "cerrar-prs"            => ConstruirArgumentosCerrarPrs(),
             "revisar-presentados"   => ["revisar-presentados", PedirTrabajoPractico()],
             _ => Array.Empty<string>()
@@ -239,6 +244,7 @@ static class AlumnosCliApp {
             new("auditoria",      "Auditoría",              "Revisar datos faltantes o incompletos"),
             new("exportar",       "Exportar",               "Guardar o exportar en distintos formatos"),
             new("crear-carpetas", "Crear carpetas",         "Crear o normalizar carpetas de alumnos"),
+            new("publicar",       "Publicar práctico",      "Copiar el enunciado de un TP a cada alumno"),
             new("prs",            "Presentaciones",         "Operaciones sobre pull requests y prácticos"),
             new("salir",          "Salir",                  "Cerrar la aplicación")
         ];
@@ -264,6 +270,15 @@ static class AlumnosCliApp {
         return forzar
             ? ["bajar-prs", trabajoPractico, "--forzar"]
             : ["bajar-prs", trabajoPractico];
+    }
+
+    static string[] ConstruirArgumentosPublicarPractico() {
+        string trabajoPractico = PedirTrabajoPractico();
+        bool forzar = AnsiConsole.Confirm("¿Sobrescribir archivos ya existentes?", false);
+
+        return forzar
+            ? ["publicar", trabajoPractico, "--forzar"]
+            : ["publicar", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosCerrarPrs() {

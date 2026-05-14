@@ -4,25 +4,25 @@ import './App.css'
 const contactos = [
   {
     id: 1,
-    nombre: 'Lucia',
-    apellido: 'Fernandez',
+    nombre: 'Lucía',
+    apellido: 'Fernández',
     telefono: '+54 381 421-7845',
     email: 'lucia.fernandez@example.com',
     empresa: 'Estudio Norte',
-    cargo: 'Disenadora UX',
-    direccion: 'San Miguel de Tucuman, Tucuman',
-    notas: 'Prefiere contacto por WhatsApp durante la manana.',
+    cargo: 'Diseñadora UX',
+    direccion: 'San Miguel de Tucumán, Tucumán',
+    notas: 'Prefiere contacto por WhatsApp durante la mañana.',
   },
   {
     id: 2,
     nombre: 'Mateo',
-    apellido: 'Gimenez',
+    apellido: 'Giménez',
     telefono: '+54 381 556-2301',
     email: 'mateo.gimenez@example.com',
     empresa: 'Andes Software',
     cargo: 'Desarrollador Backend',
-    direccion: 'Yerba Buena, Tucuman',
-    notas: 'Disponible para reuniones tecnicas los martes y jueves.',
+    direccion: 'Yerba Buena, Tucumán',
+    notas: 'Disponible para reuniones técnicas los martes y jueves.',
   },
   {
     id: 3,
@@ -30,20 +30,20 @@ const contactos = [
     apellido: 'Rojas',
     telefono: '+54 381 612-9044',
     email: 'valentina.rojas@example.com',
-    empresa: 'Clinica Central',
-    cargo: 'Administracion',
-    direccion: 'Banda del Rio Sali, Tucuman',
-    notas: 'Enviar recordatorios por correo electronico.',
+    empresa: 'Clínica Central',
+    cargo: 'Administración',
+    direccion: 'Banda del Río Salí, Tucumán',
+    notas: 'Enviar recordatorios por correo electrónico.',
   },
   {
     id: 4,
     nombre: 'Santiago',
-    apellido: 'Diaz',
+    apellido: 'Díaz',
     telefono: '+54 381 488-1170',
     email: 'santiago.diaz@example.com',
-    empresa: 'Logistica NOA',
+    empresa: 'Logística NOA',
     cargo: 'Coordinador',
-    direccion: 'Tafi Viejo, Tucuman',
+    direccion: 'Tafí Viejo, Tucumán',
     notas: 'Contacto principal para entregas de zona norte.',
   },
 ]
@@ -112,7 +112,7 @@ function App() {
 
           <div className="detail-grid">
             <article className="detail-item">
-              <span>Telefono</span>
+              <span>Teléfono</span>
               <strong>{contactoSeleccionado.telefono}</strong>
             </article>
             <article className="detail-item">
@@ -120,7 +120,7 @@ function App() {
               <strong>{contactoSeleccionado.email}</strong>
             </article>
             <article className="detail-item">
-              <span>Direccion</span>
+              <span>Dirección</span>
               <strong>{contactoSeleccionado.direccion}</strong>
             </article>
             <article className="detail-item">
