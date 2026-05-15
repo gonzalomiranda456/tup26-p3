@@ -6,7 +6,7 @@ using Spectre.Console;
 
 Console.Clear();
 // Muestra la portada.
-var figlet = new FigletText("Pizza Ya!");
+var figlet = new FigletText("Pizza Ahora!");
 AnsiConsole.Write(figlet);
 
 // Texto con formato y colores.
@@ -22,14 +22,14 @@ var table = new Table()
     .Title("Menú de la pizzería", new Style(foreground: Color.Magenta, decoration: Decoration.Bold))
     .Caption("[grey]Pizzas disponibles hoy[/]");
 
-table.AddColumn("Pizza");
-table.AddColumn("Ingredientes");
-table.AddColumn("Precio", col => col.RightAligned());
+table.AddColumn("Pizza")
+    .AddColumn("Ingredientes")
+    .AddColumn("Precio", col => col.RightAligned());
   
-table.AddRow("Muzzarella", "Salsa de tomate, muzzarella y orégano", "$8.500");
-table.AddRow("Napolitana", "Muzzarella, tomate fresco y ajo", "$9.800");
-table.AddRow("Fugazzeta", "Muzzarella y cebolla", "$9.500");
-table.AddRow("Especial", "Muzzarella, jamón, morrón y aceitunas", "$10.900");
+table.AddRow("Muzzarella", "Salsa de tomate, muzzarella y orégano",  "$8.500");
+table.AddRow("Napolitana", "Muzzarella, tomate fresco y ajo",        "$9.800");
+table.AddRow("Fugazzeta",  "Muzzarella y cebolla",                   "$9.500");
+table.AddRow("Especial",   "Muzzarella, jamón, morrón y aceitunas", "$10.900");
   
 AnsiConsole.Write(table);
 

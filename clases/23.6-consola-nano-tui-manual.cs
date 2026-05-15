@@ -47,6 +47,7 @@ void ListarContactos() {
 
         var key = ReadKey(true).Key;
         if(key == ConsoleKey.Escape || key == ConsoleKey.Enter) { return; }
+        
         MoverCursor(key, agenda.Count, ref pos);
     }
 }

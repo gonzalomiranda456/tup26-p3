@@ -3,10 +3,13 @@ namespace Tup26.AlumnosApp;
 readonly record struct CopiaRuta(string Origen, string Destino);
 readonly record struct PerfilMarkdown(string Ruta, string[] Lineas);
 readonly record struct EnunciadoPracticoDisponible(int Numero, string Carpeta, string Ruta);
+readonly record struct LimpiezaCompilacionPracticosResultado(IReadOnlyList<string> ElementosEliminados, IReadOnlyList<string> ElementosRestantes);
 
 static class AppPaths {
     static readonly string dataDirectory = ResolverDirectorioDatos();
     static readonly string[] extensionesFotoAlumno = [".png", ".jpg", ".jpeg"];
+    static readonly string[] directoriosCompilacionPracticos = ["bin", "obj", ".vs"];
+    static readonly string[] sufijosArchivosCacheCompilacion = [".lscache", ".suo", ".userosscache", ".sln.docstates"];
 
     public static string DataDirectory => dataDirectory;
     public static string RepoRoot => Directory.GetParent(DataDirectory)?.FullName ?? DataDirectory;
@@ -185,14 +188,36 @@ static class AppPaths {
     public static bool ExisteDirectorioPracticos() =>
         ExisteDirectorio(PracticosDirectory);
 
-    public static List<string> LimpiarDirectoriosCompilacionPracticos() {
-        List<string> directorios = BuscarDirectoriosCompilacion(PracticosDirectory);
+    public static LimpiezaCompilacionPracticosResultado LimpiarDirectoriosCompilacionPracticos() {
+        const int intentosMaximos = 5;
+        List<string> elementosEliminados = new();
 
-        foreach (string directorio in directorios) {
-            Directory.Delete(directorio, recursive: true);
+        for (int intento = 0; intento < intentosMaximos; intento++) {
+            List<string> rutas = BuscarArtefactosCompilacion(PracticosDirectory);
+            if (rutas.Count == 0) {
+                break;
+            }
+
+            int eliminadosAntes = elementosEliminados.Count;
+            foreach (string ruta in rutas) {
+                if (EliminarArtefactoCompilacion(ruta)) {
+                    elementosEliminados.Add(ruta);
+                }
+            }
+
+            if (elementosEliminados.Count == eliminadosAntes) {
+                break;
+            }
+
+            Thread.Sleep(200);
         }
 
-        return directorios;
+        if (elementosEliminados.Count > 0) {
+            Thread.Sleep(1200);
+        }
+
+        List<string> elementosRestantes = BuscarArtefactosCompilacion(PracticosDirectory);
+        return new(elementosEliminados.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), elementosRestantes);
     }
 
     public static bool ExisteEnunciadoPractico(string practico) =>
@@ -375,19 +400,76 @@ static class AppPaths {
         }
     }
 
-    static List<string> BuscarDirectoriosCompilacion(string rutaBase) {
+    static List<string> BuscarArtefactosCompilacion(string rutaBase) {
         if (!ExisteDirectorio(rutaBase)) {
             return [];
         }
 
-        return Directory.EnumerateDirectories(rutaBase, "*", SearchOption.AllDirectories)
-            .Where(ruta => {
-                string nombre = Path.GetFileName(ruta);
-                return string.Equals(nombre, "bin", StringComparison.OrdinalIgnoreCase) ||
-                       string.Equals(nombre, "obj", StringComparison.OrdinalIgnoreCase);
-            })
-            .OrderByDescending(ruta => ruta.Length)
-            .ToList();
+        List<string> rutas = new();
+        BuscarArtefactosCompilacion(rutaBase, rutas);
+        return rutas;
+    }
+
+    static bool EliminarArtefactoCompilacion(string ruta) {
+        if (ExisteDirectorio(ruta)) {
+            Directory.Delete(ruta, recursive: true);
+            return true;
+        }
+
+        if (ExisteArchivo(ruta)) {
+            File.Delete(ruta);
+            return true;
+        }
+
+        return false;
+    }
+
+    static void BuscarArtefactosCompilacion(string rutaDirectorio, List<string> rutas) {
+        IEnumerable<string> entradas;
+
+        try {
+            entradas = Directory.EnumerateFileSystemEntries(rutaDirectorio);
+        } catch (UnauthorizedAccessException) {
+            return;
+        } catch (DirectoryNotFoundException) {
+            return;
+        }
+
+        foreach (string ruta in entradas) {
+            if (EsEnlaceSimbolico(ruta)) {
+                continue;
+            }
+
+            string nombre = Path.GetFileName(ruta);
+            if (ExisteArchivo(ruta)) {
+                if (sufijosArchivosCacheCompilacion.Any(sufijo => nombre.EndsWith(sufijo, StringComparison.OrdinalIgnoreCase))) {
+                    rutas.Add(ruta);
+                }
+
+                continue;
+            }
+
+            if (!ExisteDirectorio(ruta)) {
+                continue;
+            }
+
+            if (directoriosCompilacionPracticos.Any(directorio => string.Equals(nombre, directorio, StringComparison.OrdinalIgnoreCase))) {
+                rutas.Add(ruta);
+                continue;
+            }
+
+            BuscarArtefactosCompilacion(ruta, rutas);
+        }
+    }
+
+    static bool EsEnlaceSimbolico(string ruta) {
+        try {
+            return File.GetAttributes(ruta).HasFlag(FileAttributes.ReparsePoint);
+        } catch (IOException) {
+            return false;
+        } catch (UnauthorizedAccessException) {
+            return false;
+        }
     }
 
     static string ResolverDirectorioDatos() {

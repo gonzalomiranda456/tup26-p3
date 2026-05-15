@@ -3,6 +3,13 @@
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "workbench.preferredDarkColorTheme": "Dark 2026",
     "dotnet.projects.enableFileBasedPrograms": true,
+    "dotnet.defaultSolution": "alumnos/alumnos.sln",
+    "dotnet.projectsystem.enableLanguageServiceCache": false,
+    "dotnet.projectsystem.cacheInProjectFolder": false,
+    "dotnet.testWindow.disableAutoDiscovery": true,
+    "dotnet.testWindow.disableBuildOnRefresh": true,
+    "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "openFiles",
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "openFiles",
     "[csharp]": {
         "editor.formatOnType": false,
         "editor.defaultFormatter": "ms-dotnettools.csharp"
@@ -12,14 +19,48 @@
     "chat.useCustomizationsInParentRepositories": true,
     "chat.fontSize": 14,
     "chat.editor.fontSize": 14,
-    "terminal.integrated.fontSize": 14,
+    "terminal.integrated.fontSize": 12,
     "editor.wordWrap": "off",
     "notebook.lineNumbers": "on",
-    "[markdown]": {
-        "editor.wordWrap": "off"
-    },
-    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+    "[markdown]": { "editor.wordWrap": "off" },
     "markdown.preview.lineHeight": 1.6,
     "markdown.preview.fontSize": 14,
-    "markdown.preview.typographer": true
+    "markdown.preview.typographer": true,
+    "files.exclude": {
+        "practicos/**/bin": true,
+        "practicos/**/obj": true,
+        "practicos/**/.vs": true,
+        "practicos/**/*.lscache": true,
+        "practicos/**/*.suo": true,
+        "practicos/**/*.userosscache": true,
+        "practicos/**/*.sln.docstates": true
+    },
+    "search.exclude": {
+        "practicos/**/bin": true,
+        "practicos/**/obj": true,
+        "practicos/**/.vs": true,
+        "practicos/**/*.lscache": true,
+        "practicos/**/*.suo": true,
+        "practicos/**/*.userosscache": true,
+        "practicos/**/*.sln.docstates": true
+    },
+    "files.watcherExclude": {
+        "practicos/**/bin/**": true,
+        "practicos/**/obj/**": true,
+        "practicos/**/.vs/**": true,
+        "practicos/**/*.lscache": true,
+        "practicos/**/*.suo": true,
+        "practicos/**/*.userosscache": true,
+        "practicos/**/*.sln.docstates": true,
+        "practicos/**/*.sln": true,
+        "practicos/**/*.csproj": true,
+        "practicos/**/*.csproj.user": true
+    },
+    "code-runner.executorMap": {
+        "csharp": "dotnet run $fileName"
+    },
+    "code-runner.fileDirectoryAsCwd": true,
+    "code-runner.runInTerminal": true,
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.saveFileBeforeRun": true
 }

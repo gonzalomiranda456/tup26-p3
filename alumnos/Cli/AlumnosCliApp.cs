@@ -26,7 +26,7 @@ static class AlumnosCliApp {
             config.AddCommand<SinPracticosCommand>("sin-practicos")
                 .WithDescription("Lista alumnos que no presentaron ningún trabajo práctico.");
             config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
-                .WithDescription("Elimina carpetas bin y obj dentro de prácticos.");
+                .WithDescription("Elimina bin, obj, .vs y cachés de compilación dentro de prácticos.");
             config.AddCommand<GuardarCommand>("guardar")
                 .WithDescription("Exporta la lista a Markdown.");
             config.AddCommand<JsonCommand>("json")
@@ -146,7 +146,7 @@ static class AlumnosCliApp {
                 new("sin-foto",                    "Sin foto",                     "Filtrar alumnos sin foto"),
                 new("tp-no-presentado",            "TP no presentado",             "Elegir un TP y listar alumnos que adeudan ese práctico"),
                 new("sin-practicos",               "Sin prácticos",                "Listar alumnos que no presentaron ningún práctico"),
-                new("limpiar-proyectos-practicos", "Limpiar Proyectos Prácticos", "Eliminar carpetas bin y obj dentro de prácticos"),
+                new("limpiar-proyectos-practicos", "Limpiar Proyectos Prácticos",  "Eliminar bin, obj, .vs y cachés dentro de prácticos"),
                 new("volver",                      "Volver",                       "Regresar al menú principal")
             ]);
 
@@ -219,12 +219,12 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "registrar-asistencias"     => ["registrar-asistencias"],
-            "contar-asistencias"        => ["contar-asistencias"],
-            "wapp-grupos"               => ["wapp-grupos"],
-            "wapp-recuperar-tp1-tp2"    => ConstruirArgumentosWappRecuperarTp1Tp2(),
-            "wapp-foto-parcial"         => ConstruirArgumentosWappFotoParcial(),
-            "registrar-respuestas"      => ["registrar-respuestas"],
+            "registrar-asistencias"  => ["registrar-asistencias"],
+            "contar-asistencias"     => ["contar-asistencias"],
+            "wapp-grupos"            => ["wapp-grupos"],
+            "wapp-recuperar-tp1-tp2" => ConstruirArgumentosWappRecuperarTp1Tp2(),
+            "wapp-foto-parcial"      => ConstruirArgumentosWappFotoParcial(),
+            "registrar-respuestas"   => ["registrar-respuestas"],
             _ => Array.Empty<string>()
         };
     }
@@ -340,9 +340,9 @@ static class AlumnosCliApp {
     }
 
     static bool EsAliasAyuda(string valor) =>
-        string.Equals(valor, "ayuda", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor, "help", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor, "-h", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "ayuda",  StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "help",   StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "-h",     StringComparison.OrdinalIgnoreCase) ||
         string.Equals(valor, "--help", StringComparison.OrdinalIgnoreCase);
 
     sealed record InteractiveChoice(string Command, string Label, string Description);

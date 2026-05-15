@@ -40,6 +40,9 @@ artifacts/
 *.user
 *.rsuser
 *.suo
+*.lscache
+*.userosscache
+*.sln.docstates
 
 # Logs and temporary files
 *.log

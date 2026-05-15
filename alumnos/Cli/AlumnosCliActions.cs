@@ -69,18 +69,34 @@ static class AlumnosCliActions {
     }
 
     public static int LimpiarProyectosPracticos() {
-        List<string> directoriosEliminados = AppPaths.LimpiarDirectoriosCompilacionPracticos();
+        LimpiezaCompilacionPracticosResultado resultado = AppPaths.LimpiarDirectoriosCompilacionPracticos();
+        IReadOnlyList<string> elementosEliminados = resultado.ElementosEliminados;
+        IReadOnlyList<string> elementosRestantes = resultado.ElementosRestantes;
 
-        if (directoriosEliminados.Count == 0) {
-            Log.Info("No se encontraron carpetas bin u obj dentro de prácticos.");
+        if (elementosEliminados.Count == 0 && elementosRestantes.Count == 0) {
+            Log.Info("No se encontraron carpetas ni cachés de compilación dentro de prácticos.");
             return 0;
         }
 
-        foreach (string directorio in directoriosEliminados) {
-            Log.Info($"Eliminado: {AppPaths.RutaRelativaDesdePracticos(directorio)}");
+        foreach (string ruta in elementosEliminados) {
+            Log.Info($"Eliminado: {AppPaths.RutaRelativaDesdePracticos(ruta)}");
         }
 
-        Log.Info($"Total de carpetas eliminadas: {directoriosEliminados.Count}");
+        Log.Info($"Total de elementos eliminados: {elementosEliminados.Count}");
+
+        if (elementosRestantes.Count > 0) {
+            Log.Warning($"Quedaron o se regeneraron {elementosRestantes.Count} elemento(s) de compilación.");
+            foreach (string ruta in elementosRestantes.Take(10)) {
+                Log.Warning($"Pendiente: {AppPaths.RutaRelativaDesdePracticos(ruta)}");
+            }
+
+            if (elementosRestantes.Count > 10) {
+                Log.Warning($"... y {elementosRestantes.Count - 10} más.");
+            }
+
+            Log.Warning("Si el número cambia al ejecutar de nuevo, probablemente VS Code/C# Dev Kit está recreando cachés de proyectos.");
+        }
+
         return 0;
     }
 

@@ -17,7 +17,7 @@ Legajo  Nombre y Apellido               Prácticos      Asi  Nota
 63174   Jerez, Luciano Germán           🟢🟢⚪️⚪️⚪️      12     9
 63700   Jiménez, Nelson Maximiliano     🟢🟢⚪️⚪️⚪️       7     0
 63399   Lazarte, Gonzalo Romeo          🟢🟢⚪️⚪️⚪️       8    10
-63211   Montero, Luca                   🔴🟢⚪️⚪️⚪️      10    10
+63211   Montero, Luca                   🟢🟢⚪️⚪️⚪️      10    10
 63350   Páez Carabajal, Santiago        🟢🟢⚪️⚪️⚪️       4     9
 61581   Paz, Naim Federico              🟢🟢⚪️⚪️⚪️       9    10
 63647   Paz, Valentina                  🟢🟢⚪️⚪️⚪️       7    10
@@ -44,7 +44,7 @@ Legajo  Nombre y Apellido               Prácticos      Asi  Nota
 63313   Ávila Puntano, Benjamín         🟢🟢⚪️⚪️⚪️      11    10
 63222   Bajre Martínez, Julián          🟢🟢⚪️⚪️⚪️      10     7
 61801   Benega, Maximiliano Abraham     🟢🟢⚪️⚪️⚪️       5     6
-63493   Busnelli, Bruno                 🟢🔴⚪️⚪️⚪️       6    10
+63493   Busnelli, Bruno                 🟢🟢⚪️⚪️⚪️       6    10
 63150   Carlino, Joaquín                🟢🟢⚪️⚪️⚪️       1    10
 63341   Carrer, Juan Cruz               🟢🟢⚪️⚪️⚪️       6    10
 63461   Cativa, Facundo Simón           🟢🟢⚪️⚪️⚪️       8     8
@@ -62,7 +62,7 @@ Legajo  Nombre y Apellido               Prácticos      Asi  Nota
 61161   González, Thomas Ezequiel       🟢🟢⚪️⚪️⚪️       8     5
 62844   Guzmán, Luciano Leonel          🟢🟢⚪️⚪️⚪️      10    10
 63231   Herrera, Rocío Tatiana          🟢🟢⚪️⚪️⚪️       9    10
-63425   Holmquist, Jeremy               🟢🔴⚪️⚪️⚪️       8     6
+63425   Holmquist, Jeremy               🟢🟢⚪️⚪️⚪️       8     6
 61907   Kargachin, Guadalupe            🔴🔴⚪️⚪️⚪️       0     0
 63219   Lazarte, Sergio Fabricio        🟢🟢⚪️⚪️⚪️       7    10
 63297   Lezana, Juan Ignacio            🟢🟢⚪️⚪️⚪️       9    10
@@ -74,7 +74,7 @@ Legajo  Nombre y Apellido               Prácticos      Asi  Nota
 63412   Morán, Facundo Martín           🟢🟢⚪️⚪️⚪️      11    10
 63205   Navarro Aragón, Facundo         🔴🔴⚪️⚪️⚪️       7    10
 63220   Pérez Del Rien, Valentina       🟢🟢⚪️⚪️⚪️      11    10
-63232   Roldan, Enzo Joaquín            🔴🔴⚪️⚪️⚪️       9     5
+63232   Roldan, Enzo Joaquín            🟢🟢⚪️⚪️⚪️       9     5
 63216   Sánchez, Sofía Micaela          🟢🟢⚪️⚪️⚪️       9    10
 63207   Saravia, César Nahum            🟢🟢⚪️⚪️⚪️       8    10
 61026   Thompson, María José            🟢🟢⚪️⚪️⚪️      10     9

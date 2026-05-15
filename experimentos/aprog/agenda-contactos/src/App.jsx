@@ -1,133 +1,236 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 
-const contactos = [
+const now = new Date()
+
+const eventosIniciales = [
   {
     id: 1,
-    nombre: 'Lucía',
-    apellido: 'Fernández',
-    telefono: '+54 381 421-7845',
-    email: 'lucia.fernandez@example.com',
-    empresa: 'Estudio Norte',
-    cargo: 'Diseñadora UX',
-    direccion: 'San Miguel de Tucumán, Tucumán',
-    notas: 'Prefiere contacto por WhatsApp durante la mañana.',
+    hora: '08:30',
+    titulo: 'Revisar correo y prioridades',
+    tipo: 'Personal',
+    lugar: 'Casa',
+    detalle: 'Confirmar tareas críticas y responder mensajes urgentes.',
+    estado: 'En curso',
   },
   {
     id: 2,
-    nombre: 'Mateo',
-    apellido: 'Giménez',
-    telefono: '+54 381 556-2301',
-    email: 'mateo.gimenez@example.com',
-    empresa: 'Andes Software',
-    cargo: 'Desarrollador Backend',
-    direccion: 'Yerba Buena, Tucumán',
-    notas: 'Disponible para reuniones técnicas los martes y jueves.',
+    hora: '10:00',
+    titulo: 'Reunión con equipo de proyecto',
+    tipo: 'Trabajo',
+    lugar: 'Sala Naranja',
+    detalle: 'Definir entregables de la semana y revisar bloqueos.',
+    estado: 'Próximo',
   },
   {
     id: 3,
-    nombre: 'Valentina',
-    apellido: 'Rojas',
-    telefono: '+54 381 612-9044',
-    email: 'valentina.rojas@example.com',
-    empresa: 'Clínica Central',
-    cargo: 'Administración',
-    direccion: 'Banda del Río Salí, Tucumán',
-    notas: 'Enviar recordatorios por correo electrónico.',
+    hora: '12:30',
+    titulo: 'Almuerzo con Laura',
+    tipo: 'Social',
+    lugar: 'Café Central',
+    detalle: 'Poner al día la agenda y coordinar el viaje del viernes.',
+    estado: 'Confirmado',
   },
   {
     id: 4,
-    nombre: 'Santiago',
-    apellido: 'Díaz',
-    telefono: '+54 381 488-1170',
-    email: 'santiago.diaz@example.com',
-    empresa: 'Logística NOA',
-    cargo: 'Coordinador',
-    direccion: 'Tafí Viejo, Tucumán',
-    notas: 'Contacto principal para entregas de zona norte.',
+    hora: '16:00',
+    titulo: 'Llamada con proveedor',
+    tipo: 'Trabajo',
+    lugar: 'Videollamada',
+    detalle: 'Cerrar el presupuesto y validar fechas de entrega.',
+    estado: 'Pendiente',
+  },
+  {
+    id: 5,
+    hora: '19:15',
+    titulo: 'Gimnasio',
+    tipo: 'Bienestar',
+    lugar: 'Club Norte',
+    detalle: 'Entrenamiento de fuerza y estiramientos.',
+    estado: 'Agendado',
   },
 ]
 
-function nombreCompleto(contacto) {
-  return `${contacto.nombre} ${contacto.apellido}`
-}
+const recordatorios = [
+  'Llevar cargador y documento',
+  'Comprar pan al volver',
+  'Responder presupuesto pendiente',
+]
 
-function iniciales(contacto) {
-  return `${contacto.nombre[0]}${contacto.apellido[0]}`
+const proximosDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+function formatoFecha(fecha) {
+  return new Intl.DateTimeFormat('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(fecha)
 }
 
 function App() {
-  const [contactoSeleccionadoId, setContactoSeleccionadoId] = useState(contactos[0].id)
+  const [eventos, setEventos] = useState(eventosIniciales)
+  const [seleccionadoId, setSeleccionadoId] = useState(eventosIniciales[1].id)
+  const [nuevoTitulo, setNuevoTitulo] = useState('')
+  const [nuevaHora, setNuevaHora] = useState('09:00')
 
-  const contactoSeleccionado = useMemo(
-    () => contactos.find((contacto) => contacto.id === contactoSeleccionadoId) ?? contactos[0],
-    [contactoSeleccionadoId],
+  const seleccionado = useMemo(
+    () => eventos.find((evento) => evento.id === seleccionadoId) ?? eventos[0],
+    [eventos, seleccionadoId],
   )
+
+  const totalHoy = eventos.length
+  const proximos = eventos.filter((evento) => evento.estado !== 'En curso').length
+
+  function agregarEvento(e) {
+    e.preventDefault()
+    const titulo = nuevoTitulo.trim()
+    if (!titulo) return
+
+    const nuevoEvento = {
+      id: Date.now(),
+      hora: nuevaHora,
+      titulo,
+      tipo: 'Personal',
+      lugar: 'Por definir',
+      detalle: 'Evento agregado desde la misma página.',
+      estado: 'Nuevo',
+    }
+
+    setEventos((actuales) => [nuevoEvento, ...actuales].sort((a, b) => a.hora.localeCompare(b.hora)))
+    setSeleccionadoId(nuevoEvento.id)
+    setNuevoTitulo('')
+    setNuevaHora('09:00')
+  }
 
   return (
     <main className="app-shell">
-      <section className="agenda" aria-label="Agenda de contactos">
-        <aside className="master">
-          <div className="section-heading">
-            <p>Agenda</p>
-            <h1>Contactos</h1>
+      <section className="agenda-page" aria-label="Agenda del día">
+        <aside className="sidebar">
+          <div className="hero">
+            <p className="eyebrow">Agenda personal</p>
+            <h1>{formatoFecha(now)}</h1>
+            <p className="hero-copy">
+              Organizá tu jornada, revisá tus citas y sumá nuevos eventos sin salir de esta página.
+            </p>
           </div>
 
-          <nav className="contact-list" aria-label="Lista de contactos">
-            {contactos.map((contacto) => {
-              const seleccionado = contacto.id === contactoSeleccionado.id
+          <div className="stats">
+            <article>
+              <span>Eventos</span>
+              <strong>{totalHoy}</strong>
+            </article>
+            <article>
+              <span>Próximos</span>
+              <strong>{proximos}</strong>
+            </article>
+            <article>
+              <span>Estado</span>
+              <strong>Activo</strong>
+            </article>
+          </div>
 
+          <div className="mini-calendar" aria-label="Próximos días">
+            {proximosDias.map((dia, index) => {
+              const activo = index === 2
               return (
-                <button
-                  className={`contact-row ${seleccionado ? 'is-selected' : ''}`}
-                  key={contacto.id}
-                  onClick={() => setContactoSeleccionadoId(contacto.id)}
-                  type="button"
-                  aria-current={seleccionado ? 'true' : undefined}
-                >
-                  <span className="contact-avatar" aria-hidden="true">
-                    {iniciales(contacto)}
-                  </span>
-                  <span className="contact-summary">
-                    <strong>{nombreCompleto(contacto)}</strong>
-                    <small>{contacto.empresa}</small>
-                  </span>
-                </button>
+                <div className={`day-pill ${activo ? 'is-active' : ''}`} key={dia}>
+                  <span>{dia}</span>
+                  <strong>{index + 12}</strong>
+                </div>
               )
             })}
-          </nav>
+          </div>
+
+          <form className="quick-add" onSubmit={agregarEvento}>
+            <h2>Agregar evento</h2>
+            <label>
+              Título
+              <input
+                value={nuevoTitulo}
+                onChange={(e) => setNuevoTitulo(e.target.value)}
+                placeholder="Ej. Estudio, reunión, gym"
+              />
+            </label>
+            <label>
+              Hora
+              <input value={nuevaHora} onChange={(e) => setNuevaHora(e.target.value)} type="time" />
+            </label>
+            <button type="submit">Sumar a la agenda</button>
+          </form>
         </aside>
 
-        <section className="detail" aria-labelledby="contact-detail-title">
-          <header className="detail-header">
-            <div className="detail-avatar" aria-hidden="true">
-              {iniciales(contactoSeleccionado)}
-            </div>
+        <section className="content">
+          <header className="content-header">
             <div>
-              <p>{contactoSeleccionado.cargo}</p>
-              <h2 id="contact-detail-title">{nombreCompleto(contactoSeleccionado)}</h2>
-              <span>{contactoSeleccionado.empresa}</span>
+              <p className="eyebrow">Día de hoy</p>
+              <h2>Eventos programados</h2>
+            </div>
+            <div className="legend" aria-label="Leyenda de estados">
+              <span><i className="dot dot-now" />En curso</span>
+              <span><i className="dot dot-next" />Próximo</span>
+              <span><i className="dot dot-new" />Nuevo</span>
             </div>
           </header>
 
-          <div className="detail-grid">
-            <article className="detail-item">
-              <span>Teléfono</span>
-              <strong>{contactoSeleccionado.telefono}</strong>
-            </article>
-            <article className="detail-item">
-              <span>Email</span>
-              <strong>{contactoSeleccionado.email}</strong>
-            </article>
-            <article className="detail-item">
-              <span>Dirección</span>
-              <strong>{contactoSeleccionado.direccion}</strong>
-            </article>
-            <article className="detail-item">
-              <span>Notas</span>
-              <strong>{contactoSeleccionado.notas}</strong>
-            </article>
+          <div className="timeline" role="list" aria-label="Lista de eventos">
+            {eventos.map((evento) => {
+              const activo = evento.id === seleccionado.id
+
+              return (
+                <button
+                  key={evento.id}
+                  className={`event-card ${activo ? 'is-selected' : ''}`}
+                  onClick={() => setSeleccionadoId(evento.id)}
+                  type="button"
+                  role="listitem"
+                  aria-current={activo ? 'true' : undefined}
+                >
+                  <span className="event-time">{evento.hora}</span>
+                  <div className="event-body">
+                    <div className="event-topline">
+                      <strong>{evento.titulo}</strong>
+                      <span>{evento.tipo}</span>
+                    </div>
+                    <p>{evento.lugar}</p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
+
+          <article className="detail-panel" aria-labelledby="detail-title">
+            <div className="detail-header">
+              <div className="detail-time">{seleccionado.hora}</div>
+              <div>
+                <p className="eyebrow">{seleccionado.estado}</p>
+                <h3 id="detail-title">{seleccionado.titulo}</h3>
+              </div>
+            </div>
+
+            <div className="detail-grid">
+              <div className="info-box">
+                <span>Tipo</span>
+                <strong>{seleccionado.tipo}</strong>
+              </div>
+              <div className="info-box">
+                <span>Lugar</span>
+                <strong>{seleccionado.lugar}</strong>
+              </div>
+              <div className="info-box wide">
+                <span>Detalle</span>
+                <strong>{seleccionado.detalle}</strong>
+              </div>
+            </div>
+
+            <div className="notes">
+              <h4>Recordatorios</h4>
+              <ul>
+                {recordatorios.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
         </section>
       </section>
     </main>
