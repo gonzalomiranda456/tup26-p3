@@ -236,5 +236,3 @@ El orden sugerido dentro del archivo `agenda.cs` es:
 ## Entrega
 
 - Un único archivo `agenda.cs` en la carpeta `/tp3`.
-
-> En [Estado.md](/Estado.md) se muestra el progreso actual del trabajo práctico, con tareas pendientes y realizadas.
