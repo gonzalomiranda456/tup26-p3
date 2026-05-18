@@ -32,14 +32,13 @@ Legajo  Nombre y Apellido               Teléfono       Fot  GitHub             
 63447   Suárez, Sofía Celeste           (381)246-3725  Sí   suarezsofia541-alt         🟢🟢⚪️⚪️⚪️            🟢⚪️  No      10    10  63447.19.nth33okuj84lkuup17c.01 
 61490   Valdez Bustamante, Tomás        (381)303-1034  Sí   tomas-valdez-bustamante    🟢🟢⚪️⚪️⚪️            🟢⚪️  No      13     6  61490.15.4d9eh278dmvtsnhjp28    
 63397   Vercellone, Tomás               (381)676-6267  Sí   xtomi2456                  🟢🟢⚪️⚪️⚪️            🟢⚪️  No      10     9  63397.48.ek90lhofoio6eukqfcf.07 
-```
 
 ## C9
 ```text
 Legajo  Nombre y Apellido               Teléfono       Fot  GitHub                     Prácticos             Ex    Pr      Nr  Nota  Código                          
 ------  ------------------------------  -------------  ---  -------------------------  --------------------  ----  ----  ----  ----  --------------------------------
 63385   Almaraz Sintora, Nahuel         (381)502-5082  Sí   nahuelalmaraz957-ops       🟢🟢⚪️⚪️⚪️            🟢⚪️  No      13    10  63385.19.n4td3p08jc2n7of89j9.84 
-63217   Altamiranda Borquez, Bian       (381)581-3104  Sí   sofiaaltamiranda22         🟢🔴⚪️⚪️⚪️            🟡⚪️  No       9     8  63217.17.eh47au1g2hid5uivmab.04 
+63217   Altamiranda Borquez, Bian       (381)581-3104  Sí   sofiaaltamiranda22         🟢🟢⚪️⚪️⚪️            🟡⚪️  No       9     8  63217.17.eh47au1g2hid5uivmab.04 
 63300   Álvarez, Hernán Fabricio        (381)581-4086  Sí   hernancarpalvarez28        🟢🟢⚪️⚪️⚪️            🟢⚪️  No       9    10  63300.19.93l7avkm33u5q5rq6fc.39 
 63313   Ávila Puntano, Benjamín         (381)329-6643  Sí   santiagobnj-avila-pun      🟢🟢⚪️⚪️⚪️            🟢⚪️  No      13    10  63313.19.q2097b7bfkvi9js5heu.30 
 63222   Bajre Martínez, Julián          (381)351-9652  Sí   julianbajre-png            🟢🟢⚪️⚪️⚪️            🟢⚪️  No      12     7  63222.16.70e849i2ra5gbeb7l2m.70 
@@ -78,4 +77,13 @@ Legajo  Nombre y Apellido               Teléfono       Fot  GitHub             
 63216   Sánchez, Sofía Micaela          (381)342-9672  Sí   sofisanchez126             🟢🟢⚪️⚪️⚪️            🟢⚪️  No      11    10  63216.19.la9m5mdko85cr0t8qhb.66 
 63207   Saravia, César Nahum            (381)612-1173  Sí   nahum-saravia              🟢🟢⚪️⚪️⚪️            🟢⚪️  No       9    10  63207.19.6rhed78i9ft7v1tb8a1.65 
 61026   Thompson, María José            (381)448-3445  Sí   mariajosethompson0-eng     🟢🟢⚪️⚪️⚪️            🟢⚪️  No      12     9  61026.18.ssgsvmom27j9an7dmuh.03 
+```
+
+## C10
+```text
+Legajo  Nombre y Apellido               Teléfono       Fot  GitHub                     Prácticos             Ex    Pr      Nr  Nota  Código                          
+------  ------------------------------  -------------  ---  -------------------------  --------------------  ----  ----  ----  ----  --------------------------------
+65001   Romero, Agustina                (381)444-1101  Sí   agustinaromero01           🟢🟢⚪️⚪️⚪️            🟢⚪️  No      11    10  65001.19.abcd1234efgh5678ijk.01 
+65002   Ferreyra, Mateo                 (381)444-1102  Sí   mateferreyra02             🟢🟢⚪️⚪️⚪️            🟢⚪️  No      10     9  65002.19.bcde2345fghi6789jkl.02 
+65003   Luna, Emilia                    (381)444-1103  Sí   emilialuna03               🟢🟢⚪️⚪️⚪️            🟢⚪️  No      12    10  65003.19.cdef3456ghij7890klm.03 
 ```

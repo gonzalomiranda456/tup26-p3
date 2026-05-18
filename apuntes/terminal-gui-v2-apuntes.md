@@ -171,36 +171,24 @@ En el ejemplo final hay cuatro responsabilidades separadas:
 
 ## 3. Crear el proyecto
 
-Para clase conviene una app C# de archivo único con .NET 10. Las dependencias se declaran al principio del `.cs`:
+Para clase conviene una app C# de archivo único (file based) con .NET 10. Las dependencias se declaran al principio del `.cs`:
 
 ``` csharp
+#!/usr/bin/env -S dotnet run
 #:package Terminal.Gui@2.0.1
-#:package Microsoft.Data.Sqlite@9.0.0
-#:package Dapper@2.1.35
-#:package Dapper.Contrib@2.0.78
 #:property PublishAot=false
-```
 
-Luego se ejecuta:
-
-``` bash
-dotnet run agenda-terminal-gui.cs
-```
-
-Los `using` más usados son:
-
-``` csharp
 using Terminal.Gui.App;       // Application, IApplication, Runnable
 using Terminal.Gui.Drawing;   // LineStyle, colores y dibujo
 using Terminal.Gui.Input;     // Key, Command
 using Terminal.Gui.ViewBase;  // View, Pos, Dim
 using Terminal.Gui.Views;     // Window, FrameView, Button, TextField, etc.
+```
 
-using Microsoft.Data.Sqlite;  // SqliteConnection
-using Dapper;                 // Execute, Query
-using Dapper.Contrib.Extensions; // GetAll, Insert, Update, Delete, [Key], [Table]
+Luego se ejecuta:
 
-using System.Text.Json;       // JsonSerializer
+``` bash
+dotnet agenda-terminal-gui.cs
 ```
 
 ---
@@ -210,8 +198,10 @@ using System.Text.Json;       // JsonSerializer
 El ciclo de vida mínimo es:
 
 ``` csharp
-using IApplication app = Application.Create().Init();
-app.Run(new AgendaWindow(store));
+using( IApplication app = Application.Create().Init()){
+    Window mainWindow = new() { Title = "Tutorial Terminal.Gui v2" };
+    app.Run(mainWindow);
+}
 ```
 
 Qué pasa ahí:
@@ -221,21 +211,6 @@ Qué pasa ahí:
 3.  `Run(...)` ejecuta una pantalla, ventana o diálogo.
 4.  Cuando la pantalla pide detenerse, `Run` termina.
 5.  El `using` llama a `Dispose()` y restaura la terminal.
-
-Ventajas del modelo por instancia:
-
-- hay menos estado global;
-- es más testeable;
-- cada `View` puede acceder a su aplicación mediante `App`;
-- el cierre libera recursos correctamente.
-
-Para cerrar una ventana o diálogo se usa:
-
-``` csharp
-App!.RequestStop();
-```
-
-`RequestStop` no mata el proceso. Le pide al loop activo que termine de forma ordenada.
 
 ---
 
@@ -251,9 +226,7 @@ using Terminal.Gui.Configuration;
 ConfigurationManager.RuntimeConfig = """
 {
   "Theme": "Dark",
-  "Application.DefaultKeyBindings": {
-    "Quit": { "All": ["Ctrl+Q"] }
-  }
+  "Application.DefaultKeyBindings": { "Quit": { "All": ["Ctrl+Q"] } }
 }
 """;
 
@@ -283,18 +256,18 @@ Una `View` puede ser:
 Se agregan vistas con `Add`:
 
 ``` csharp
-FrameView listPanel = new() {
-    Title = "Contactos",
-    X = 0, Y = 4,
-    Width = Dim.Percent(58), Height = Dim.Fill(2)
+FrameView maestro = new() {
+    Title = "Maestro",
+    Width = Dim.Percent(50), Height = Dim.Fill()
 };
 
-ListView contactsList = new() {
-    X = 0, Y = 1,
+FrameView detalle = new() {
+    Title = "Detalle",
+    X = Pos.Right(maestro),
     Width = Dim.Fill(), Height = Dim.Fill()
 };
 
-listPanel.Add(contactsList);
+mainWindow.Add(maestro, detalle);
 ```
 
 El panel se vuelve el `SuperView` de la lista. La lista se posiciona dentro del área interna del panel, no contra toda la pantalla.
@@ -302,14 +275,13 @@ El panel se vuelve el `SuperView` de la lista. La lista se posiciona dentro del 
 Esto permite pensar por capas:
 
 ``` text
-AgendaWindow
+MainWindows
 ├── MenuBar
-├── controles de búsqueda
-├── FrameView "Contactos"
+├── FrameView "Maestro"
 │   ├── Label encabezado
 │   └── ListView
 ├── FrameView "Detalle"
-│   └── Label
+│   └── Markdown o Label multilinea
 └── Label de estado
 ```
 
@@ -324,33 +296,68 @@ En Terminal.Gui no se ejecuta cualquier objeto: se ejecuta un objeto que partici
 En el ejemplo final:
 
 ``` csharp
-public sealed class AgendaWindow : Runnable {
-    public AgendaWindow(SqliteAgendaStore store) {
-        Title = "Agenda - Terminal.Gui";
-        Width = Dim.Fill(); Height = Dim.Fill();
+class Agenda : Window {
+    public Agenda() {
+        Title = "Agenda";
 
-        BuildLayout();
-        LoadContacts();
+        Button boton     = new() { Text = "¡Confirmar!", X = Pos.Center(), Y = Pos.Center() };
+        Label  resultado = new() { Text = "Resultado: ", X = Pos.Center(), Y = Pos.Bottom(boton) + 1 };
+
+        boton.Accepting += (_,_) => {
+            using Confirmar confirmar = new("¿Estás seguro de que quieres confirmar esta acción?");
+            App!.Run(confirmar);
+            resultado.Text = "Resultado " + (confirmar.Result==1 ? "¡Confirmado!" : "Cancelado.");
+        };
+
+        Add(boton);
+        Add(resultado);
     }
 }
+
+class Confirmar : Dialog { 
+    public Confirmar(string Mensaje){
+        Title = "Confirmar acción";
+        Width = 60; Height = 10;
+
+        Add(new Label() { Text = Mensaje, X = Pos.Center(), Y = 2 });
+
+        AddButton(new Button(){Title = "Cancelar" }); // Resultado = 0
+        AddButton(new Button(){Title = "Confirmar"}); // Resultado = 1
+    }
+}
+
 ```
 
 Y se ejecuta así:
 
 ``` csharp
-using IApplication app = Application.Create().Init();
-app.Run(new AgendaWindow(store));
+using (IApplication app = Application.Create().Init()) {
+    app.Run(new Agenda());
+}
+```
+o 
+``` csharp
+using (IApplication app = Application.Create().Init()) {
+    app.Run<Agenda>();
+}
+
+```
+o 
+```csharp
+using IApplication app = Application.Create().Init());
+using Agenda agenda = new();
+app.Run(agenda);
 ```
 
 Cuando una pantalla necesita abrir un diálogo:
 
 ``` csharp
-ContactDialog dialog = new("Editar contacto", selected.Clone());
-App!.Run(dialog);
-
-if (dialog.Saved && dialog.Contact is not null) {
-    // aplicar cambios
-}
+// Crea la caja de dialogo
+Confirmar confirmar = new("¿Estás seguro de que quieres confirmar esta acción?");
+// 'Apila' la caja de dialogo y espera a que el usuario elija una opción
+App!.Run(confirmar);
+// Al cerrar el diálogo, el control vuelve a esta línea, y se puede leer el resultado
+resultado.Text = "Resultado " + (confirmar.Result==1 ? "¡Confirmado!" : "Cancelado.");
 ```
 
 `App!.Run(dialog)` abre un loop modal encima del actual. Mientras el diálogo está abierto, la ventana de atrás no recibe input. Cuando el diálogo llama a `App!.RequestStop()`, el control vuelve a la línea siguiente.
@@ -386,9 +393,45 @@ FrameView detailsPanel = new() {
 Es una ventana modal. Se usa para edición, confirmaciones o formularios cortos.
 
 ``` csharp
-public sealed class ContactDialog : Dialog {
-    public bool Saved { get; private set; }
-    public Contacto? Contact { get; private set; }
+class Editar : Dialog<Contacto?> {
+    public Editar(){
+        Title  = "Editar Contacto";
+        Width  = 60; Height = 10;
+
+        // Agrego el campo Nombre
+        Label labelNombre       = new() { Text = "  Nombre:", X = 1, Y = 1 };
+        TextField inputNombre   = new() { X = Pos.Right(labelNombre) + 1, Y = 1, Width = 30 };
+        Add(labelNombre, inputNombre);
+
+        // Agrego el campo Teléfono
+        Label labelTelefono     = new() { Text = "Teléfono:", X = 1, Y = 3 };
+        TextField inputTelefono = new() { X = Pos.Right(labelTelefono) + 1, Y = 3, Width = 15 };
+        Add(labelTelefono, inputTelefono);
+
+        // Si cancelo retorno null
+        Button btnCancelar = new() { Title = "Cancelar" };
+        btnCancelar.Accepting += (_,_) => Result = null;
+        AddButton(btnCancelar);
+
+        // Si confirmo, valido y retorno el contacto
+        Button btnConfirmar = new() { Title = "Confirmar" };
+        btnConfirmar.Accepting += (_, e) => {
+            e.Handled = true; // Evito que el diálogo se cierre automáticamente
+            if(string.IsNullOrWhiteSpace(inputNombre.Text) || inputNombre.Text.Length < 3) {
+                inputNombre.SetFocus();
+                return;
+            }
+
+            if(string.IsNullOrWhiteSpace(inputTelefono.Text) || !inputTelefono.Text.ToString()!.All(char.IsDigit)) {
+                inputTelefono.SetFocus();
+                return;
+            }
+            
+            Result = new Contacto(inputNombre.Text.ToString(), inputTelefono.Text.ToString());
+            App!.RequestStop();
+        };
+        AddButton(btnConfirmar);
+    }
 }
 ```
 
@@ -469,7 +512,7 @@ Sirve para partir la pantalla en paneles.
 ### Rellenar el espacio disponible
 
 ``` csharp
-Width = Dim.Fill();
+Width  = Dim.Fill();
 Height = Dim.Fill(2);
 ```
 
@@ -820,7 +863,20 @@ El resultado es un store muy chico: una clase, una conexión, y métodos de una 
 
 El modelo se anota con atributos de Dapper.Contrib:
 
-``` csharp
+```csharp
+#:package Terminal.Gui@2.0.1
+#:package Microsoft.Data.Sqlite@9.0.0
+#:package Dapper@2.1.35
+#:package Dapper.Contrib@2.0.78
+
+using Microsoft.Data.Sqlite;  // SqliteConnection
+using Dapper;                 // Execute, Query
+using Dapper.Contrib.Extensions; // GetAll, Insert, Update, Delete, [Key], [Table]
+
+using System.Text.Json;       // JsonSerializer
+```
+
+```csharp
 [Table("Contactos")]
 public sealed class Contacto {
     [Key]  public int    Id        { get; set; }

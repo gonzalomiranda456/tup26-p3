@@ -425,11 +425,15 @@ static class AlumnosManager {
             });
 
             JsonSerializerOptions opciones = new() {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = true
             };
 
-            AppPaths.EscribirAlumnosJson(JsonSerializer.Serialize(datos, opciones) + Environment.NewLine, rutaArchivo);
+            string json = JsonSerializer.Serialize(datos, opciones);
+            json = DesescaparUnicodeJsonLegible(json);
+
+            AppPaths.EscribirAlumnosJson(json + Environment.NewLine, rutaArchivo);
 
             Log.Info($"Alumnos guardados en JSON: {rutaArchivo}");
         } catch (Exception ex) {
@@ -513,6 +517,74 @@ static class AlumnosManager {
     static string ObtenerComision(Alumno alumno) {
         return FormatearTexto(alumno.Comision);
     }
+
+    static string DesescaparUnicodeJsonLegible(string json) {
+        StringBuilder sb = new(json.Length);
+
+        for (int i = 0; i < json.Length; i++) {
+            if (!TryLeerCodigoUnicode(json, i, out int codePoint, out int consumed)) {
+                sb.Append(json[i]);
+                continue;
+            }
+
+            sb.Append(char.ConvertFromUtf32(codePoint));
+            i += consumed - 1;
+        }
+
+        return sb.ToString();
+    }
+
+    static bool TryLeerCodigoUnicode(string json, int indice, out int codePoint, out int consumed) {
+        codePoint = 0;
+        consumed = 0;
+
+        if (json[indice] != '\\' || indice + 5 >= json.Length || json[indice + 1] != 'u') {
+            return false;
+        }
+
+        if (CantidadBarrasInvertidasConsecutivas(json, indice) % 2 != 0) {
+            return false;
+        }
+
+        if (!TryParseHex(json.AsSpan(indice + 2, 4), out int primerValor)) {
+            return false;
+        }
+
+        if (char.IsHighSurrogate((char)primerValor)) {
+            if (indice + 11 >= json.Length || json[indice + 6] != '\\' || json[indice + 7] != 'u') {
+                return false;
+            }
+
+            if (!TryParseHex(json.AsSpan(indice + 8, 4), out int segundoValor) || !char.IsLowSurrogate((char)segundoValor)) {
+                return false;
+            }
+
+            codePoint = char.ConvertToUtf32((char)primerValor, (char)segundoValor);
+            consumed = 12;
+            return true;
+        }
+
+        if (primerValor < 0x20 || primerValor == '"' || primerValor == '\\' || char.IsSurrogate((char)primerValor)) {
+            return false;
+        }
+
+        codePoint = primerValor;
+        consumed = 6;
+        return true;
+    }
+
+    static int CantidadBarrasInvertidasConsecutivas(string texto, int indice) {
+        int cantidad = 0;
+
+        for (int i = indice - 1; i >= 0 && texto[i] == '\\'; i--) {
+            cantidad++;
+        }
+
+        return cantidad;
+    }
+
+    static bool TryParseHex(ReadOnlySpan<char> valor, out int resultado) =>
+        int.TryParse(valor, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out resultado);
 
     static string ToSiNo(this bool valor) => valor ? "Sí" : "No";
 
