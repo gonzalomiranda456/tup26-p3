@@ -30,6 +30,7 @@ MenuBar menu = new(new MenuBarItem[] {
     new("Contacto", new MenuItem[] {
         new("_Agregar", "Agrega un nuevo contacto",    () => mensaje.Text = "Contacto > Agregar", Key.A.WithCtrl),
         new("_Editar",  "Edita un contacto existente", () => mensaje.Text = "Contacto > Editar",  Key.E.WithCtrl),
+        null!,
         new("_Borrar",  "Borra un contacto existente", () => mensaje.Text = "Contacto > Borrar",  Key.B.WithCtrl)
     })
 });

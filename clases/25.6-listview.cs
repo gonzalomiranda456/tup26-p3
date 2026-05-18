@@ -18,25 +18,27 @@ List<Contacto> agenda = [
 ];
 
 using( IApplication app = Application.Create().Init()){
-    Window mainWindow = new() { Title = "Tutorial Terminal.Gui v2" };
+    Window mainWindow= new() { Title = "Tutorial Terminal.Gui v2" };
 
     Label etiqueta   = new() { Text = "Buscar:", X = 1, Y = 1 };
-    TextField buscar = new() { X = Pos.Right(etiqueta), Y = 1, Width = 33 };
-    ListView lista   = new() { X = 1, Y = 3, Width = 40, Height = Dim.Fill(4) };
-    Markdown detalle  = new() { Text = "", X = Pos.Right(lista) + 1, Y = 3, Width = 40, Height = Dim.Fill(4) };
+    TextField buscar = new() { X = Pos.Right(etiqueta), Y = 1, Width = 43 };
+    
+    ListView maestro = new() { X = 1, Y = 3, Width = 50, Height = Dim.Fill(4) };
+    Markdown detalle = new() { Text = "", X = Pos.Right(maestro) + 1, Y = 3, Width = 40, Height = Dim.Fill(4) };
+    
     List<Contacto> filtrados = [];
 
     void Actualizar() {
         string texto = buscar.Text ?? "";
         filtrados = agenda.Where(c => c.Coincide(texto)).ToList();
-        lista.SetSource(new ObservableCollection<string>(filtrados.Select(c => c.ToString()).ToList()));
+        maestro.SetSource(new ObservableCollection<string>(filtrados.Select(c => c.ToString()).ToList()));
     }
 
     buscar.TextChanged += (_, _) => Actualizar();
     Actualizar();
 
-    lista.ValueChanged += (_, _) => {
-        int indice = lista.SelectedItem ?? -1;
+    maestro.ValueChanged += (_, _) => {
+        int indice = maestro.SelectedItem ?? 0;
         if (indice >= 0 && indice < filtrados.Count) {
             Contacto contacto = filtrados[indice];
             detalle.Text = $"""
@@ -45,6 +47,7 @@ using( IApplication app = Application.Create().Init()){
                 **{contacto.NombreCompleto}**
 
                 *Teléfono:* **{contacto.Telefono}**
+                
                 *Edad:* **{contacto.Edad}** años
                 """;
         } else {
@@ -52,7 +55,7 @@ using( IApplication app = Application.Create().Init()){
         }
     };
 
-    mainWindow.Add(etiqueta, buscar, lista, detalle);
+    mainWindow.Add(etiqueta, buscar, maestro, detalle);
 
     app.Run( mainWindow);
 }
@@ -62,7 +65,7 @@ record Contacto(string Nombre, string Apellido, string Telefono, int Edad) {
     
     public bool Coincide(string texto) =>
         NombreCompleto.Contains(texto.Trim(), StringComparison.OrdinalIgnoreCase)
-        || Telefono.Contains(texto.Trim(), StringComparison.OrdinalIgnoreCase);
+        || Telefono.Contains(texto.Trim());
 
-    public override string ToString() => $" {NombreCompleto,-22} | {Telefono} | {Edad} años";
+    public override string ToString() => $" {NombreCompleto,-22} | {Telefono,10} | {Edad,2} años";
 };

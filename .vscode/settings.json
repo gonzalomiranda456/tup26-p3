@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Light 2026",
+    "workbench.colorTheme": "Dark 2026",
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "workbench.preferredDarkColorTheme": "Dark 2026",
     "dotnet.projects.enableFileBasedPrograms": true,
@@ -14,12 +14,11 @@
         "editor.formatOnType": false,
         "editor.defaultFormatter": "ms-dotnettools.csharp"
     },
-    "editor.fontSize": 14,
     "chat.promptFiles": true,
     "chat.useCustomizationsInParentRepositories": true,
     "chat.fontSize": 14,
     "chat.editor.fontSize": 14,
-    "terminal.integrated.fontSize": 12,
+    "terminal.integrated.fontSize": 28,
     "editor.wordWrap": "off",
     "notebook.lineNumbers": "on",
     "[markdown]": { "editor.wordWrap": "off" },

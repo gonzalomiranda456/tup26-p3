@@ -1,7 +1,7 @@
 function GenerarExamen(semilla, cantidad, maximo = 424) {
     const MULTIPLICADOR = 48271;
     const MODULO        = 2147483647;
-    const SALTAR        = 22; // Se salta un número inicial de elementos para evitar patrones predecibles
+    const SALTAR        = 33; // Se salta un número inicial de elementos para evitar patrones predecibles
 
     const numeros = Array.from({ length: maximo }, (_, index) => index + 1);
     

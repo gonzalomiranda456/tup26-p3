@@ -12,18 +12,18 @@ using( IApplication app = Application.Create().Init()){
     Button editar    = new() { Title = "Editar contacto",    X = Pos.Center(), Y = Pos.Center() };
     Label  resultado = new() { Text  = "Resultado: Ninguno", X = Pos.Center(), Y = Pos.Bottom(editar) };
     
-    editar.Accepting += (_,_) => {
-        using Editar dialog = new();
-        app.Run(dialog);
-        if (dialog.Result is not null) {
-            resultado.Text = $"Resultado: {dialog.Result}";
-        }
-    };
-
     // editar.Accepting += (_,_) => {
-    //     app.Run<Editar>();
-    //     resultado.Text = $"Resultado: {app.GetResult<Contacto>()}";
+    //     using Editar dialog = new();
+    //     app.Run(dialog);
+    //     if (dialog.Result is not null) {
+    //         resultado.Text = $"Resultado: {dialog.Result}";
+    //     }
     // };
+
+    editar.Accepting += (_,_) => {
+        app.Run<Editar>();
+        resultado.Text = $"Resultado: {app.GetResult<Contacto>()}";
+    };
 
     mainWindow.Add(editar);
     mainWindow.Add(resultado);
@@ -37,8 +37,8 @@ record Contacto(string Nombre, string Telefono) {
 
 class Editar : Dialog<Contacto?> {
     public Editar(){
-        Title  = "Editar Contacto";
-        Width  = 60; Height = 10;
+        Title = "Editar Contacto";
+        Width = 60; Height = 10;
 
         // Agrego el campo Nombre
         Label labelNombre       = new() { Text = "  Nombre:", X = 1, Y = 1 };
@@ -58,19 +58,19 @@ class Editar : Dialog<Contacto?> {
         // Si confirmo, valido y retorno el contacto
         Button btnConfirmar = new() { Title = "Confirmar" };
         btnConfirmar.Accepting += (_, e) => {
-            e.Handled = true; // Evito que el diálogo se cierre automáticamente
             if(string.IsNullOrWhiteSpace(inputNombre.Text) || inputNombre.Text.Length < 3) {
+                e.Handled = true; // Evito que el diálogo se cierre automáticamente
                 inputNombre.SetFocus();
                 return;
             }
 
-            if(string.IsNullOrWhiteSpace(inputTelefono.Text) || !inputTelefono.Text.ToString()!.All(char.IsDigit)) {
+            if(string.IsNullOrWhiteSpace(inputTelefono.Text) || !inputTelefono.Text.All( char.IsDigit )) {
+                e.Handled = true; // Evito que el diálogo se cierre automáticamente
                 inputTelefono.SetFocus();
                 return;
             }
             
-            Result = new Contacto(inputNombre.Text.ToString(), inputTelefono.Text.ToString());
-            App!.RequestStop();
+            Result = new Contacto(inputNombre.Text, inputTelefono.Text);
         };
         AddButton(btnConfirmar);
     }

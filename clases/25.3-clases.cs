@@ -31,9 +31,9 @@ class Agenda : Window {
         };
 
         // Definimos un diálogo de confirmación que se mostrará al hacer click en el botón
-        Dialog confirmar = new Dialog() {
-            Title = "Confirmar acción",
-            Width = 60,
+        Dialog confirmar = new() {
+            Title  = "Confirmar acción",
+            Width  = 60,
             Height = 10
         };
 
@@ -55,7 +55,6 @@ class Agenda : Window {
             }
         };
 
-        Add(boton);
-        Add(resultado);
+        Add(boton, resultado);
     }
 }

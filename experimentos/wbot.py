@@ -1,3 +1,4 @@
+import logging
 import os
 import signal
 import threading
@@ -10,6 +11,10 @@ from neonize.events import ConnectedEv, MessageEv
 from neonize.utils.message import extract_text
 
 raiz = Path(__file__).resolve().parent
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
 
 @function_tool
 def leer_archivo(ruta: str) -> str:

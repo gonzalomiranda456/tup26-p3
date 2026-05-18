@@ -3,8 +3,6 @@
 #:property PublishAot=false
 
 using Terminal.Gui.App;       // Application, IApplication, Runnable
-using Terminal.Gui.Drawing;   // LineStyle, colores y dibujo
-using Terminal.Gui.Input;     // Key, Command
 using Terminal.Gui.ViewBase;  // View, Pos, Dim
 using Terminal.Gui.Views;     // Window, FrameView, Button, TextField, etc.
 
@@ -13,22 +11,15 @@ using( IApplication app = Application.Create().Init()){
 
     FrameView maestro = new() {
         Title = "Maestro",
-        Width = Dim.Percent(50), Height = Dim.Fill()
+        X = 0, Y = 0,
+        Width = Dim.Percent(25), Height = Dim.Fill()
     };
     FrameView detalle = new() {
         Title = "Detalle",
-        X = Pos.Right(maestro),
+        X = Pos.Right(maestro) + 5,
         Width = Dim.Fill(), Height = Dim.Fill()
     };
     mainWindow.Add(maestro, detalle);
 
     app.Run( mainWindow);
-}
-
-class Agenda : Window {
-    public Agenda() {
-        Title  = "Agenda";
-        Width  = Dim.Fill();
-        Height = Dim.Fill();
-    }
 }
