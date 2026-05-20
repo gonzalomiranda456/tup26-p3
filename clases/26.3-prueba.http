@@ -1,6 +1,6 @@
 ### Probamos el servidor desde HTTP
 
-GET http://localhost:5001/saludo
+GET https://www.google.com
 
 ###
 
