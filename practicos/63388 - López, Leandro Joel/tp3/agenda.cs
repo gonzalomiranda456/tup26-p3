@@ -6,9 +6,16 @@
 #:package Dapper@*
 #:package Dapper.Contrib@*
 
-
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using Terminal.Gui.App;
 using Terminal.Gui.Drawing;
+using Terminal.Gui.Drivers;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
@@ -23,47 +30,129 @@ using Dapper.Contrib.Extensions;
 /// ====
 
 // Punto de entrada
-using IApplication app = Application.Create().Init();
-app.Run(new AgendaWindow());
 
+try {
+    string databasePath = args.Length switch {
+        
+        0=> "agenda.db",
+        1=> args[0],
+        _=> throw new ArgumentException("uso: agenda [archivo.db]")
+    };
+
+    using IApplication app = Application.Create().Init();
+    var store = new SqliteAgendaStore(databasePath);
+    var agenda = new AgendaWindow(store);
+    app.Run(agenda);
+    return 0;
+
+}
+ catch (Exception ex) {
+    Console.WriteLine($"Error: {ex.Message}");
+    return 1;
+}
 
 // Ventana principal
 public sealed class AgendaWindow : Runnable {
 
-    public AgendaWindow() {
-        Title  = "Agenda - Terminal.Gui";
+    private readonly SqliteAgendaStore _store;
+    private readonly List <Contacto> contactos = new();
+    private readonly List<Contacto> contactosFiltrados = new();
+    private readonly ObservableCollection<string> filas = new();
+    private MenuItem soloFavoritosMenuItem = null!;
+    private bool soloFavoritos;
+    private string filtro = string.Empty;
+    private ListView listView = null!;
+    private TextField searchField = null!;
+    private TextView detailsView = null!;
+    private Label statusLabel = null!;
+    private string ultimaOperacion = "Listo.";
+    public AgendaWindow(SqliteAgendaStore store) : base(){
+
+        this._store = store;
+        Title  = "Agenda - AgendaT";
         Width  = Dim.Fill();
         Height = Dim.Fill();
 
         Menu.DefaultBorderStyle = LineStyle.Single;
         BuildLayout();
+        CargarContactos();
     }
 
     private void BuildLayout() {
-        MenuBar menu = new() {
-            Menus = [
-                new MenuBarItem("_Archivo", [
-                    new MenuItem("_Nuevo contacto", null!, AbrirDialogo),
-                    null!, // Separador
+
+        soloFavoritosMenuItem = new MenuItem("_Solo favoritos", string.Empty, ToggleSoloFavoritos);
+        
+        
+        var menu = new MenuBar(new MenuBarItem[]  {
+            
+                new ("_Archivo", new MenuItem [] {
+                    new ("_Importar Json", "Ctrl+I", ImportarJson),
+                    new ("_Exportar Json", "Ctrl+E", ExportarJson),                    
                     new MenuItem("_Salir", "Ctrl+Q", SolicitarSalir)
-                ])
-            ]
+                }),
+
+                new ("_Contacto", new MenuItem [] {
+                    new ("_Nuevo contacto", "Ctrl+N", NuevoContacto),
+                    new ("_Editar contacto", "Ctrl+E", EditarContacto),
+                    new ("_Eliminar contacto", "Ctrl+D", EliminarContacto),
+                    new ("_Alternar favorito", string.Empty, AlternarFavorito)
+                }),
+
+                new ("_Ver", new MenuItem [] {
+                    soloFavoritosMenuItem,
+                }),
+                new ("_Ayuda", new MenuItem [] {
+                    new ("_Acerca de", string.Empty, MostrarAcercaDe)
+                })
+        });
+
+        var searchLabel = new Label() {
+            Text = "Buscar:",
+            X    = 1,
+            Y    = 1
         };
 
-        Button openButton = new() {
-            Text = "_Abrir diálogo",
-            X    = Pos.Center(),
-            Y    = Pos.Center()
+        searchField = new TextField() {
+            Text  = string.Empty,
+            X     = Pos.Right(searchLabel) + 1,
+            Y     = Pos.Top(searchLabel),
+            Width = Dim.Fill(1)
         };
 
-        openButton.Accepting += (_, e) => {
-            AbrirDialogo();
-            e.Handled = true;
+        searchField.TextChanged += (_, _) => {
+            filtro = searchField.Text ?? string.Empty;
+            ActualizarListaVisible();
         };
 
-        Add(menu, openButton);
-    }
+        listView = new ListView() {
+            X      = 1,
+            Y      = 3,
+            Width  = Dim.Percent(55),
+            Height = Dim.Fill(4)
+        };
 
+        listView.Source = new ListWrapper<string>(filas);
+        listView.ValueChanged += (_, _) => MostrarDetalle();
+        listView.Accepted += (_, _) => EditarSelecciona();
+
+        detailsView = new TextView() {
+            X      = Pos.Right(listView) + 2,
+            Y      = Pos.Top(listView),
+            Width  = Dim.Fill(1),
+            Height = Dim.Fill(4)
+            ReadOnly = true,
+            WordWrap = true,
+            Text = "Sin contactos."
+        };
+
+        statusLabel = new Label() {
+            Text = ultimaOperacion,
+            X    = 1,
+            Y    = Pos.AnchorEnd(1),
+            Width = Dim.Fill(1)
+        };
+
+        Add(menu, searchLabel, searchField, listView, detailsView, statusLabel);
     private void AbrirDialogo() {
         EjemploDialog dialog = new();
         App!.Run(dialog);
