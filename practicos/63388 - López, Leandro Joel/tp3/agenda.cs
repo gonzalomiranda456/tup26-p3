@@ -218,7 +218,7 @@ public sealed class AgendaWindow : Runnable {
     private void EditarSelecciona() {
 
         Contacto? actual = Seleccionado();
-        if (aactual is null) {
+        if (actual is null) {
 
             MessageBox.ErrorQuery(App!, "Agenda", "Selecciona un contacto para editar.", "OK");
             return;
@@ -264,14 +264,115 @@ public sealed class AgendaWindow : Runnable {
         actual.Favorito = !actual.Favorito;
         store.Guardar(actual);
         CargarContactos();
-        ActualizarEstado($"Contacto '{actual.Nombre}' {(actual.Favorito ? "marcado como favorito" : "desmarcado como favorito")}.");
-    }
-    private void AbrirDialogo() {
-        EjemploDialog dialog = new();
-        App!.Run(dialog);
+        ActualizarEstado(actual.Favorito ? "marcado como favorito" : "desmarcado como favorito");
     }
 
+    private void ToggleSoloFavoritos() {
+
+        soloFavoritos = !soloFavoritos;
+        soloFavoritosMenuItem.Title = soloFavoritos ? "_Solo favoritos [x]" : "_Solo favoritos";
+        ActualizarListaVisible();
+        ActualizarEstado(soloFavoritos ? "Filtrando solo favoritos" : "Mostrando todos los contactos");
+    }
+
+    private void ImportarJson() {
+
+        var dialog = new OpenDialog() {
+            
+            Title = "Importar contactos",
+
+        };
+
+        App!.Run(dialog);
+
+        if (dialog.Canceled) {
+
+            return;
+
+        }
+
+        var pathEntry = dialog.FilePaths.FirstOrDefault();
+        if (pathEntry is null) {
+
+            return;
+        }
+
+        string path = pathEntry.ToString();
+        try {
+            
+            var importados = JsonAgendaIO.Leer(path);
+            if (importados.count == 0) {
+
+                MessageBox.Query(App!, "Importar", "No se encontraron contactos en el archivo.", "OK");
+                return;
+            }
+
+            int response = MessageBox.Query(App!, "Importar", $"Se encontraron {importados.Count} contactos. ¿Deseas importarlos?", "Sí", "No") ?? -1;
+            if (response != 1) {
+
+                return;
+            }
+
+            foreach (var contacto in importados) {
+
+                contacto.Id = 0;
+                store.Guardar(contacto);
+            }
+
+            CargarContactos();
+            ActualizarEstado($"Importados {importados.Count} contactos.");
+        }
+
+        catch (Exception ex) {
+
+            MessageBox.ErrorQuery(App!, "Error", ex.Message, "OK");
+        }
+    }
+
+    private void ExportarJson() {
+
+        var dialog = new SaveDialog() {
+            
+            Title = "Exportar contactos",
+
+        };
+
+        App!.Run(dialog);
+
+        if (dialog.Canceled || string.IsNullOrWhiteSpace(dialog.FileName?.ToString()) ) {
+
+            return;
+
+        }
+
+        try {
+            
+            string path = dialog.FileName.ToString();
+
+            JsonAgendaIO.Escribir(path, StoreLocation.ListrarTodos());
+            MessageBox.Query(App!, "Exportar", $"Contactos exportados correctamente", "OK");
+            ActualizarEstado($"Exportados {store.ListarTodos().Count} contactos a {Path.GetFileName(path)}.");
+        }
+        
+        catch (Exception ex) {
+
+            MessageBox.ErrorQuery(App!, "Error", ex.Message, "OK");
+        }
+    }
+
+    private void MostrarAcercaDe() {
+
+        MessageBox.Query(App!, "Acerca de", "AgendaT - Trabajo Practico 3\nTerminal GUI con Persistencia SQLite e import/export JSON.\n\nAtajos: F2, F3, Del, Ctrl+N, CtrlD, Ctrl+I, Ctrl+E, F4,Ctrl+Q", "OK");
+    }
+
+    private void ActualizarEstado(string mensaje) {
+
+        ultimaOperacion = mensaje;
+        statusLabel.Text = ultimaOperacion;
+    }
+    
     private void SolicitarSalir() {
+        
         App!.RequestStop();
     }
 
