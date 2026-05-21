@@ -23,6 +23,7 @@ using Microsoft.Data.Sqlite;
 using Dapper;
 using System.Data.Common;
 using Dapper.Contrib.Extensions;
+using System.Security.Cryptography.X509Certificates;
 
 /// ==== 
 /// Estes es un archivo de referencia con el esqueleto del proyecto.
@@ -153,6 +154,118 @@ public sealed class AgendaWindow : Runnable {
         };
 
         Add(menu, searchLabel, searchField, listView, detailsView, statusLabel);
+    
+    private void CargarContactos() {
+        contactos.Clear();
+        contactos.AddRange(store.Listartodos());
+        ActualizarListaVisible();
+    }
+
+    private void ActualizarListaVisible() {
+
+        contactosFiltrados.Clear();
+        filas.Clear();
+
+        string texto = filtro.Trim();
+        foreach (Contacto contacto in contactos) {
+
+            if (soloFavoritos && !contacto.Favorito) {
+
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(texto) &&
+               !contacto.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) &&
+               !contacto.Telefonos.Contains(texto, StringComparison.OrdinalIgnoreCase) &&
+               !contacto.Email.Contains(texto, StringComparison.OrdinalIgnoreCase) && {
+                continue;
+            }
+        
+            contactosFiltrados.Add(contacto);
+            filas.Add($"{(contacto.Favorito ? "*" : " ")}{contacto.Nombre} - {contacto.Telefonos}");
+    }
+    listView.Source = new ListWrapper<string>(filas);
+    MostrarDetalle();
+    }
+
+    private Contacto? Seleccionado() {
+
+        int selected = listView.SelectedItem ?? -1;
+        if (selected < 0 || selected >= contactosFiltrados.Count) {
+
+            return null;
+        }
+        return contactosFiltrados[selected];
+    }
+
+    private void MostrarDetalle() {
+
+        Contacto? contacto = Seleccionado();
+    detailsView.Text = contacto is null ? " Sin contactos para mostrar." : $"Nombre: {contacto.Nombre}\nTelefonos: {contacto.Telefonos}\nEmail: {contacto.Email}\nFavorito: {(contacto.Favorito ? "Sí" : "No")}\n\nNotas:\n{contacto.Notas}";
+    }
+
+    private void NuevoContacto() {
+        var dialog = new ContactoDialog("Nuevo contacto", new Contacto());
+        App!.Run(dialog);
+        if (dialog.Guardado) {
+            
+            store.Guardar(dialog.Contacto);
+            CargarContactos();
+            ActualizarEstado("Contacto creado.");
+        }
+    }
+
+    private void EditarSelecciona() {
+
+        Contacto? actual = Seleccionado();
+        if (aactual is null) {
+
+            MessageBox.ErrorQuery(App!, "Agenda", "Selecciona un contacto para editar.", "OK");
+            return;
+        }
+
+        var dialog = new ContactoDialog("Editar contacto", actual.Clonar());
+        App!.Run(dialog);
+        if (dialog.Guardado) {
+
+            store.Guardar(dialog.Contacto);
+            CargarContactos();
+            ActualizarEstado($"Contacto '{dialog.Contacto.Nombre}' actualizado.");
+        }
+    }
+
+    private void EliminarSeleccionado() {
+
+        Contacto? actual = Seleccionado();
+        if (actual is null) {
+
+            MessageBox.ErrorQuery(App!, "Agenda", "Selecciona un contacto para eliminar.", "OK");
+            return;
+        }
+
+        int response = MessageBox.Query(App!, "Eliminar", $"Eliminar a {actual.Nombre}?", "Sí", "No") ??-1;
+        if (response == 1) {
+
+            Store.Eliminar(actual.Id);
+            CargarContactos();
+            ActualizarEstado($"Contacto '{actual.Nombre}' eliminado.");
+        }
+    }
+
+    private void AlternarFavorito() {
+
+        Contacto? actual = Seleccionado();
+        if (actual is null) {
+
+            MessageBox.ErrorQuery(App!, "Agenda", "Selecciona un contacto para alternar favorito.", "OK");
+            return;
+        }
+
+        actual.Favorito = !actual.Favorito;
+        store.Guardar(actual);
+        CargarContactos();
+        ActualizarEstado($"Contacto '{actual.Nombre}' {(actual.Favorito ? "marcado como favorito" : "desmarcado como favorito")}.");
+    }
     private void AbrirDialogo() {
         EjemploDialog dialog = new();
         App!.Run(dialog);
