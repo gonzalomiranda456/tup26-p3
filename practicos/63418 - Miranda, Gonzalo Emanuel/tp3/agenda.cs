@@ -16,6 +16,7 @@ using Microsoft.Data.Sqlite;
 using Dapper;
 using System.Data.Common;
 using Dapper.Contrib.Extensions;
+using System.Collections.Generic;
 
 /// ==== 
 /// Estes es un archivo de referencia con el esqueleto del proyecto.
@@ -23,14 +24,21 @@ using Dapper.Contrib.Extensions;
 /// ====
 
 // Punto de entrada
+string dbPath = args.Length > 0 ? args[0] : "agenda.db";
+var store = new SqliteAgendaStore(dbPath);
+
 using IApplication app = Application.Create().Init();
-app.Run(new AgendaWindow());
+app.Run(new AgendaWindow(store));
 
 
 // Ventana principal
-public sealed class AgendaWindow : Runnable {
+public sealed class AgendaWindow : Runnable 
+{
+    private readonly SqliteAgendaStore _store;
 
-    public AgendaWindow() {
+    public AgendaWindow(SqliteAgendaStore store) 
+    {
+        _store = store;
         Title  = "Agenda - Terminal.Gui";
         Width  = Dim.Fill();
         Height = Dim.Fill();
@@ -112,15 +120,78 @@ public sealed class EjemploDialog : Dialog {
 }
 
 
-public class SqliteAgendaStore {}
+public class SqliteAgendaStore {
+        private readonly string _connectionString;
+
+        public SqliteAgendaStore(string dbPath)
+        {
+            _connectionString = $"Data Source={dbPath}";
+            InitializeDatabase();
+        }
+    
+
+        private void InitializeDatabase()
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            var createTableQuery = @"
+            CREATE TABLE IF NOT EXISTS Contactos (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Nombre TEXT NOT NULL,
+                Telefonos TEXT,
+                Email TEXT,
+                Notas TEXT,
+                Favorito INTEGER NOT NULL
+            );";
+        connection.Execute(createTableQuery);
+        }
+
+        public IEnumerable<Contacto> GetAll()
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            return connection.GetAll<Contacto>();
+        }
+
+        public void Insert(Contacto contacto)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            contacto.Id = (int)connection.Insert(contacto);
+        }
+
+        public void Update(Contacto contacto)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Update(contacto);
+        }
+
+        public void Delete(Contacto contacto)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Delete(contacto);
+        }
+    }
 public class JsonAgendaIO {}
 
 [Table("Contactos")]
-public class Contacto {
+public sealed class Contacto {
     [Key] public int    Id        { get; set; }
           public string Nombre    { get; set; } = "";
           public string Telefonos { get; set; } = "";
           public string Email     { get; set; } = "";
           public string Notas     { get; set; } = "";
           public bool   Favorito  { get; set; }
+
+        public Contacto Clone()
+        {
+            return new Contacto
+            {
+                Id = this.Id,
+                Nombre = this.Nombre,
+                Telefonos = this.Telefonos,
+                Email = this.Email,
+                Notas = this.Notas,
+                Favorito = this.Favorito
+             };
+        }
+    
 }
