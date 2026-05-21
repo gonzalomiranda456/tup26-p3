@@ -638,8 +638,8 @@ class GitHub {
 
 
     public static int ExtraerTP(string titulo) {
-        Match match = Regex.Match(titulo, @"\bTP\s*\d+\b", RegexOptions.IgnoreCase);
-        return match.Success ? int.Parse(match.Value[2..].Trim()) : 0;
+        Match match = Regex.Match(titulo, @"\bTP\s*-?\s*\d+\b", RegexOptions.IgnoreCase);
+        return match.Success ? int.Parse(match.Value[2..].Replace("-", "").Trim()) : 0;
     }
 
 
