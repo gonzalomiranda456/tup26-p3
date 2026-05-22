@@ -71,3 +71,57 @@ public sealed class SqliteAgendaStore : IDisposable {
         if (!string.IsNullOrWhiteSpace(c.Email) && !c.Email.Contains('@')) throw new InvalidOperationException("El email debe contener @.");
     }
 }
+public sealed class AgendaWindow : Runnable {
+    readonly SqliteAgendaStore store; readonly string db;
+    readonly List<Contacto> contactos; readonly List<Contacto> visibles = [];
+    readonly System.Collections.ObjectModel.ObservableCollection<string> filas = [];
+    readonly TextField buscar; readonly ListView lista; readonly TextView detalle; readonly Label estado;
+    bool soloFav;
+
+    public AgendaWindow(SqliteAgendaStore store, string db) {
+        this.store = store; this.db = db; contactos = store.Listar().ToList();
+        Title = "Agenda - Terminal.Gui"; Width = Dim.Fill(); Height = Dim.Fill();
+        Menu.DefaultBorderStyle = LineStyle.Single;
+
+        Label lbl = new() { Text = "Buscar:", X = 1, Y = 1 };
+        buscar = new() { X = Pos.Right(lbl) + 1, Y = 1, Width = Dim.Fill(1) };
+        buscar.TextChanged += (_, _) => ActualizarVista();
+
+        lista = new() { X = 0, Y = 3, Width = Dim.Percent(40), Height = Dim.Fill(1), Title = "Contactos", BorderStyle = LineStyle.Single };
+        lista.SetSource(filas);
+        lista.ValueChanged += (_, _) => MostrarDetalle();
+        lista.Accepting += (_, e) => { Editar(); e.Handled = true; };
+
+        detalle = new() { X = Pos.Right(lista) + 1, Y = 3, Width = Dim.Fill(), Height = Dim.Fill(1), Title = "Detalle", BorderStyle = LineStyle.Single, CanFocus = false };
+        estado = new() { X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(), Text = "Listo." };
+        Add(ArmarMenu(), lbl, buscar, lista, detalle, estado);
+        ActualizarVista();
+    }
+
+    MenuBar ArmarMenu() => new() { Menus = [
+        new MenuBarItem("_Archivo", [
+            new MenuItem("_Importar JSON", "Ctrl+I", Importar),
+            new MenuItem("_Exportar JSON", "Ctrl+E", Exportar),
+            null!,
+            new MenuItem("_Salir", "Ctrl+Q", () => App!.RequestStop())]),
+        new MenuBarItem("_Contactos", [
+            new MenuItem("_Nuevo", "F2 / Ctrl+N", Nuevo),
+            new MenuItem("_Editar", "F3 / Enter", Editar),
+            new MenuItem("_Eliminar", "Del / Ctrl+D", Eliminar)]),
+        new MenuBarItem("_Ver", [
+            new MenuItem("_Solo favoritos", null!, () => { soloFav = !soloFav; ActualizarVista(); Avisar(soloFav ? "Solo favoritos." : "Todos los contactos."); })]),
+        new MenuBarItem("A_yuda", [
+            new MenuItem("_Acerca de", null!, () => MessageBox.Query(App!, "Acerca de", $"AgendaT\nBase: {(db == ":memory:" ? "memoria" : db)}", "Aceptar"))])
+    ] };
+
+    protected override bool OnKeyDown(Key key) {
+        if (key == Key.F2 || key == Key.N.WithCtrl) { Nuevo(); return true; }
+        if (key == Key.F3 || key == Key.Enter) { Editar(); return true; }
+        if (key == Key.Delete || key == Key.D.WithCtrl) { Eliminar(); return true; }
+        if (key == Key.I.WithCtrl) { Importar(); return true; }
+        if (key == Key.E.WithCtrl) { Exportar(); return true; }
+        if (key == Key.F4) { buscar.SetFocus(); Avisar("Búsqueda activa."); return true; }
+        if (key == Key.Q.WithCtrl) { App!.RequestStop(); return true; }
+        return base.OnKeyDown(key);
+    }
+}
