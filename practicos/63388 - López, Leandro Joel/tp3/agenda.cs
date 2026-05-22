@@ -24,6 +24,7 @@ using Dapper;
 using System.Data.Common;
 using Dapper.Contrib.Extensions;
 using System.Security.Cryptography.X509Certificates;
+using System.Runtime.CompilerServices;
 
 /// ==== 
 /// Estes es un archivo de referencia con el esqueleto del proyecto.
@@ -48,14 +49,15 @@ try {
 
 }
  catch (Exception ex) {
-    Console.WriteLine($"Error: {ex.Message}");
+
+    Console.Error.WriteLine($"Error: {ex.Message}");
     return 1;
 }
 
 // Ventana principal
 public sealed class AgendaWindow : Runnable {
 
-    private readonly SqliteAgendaStore _store;
+    private readonly SqliteAgendaStore store;
     private readonly List <Contacto> contactos = new();
     private readonly List<Contacto> contactosFiltrados = new();
     private readonly ObservableCollection<string> filas = new();
@@ -69,7 +71,7 @@ public sealed class AgendaWindow : Runnable {
     private string ultimaOperacion = "Listo.";
     public AgendaWindow(SqliteAgendaStore store) : base(){
 
-        this._store = store;
+        this.store = store;
         Title  = "Agenda - AgendaT";
         Width  = Dim.Fill();
         Height = Dim.Fill();
@@ -94,15 +96,17 @@ public sealed class AgendaWindow : Runnable {
 
                 new ("_Contacto", new MenuItem [] {
                     new ("_Nuevo contacto", "Ctrl+N", NuevoContacto),
-                    new ("_Editar contacto", "Ctrl+E", EditarContacto),
-                    new ("_Eliminar contacto", "Ctrl+D", EliminarContacto),
+                    new ("_Editar contacto", "Ctrl+E", EditarSeleccionado),
+                    new ("_Eliminar contacto", "Ctrl+D", EliminarSeleccionado),
                     new ("_Alternar favorito", string.Empty, AlternarFavorito)
                 }),
 
                 new ("_Ver", new MenuItem [] {
+
                     soloFavoritosMenuItem,
                 }),
                 new ("_Ayuda", new MenuItem [] {
+
                     new ("_Acerca de", string.Empty, MostrarAcercaDe)
                 })
         });
@@ -134,13 +138,13 @@ public sealed class AgendaWindow : Runnable {
 
         listView.Source = new ListWrapper<string>(filas);
         listView.ValueChanged += (_, _) => MostrarDetalle();
-        listView.Accepted += (_, _) => EditarSelecciona();
+        listView.Accepted += (_, _) => EditarSeleccionado();
 
         detailsView = new TextView() {
             X      = Pos.Right(listView) + 2,
             Y      = Pos.Top(listView),
             Width  = Dim.Fill(1),
-            Height = Dim.Fill(4)
+            Height = Dim.Fill(4),
             ReadOnly = true,
             WordWrap = true,
             Text = "Sin contactos."
@@ -154,10 +158,11 @@ public sealed class AgendaWindow : Runnable {
         };
 
         Add(menu, searchLabel, searchField, listView, detailsView, statusLabel);
+    }
     
     private void CargarContactos() {
         contactos.Clear();
-        contactos.AddRange(store.Listartodos());
+        contactos.AddRange(store.ListarTodos());
         ActualizarListaVisible();
     }
 
@@ -177,9 +182,11 @@ public sealed class AgendaWindow : Runnable {
             if (!string.IsNullOrWhiteSpace(texto) &&
                !contacto.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase) &&
                !contacto.Telefonos.Contains(texto, StringComparison.OrdinalIgnoreCase) &&
-               !contacto.Email.Contains(texto, StringComparison.OrdinalIgnoreCase) && {
+               !contacto.Email.Contains(texto, StringComparison.OrdinalIgnoreCase))
+
+                {
                 continue;
-            }
+                }
         
             contactosFiltrados.Add(contacto);
             filas.Add($"{(contacto.Favorito ? "*" : " ")}{contacto.Nombre} - {contacto.Telefonos}");
@@ -205,6 +212,7 @@ public sealed class AgendaWindow : Runnable {
     }
 
     private void NuevoContacto() {
+
         var dialog = new ContactoDialog("Nuevo contacto", new Contacto());
         App!.Run(dialog);
         if (dialog.Guardado) {
@@ -215,7 +223,7 @@ public sealed class AgendaWindow : Runnable {
         }
     }
 
-    private void EditarSelecciona() {
+    private void EditarSeleccionado() {
 
         Contacto? actual = Seleccionado();
         if (actual is null) {
@@ -246,7 +254,7 @@ public sealed class AgendaWindow : Runnable {
         int response = MessageBox.Query(App!, "Eliminar", $"Eliminar a {actual.Nombre}?", "Sí", "No") ??-1;
         if (response == 1) {
 
-            Store.Eliminar(actual.Id);
+            store.Eliminar(actual.Id);
             CargarContactos();
             ActualizarEstado($"Contacto '{actual.Nombre}' eliminado.");
         }
@@ -372,46 +380,67 @@ public sealed class AgendaWindow : Runnable {
     }
     
     private void SolicitarSalir() {
-        
+
         App!.RequestStop();
     }
 
     protected override bool OnKeyDown(Key key) {
-        if (key == Key.Q.WithCtrl) {
-            SolicitarSalir();
+
+        if (IsBaseKey(key, KeyCode.F2) || (key.IsCtrl && IsBaseKey(key, KeyCode.N))) {
+            
+            NuevoContacto();
             return true;
         }
 
+        if (IsBaseKey(key, KeyCode.F3) || IsBaseKey(key, KeyCode.Enter)) {
+            
+            EditarSeleccionado();
+            return true;
+        }
+
+        if (IsBaseKey(key, KeyCode.Delete) || (key.IsCtrl && IsBaseKey(key, KeyCode.D))) {
+            
+            EliminarSeleccionado();
+            return true;
+        }
+
+        if (key.IsCtrl && IsBaseKey(key, KeyCode.I)) {
+            
+            ImportarJson();
+            return true;
+        }
+
+        if (key.IsCtrl && IsBaseKey(key, KeyCode.E)) {
+            
+            ExportarJson();
+            return true;
+        }
+
+        if (IsBaseKey(key, KeyCode.F4)) {
+            
+            searchField.SetFocus();
+            return true;
+        }
+        
         return base.OnKeyDown(key);
+    }
+
+    private static bool IsBaseKey(Key key, KeyCode keyCode) {
+
+        return (key.NoCtrl.NoAlt.NoShift.KeyCode == keyCode);
     }
 }
 
 // Diálogo de ejemplo
-public sealed class EjemploDialog : Dialog {
-    public EjemploDialog() {
-        Title  = "Diálogo de ejemplo";
-        Width  = 50;
-        Height = 8;
-
-        Label message = new() {
-            Text = "Este es un diálogo modal de ejemplo.",
-            X    = Pos.Center(),
-            Y    = 1
-        };
-
-        Button closeButton = new() {
-            Text      = "_Cerrar",
-            IsDefault = true
-        };
-
-        closeButton.Accepting += (_, e) => {
-            App!.RequestStop();
-            e.Handled = true;
-        };
-
-        Add(message);
-        AddButton(closeButton);
-    }
+public sealed class ContactoDialog : Dialog {
+        
+        private readonly TextField nombre = new();
+        private readonly TextField[] telefonos = new TextField[3];
+        private readonly TextField email = new();
+        private readonly CheckBox notas = new() { Height = 4, Width = Dim.Fill(1) };
+        private readonly CheckBox favorito = new() { Text = "Favorito  " };
+        public Contacto Contacto { get; }
+        public bool Guardado { get; private set; }
 }
 
 
