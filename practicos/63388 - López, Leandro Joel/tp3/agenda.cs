@@ -1,10 +1,11 @@
 #!/usr/bin/env dotnet
 #:property PublishAot=false
+#:property NuGetAudit=false
 
 #:package Terminal.Gui@2.0.1
-#:package Microsoft.Data.Sqlite@*
-#:package Dapper@*
-#:package Dapper.Contrib@*
+#:package Microsoft.Data.Sqlite@10.0.8
+#:package Dapper@2.1.79
+#:package Dapper.Contrib@2.0.78
 
 using System;
 using System.Collections.Generic;
@@ -309,7 +310,7 @@ public sealed class AgendaWindow : Runnable {
         try {
             
             var importados = JsonAgendaIO.Leer(path);
-            if (importados.count == 0) {
+            if (importados.Count == 0) {
 
                 MessageBox.Query(App!, "Importar", "No se encontraron contactos en el archivo.", "OK");
                 return;
@@ -357,7 +358,7 @@ public sealed class AgendaWindow : Runnable {
             
             string path = dialog.FileName.ToString();
 
-            JsonAgendaIO.Escribir(path, StoreLocation.ListrarTodos());
+            JsonAgendaIO.Escribir(path, StoreLocation.ListarTodos());
             MessageBox.Query(App!, "Exportar", $"Contactos exportados correctamente", "OK");
             ActualizarEstado($"Exportados {store.ListarTodos().Count} contactos a {Path.GetFileName(path)}.");
         }
@@ -505,7 +506,7 @@ public sealed class ContactoDialog : Dialog {
         nombre.Text = Contacto.Nombre;
         email.Text = Contacto.Email;
         notas.Text = Contacto.Notas;
-        favorito.Value = Contacto.Favorito ? CheckState.Checked : CheckState.Unchecked;
+        favorito.Value = Contacto.Favorito ? CheckState.Checked : CheckState.UnChecked;
 
         string[] partes = Contacto.Telefonos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         for (int i = 0; i < telefonos.Length; i++) {
@@ -541,16 +542,112 @@ public sealed class ContactoDialog : Dialog {
     }
 }
 
+public class SqliteAgendaStore {
+    
+    private readonly string connectionString;
 
-public class SqliteAgendaStore {}
-public class JsonAgendaIO {}
+    public SqliteAgendaStore(string databasePath) {
+        
+        connectionString = new SqliteConnectionStringBuilder() {
+            DataSource = databasePath}.ToString();
+            Inicializar();
+    }
+
+    public IReadOnlyList<Contacto> ListarTodos() {
+
+        using SqliteConnection connection = Abrir();
+        return connection.Query<Contacto>(
+            """
+            SELECT Id, Nombre, Telefonos, Email, Notas, Favorito
+            FROM Contactos
+            ORDER BY Favorito DESC, Nombre COLLATE NOCASE
+            """).ToList();
+    }
+
+    public void Guardar(Contacto contacto) {
+
+        using SqliteConnection connection = Abrir();
+        if (contacto.Id == 0) {
+
+            contacto.Id = (int)connection.Insert(contacto);
+        }
+        else {
+
+            connection.Update(contacto);
+        }
+    }
+
+    public void Eliminar(int id) {
+
+        using SqliteConnection connection = Abrir();
+        connection.Execute("DELETE FROM Contactos WHERE Id = @Id", new { id });
+    }
+
+    private SqliteConnection Abrir() {
+
+        var connection = new SqliteConnection(connectionString);
+        connection.Open();
+        return connection;
+    }
+
+    private void Inicializar() {
+
+        using SqliteConnection connection = Abrir();
+        connection.Execute(
+            """
+            CREATE TABLE IF NOT EXISTS Contactos (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Nombre TEXT NOT NULL,
+                Telefonos TEXT NOT NULL DEFAULT '',
+                Email TEXT NOT NULL DEFAULT '',
+                Notas TEXT NOT NULL DEFAULT '',
+                Favorito INTEGER NOT NULL DEFAULT 0
+            )
+            """);
+    }
+}
+public static class JsonAgendaIO {
+    
+    private static readonly JsonSerializerOptions Options = new() {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    public static IReadOnlyList<Contacto> Leer(string path) {
+
+        if (!File.Exists(path)) {
+
+            throw new FileNotFoundException("El archivo JSON no existe.", path);
+        }
+
+        string json = File.ReadAllText(path);
+        return JsonSerializer.Deserialize<List<Contacto>>(json, Options) ?? new List<Contacto>();
+    }
+
+    public static void Escribir(string path, IEnumerable<Contacto> contactos) {
+
+        string json = JsonSerializer.Serialize(contactos, Options);
+        File.WriteAllText(path, json);
+    }
+
+}
 
 [Table("Contactos")]
 public class Contacto {
     [Key] public int    Id        { get; set; }
-          public string Nombre    { get; set; } = "";
-          public string Telefonos { get; set; } = "";
-          public string Email     { get; set; } = "";
-          public string Notas     { get; set; } = "";
+          public string Nombre    { get; set; } = string.Empty;
+          public string Telefonos { get; set; } = string.Empty;
+          public string Email     { get; set; } = string.Empty;
+          public string Notas     { get; set; } = string.Empty;
           public bool   Favorito  { get; set; }
+
+          public Contacto Clonar() => new() {
+
+                  Id = Id,
+                  Nombre = Nombre,
+                  Telefonos = Telefonos,
+                  Email = Email,
+                  Notas = Notas,
+                  Favorito = Favorito
+          };
 }
