@@ -17,6 +17,10 @@ using Dapper;
 using System.Data.Common;
 using Dapper.Contrib.Extensions;
 using System.Collections.Generic;
+using System;
+using System.Linq;
+using System.Text.Json;
+using System.IO;
 
 /// ==== 
 /// Estes es un archivo de referencia con el esqueleto del proyecto.
@@ -170,7 +174,34 @@ public class SqliteAgendaStore {
             connection.Delete(contacto);
         }
     }
-public class JsonAgendaIO {}
+public class JsonAgendaIO 
+{
+    public static void Exportar(IEnumerable<Contacto> contactos, string rutaArchivo)
+    {
+        // Configuramos el JSON para que sea legible (con sangrías) y maneje bien los caracteres como la ñ o tildes
+        var opciones = new JsonSerializerOptions 
+        { 
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        
+        string json = JsonSerializer.Serialize(contactos, opciones);
+        File.WriteAllText(rutaArchivo, json);
+    }
+
+    public static List<Contacto> Importar(string rutaArchivo)
+    {
+        if (!File.Exists(rutaArchivo))
+        {
+            throw new FileNotFoundException("El archivo JSON no existe.");
+        }
+
+        string json = File.ReadAllText(rutaArchivo);
+        var contactos = JsonSerializer.Deserialize<List<Contacto>>(json);
+        
+        return contactos ?? new List<Contacto>();
+    }
+}
 
 [Table("Contactos")]
 public sealed class Contacto {
