@@ -125,3 +125,57 @@ public sealed class AgendaWindow : Runnable {
         return base.OnKeyDown(key);
     }
 }
+void Nuevo() {
+    ContactDialog dlg = new("Nuevo contacto", new Contacto());
+    App!.Run(dlg); if (dlg.Resultado is null) return;
+    Intentar("crear", () => { var c = store.Agregar(dlg.Resultado); contactos.Add(c); ActualizarVista(c.Id); Avisar("Contacto creado."); });
+}
+
+void Editar() {
+    Contacto? c = Seleccionado(); if (c is null) { Avisar("No hay contacto seleccionado."); return; }
+    ContactDialog dlg = new("Editar contacto", c.Clone());
+    App!.Run(dlg); if (dlg.Resultado is null) return;
+    Intentar("editar", () => {
+        store.Modificar(dlg.Resultado);
+        contactos[contactos.FindIndex(x => x.Id == c.Id)] = dlg.Resultado;
+        ActualizarVista(dlg.Resultado.Id); Avisar("Contacto actualizado.");
+    });
+}
+
+void Eliminar() {
+    Contacto? c = Seleccionado(); if (c is null) { Avisar("Seleccioná un contacto."); return; }
+    if (MessageBox.Query(App!, "Confirmar", $"¿Eliminar a {c.Nombre}?", "Eliminar", "Cancelar") != 0) return;
+    Intentar("eliminar", () => { store.Eliminar(c); contactos.RemoveAll(x => x.Id == c.Id); ActualizarVista(); Avisar("Contacto eliminado."); });
+}
+
+void ActualizarVista(int? id = null) {
+    string texto = buscar.Text?.ToString() ?? "";
+    visibles.Clear();
+    visibles.AddRange(contactos.Where(c => Coincide(c, texto) && (!soloFav || c.Favorito)).OrderBy(c => c.Nombre));
+    filas.Clear();
+    foreach (Contacto c in visibles) filas.Add($"{(c.Favorito ? "*" : " ")} {c.Nombre} - {c.Telefonos}");
+    lista.SetSource(filas);
+    int pos = id is null ? 0 : visibles.FindIndex(c => c.Id == id);
+    lista.SelectedItem = visibles.Count == 0 ? null : Math.Max(0, pos);
+    MostrarDetalle();
+}
+
+static bool Coincide(Contacto c, string q) => string.IsNullOrWhiteSpace(q)
+    || c.Nombre.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+    || c.Telefonos.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+    || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase);
+
+Contacto? Seleccionado() {
+    int? i = lista.SelectedItem;
+    return i is null || i < 0 || i >= visibles.Count ? null : visibles[i.Value];
+}
+
+void MostrarDetalle() {
+    Contacto? c = Seleccionado();
+    detalle.Text = c is null ? "Sin contactos." : $"Id: {c.Id}\nNombre: {c.Nombre}\nTeléfonos: {c.Telefonos}\nEmail: {c.Email}\nFavorito: {(c.Favorito ? "Sí" : "No")}\n\nNotas:\n{c.Notas}";
+}
+
+void Intentar(string accion, Action op) {
+    try { op(); } catch (Exception ex) { MessageBox.ErrorQuery(App!, $"Error al {accion}", ex.Message, "Aceptar"); Avisar(ex.Message); }
+}
+void Avisar(string msg) { estado.Text = msg; estado.SetNeedsDraw(); }
