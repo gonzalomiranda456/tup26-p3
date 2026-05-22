@@ -179,3 +179,58 @@ void Intentar(string accion, Action op) {
     try { op(); } catch (Exception ex) { MessageBox.ErrorQuery(App!, $"Error al {accion}", ex.Message, "Aceptar"); Avisar(ex.Message); }
 }
 void Avisar(string msg) { estado.Text = msg; estado.SetNeedsDraw(); }
+
+public sealed class ContactDialog : Dialog {
+    readonly TextField nombre, email; readonly TextField[] tel; readonly TextView notas; readonly CheckBox fav;
+    public Contacto? Resultado { get; private set; }
+
+    public ContactDialog(string titulo, Contacto c) {
+        Title = titulo; Width = Dim.Percent(70); Height = Dim.Percent(80);
+        nombre = Campo("Nombre:", 1, c.Nombre);
+        tel = Enumerable.Range(0, 5).Select(i => Campo($"Teléfono {i + 1}:", 3 + i * 2, Telefono(c, i))).ToArray();
+        email = Campo("Email:", 13, c.Email);
+        Add(new Label { Text = "Notas:", X = 2, Y = 15 });
+        notas = new() { X = 14, Y = 15, Width = Dim.Fill(2), Height = Dim.Fill(4), Text = c.Notas, BorderStyle = LineStyle.Single };
+        fav = new() { Text = "Favorito", X = 14, Y = Pos.Bottom(notas) + 1, Value = c.Favorito ? CheckState.Checked : CheckState.UnChecked };
+        Add(notas, fav);
+        Button guardar = new() { Text = "Guardar", IsDefault = true };
+        guardar.Accepting += (_, e) => { if (Crear(c.Id, out Contacto listo)) { Resultado = listo; App!.RequestStop(); } e.Handled = true; };
+        Button cancelar = new() { Text = "Cancelar" };
+        cancelar.Accepting += (_, e) => { Resultado = null; App!.RequestStop(); e.Handled = true; };
+        AddButton(cancelar); AddButton(guardar);
+    }
+
+    TextField Campo(string texto, int y, string valor) {
+        Add(new Label { Text = texto, X = 2, Y = y });
+        TextField t = new() { X = 14, Y = y, Width = Dim.Fill(2), Text = valor };
+        Add(t); return t;
+    }
+
+    bool Crear(int id, out Contacto c) {
+        c = new Contacto();
+        string n = nombre.Text?.ToString().Trim() ?? "", m = email.Text?.ToString().Trim() ?? "";
+        if (n == "") { MessageBox.ErrorQuery(App!, "Validación", "El nombre no puede estar vacío.", "Aceptar"); return false; }
+        if (m != "" && !m.Contains('@')) { MessageBox.ErrorQuery(App!, "Validación", "El email debe contener @.", "Aceptar"); return false; }
+        c = new() { Id = id, Nombre = n, Email = m, Notas = notas.Text?.ToString() ?? "", Favorito = fav.Value == CheckState.Checked,
+            Telefonos = string.Join(", ", tel.Select(x => x.Text?.ToString().Trim()).Where(x => !string.IsNullOrWhiteSpace(x))) };
+        return true;
+    }
+    static string Telefono(Contacto c, int i) {
+        string[] partes = c.Telefonos.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return i < partes.Length ? partes[i] : "";
+    }
+}
+
+public sealed class PathDialog : Dialog {
+    readonly TextField campo; public string? Ruta { get; private set; }
+    public PathDialog(string titulo, string etiqueta, string boton) {
+        Title = titulo; Width = Dim.Percent(65); Height = 7;
+        Add(new Label { Text = etiqueta, X = 1, Y = 1 });
+        campo = new() { X = 1, Y = 2, Width = Dim.Fill(2) }; Add(campo);
+        Button ok = new() { Text = boton, IsDefault = true };
+        ok.Accepting += (_, e) => { Ruta = campo.Text?.ToString().Trim(); App!.RequestStop(); e.Handled = true; };
+        Button cancelar = new() { Text = "Cancelar" };
+        cancelar.Accepting += (_, e) => { Ruta = null; App!.RequestStop(); e.Handled = true; };
+        AddButton(cancelar); AddButton(ok);
+    }
+}
