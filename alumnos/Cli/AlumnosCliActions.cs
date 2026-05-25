@@ -238,31 +238,37 @@ static class AlumnosCliActions {
 
         string carpetaTp     = CarpetaTrabajoPractico(numeroTp);
         string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
-        int lineasEnunciado  = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
+        int lineasEnunciado  = ObtenerLineasBaseEnunciado(numeroTp, carpetaTp, rutaEnunciado, alumnos);
 
         Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
-        int marcados = 0;
+        List<TrabajoPresentadoLocal> trabajosPresentados = new();
+        bool habiaCodigos = alumnos.Any(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
 
         foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
             string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
             int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
             int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
+            alumno.Codigo = string.Empty;
+
             Estado estado = Estado.Desaprobado;
             if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
                 estado = Estado.Aprobado;
-                marcados++;
+                trabajosPresentados.Add(new(alumno, rutaPractico, ObtenerLineasCodigoNormalizadas(rutaPractico)));
             }
 
             alumno.Practico(numeroTp, estado);
             Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
         }
 
-        if (marcados > 0) {
+        int copias = RevisarCopiasTrabajosPresentados(numeroTp, trabajosPresentados);
+        int marcados = alumnos.Count(alumno => alumno.EstadoPractico(numeroTp) == Estado.Aprobado);
+
+        if (trabajosPresentados.Count > 0 || habiaCodigos) {
             AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         }
 
-        Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
+        Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, copias={copias}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
         return 0;
     }
 
@@ -631,16 +637,274 @@ static class AlumnosCliActions {
     static int ContarLineasPracticoLocal(string rutaPractico) =>
         AppPaths.ContarLineasArchivos(rutaPractico, "*.cs", SearchOption.TopDirectoryOnly);
 
+    static int ObtenerLineasBaseEnunciado(int numeroTp, string carpetaTp, string rutaEnunciado, Alumnos alumnos) {
+        int lineasEnunciado = AppPaths.ContarLineasArchivos(rutaEnunciado, "*.cs");
+        if (numeroTp != 3) {
+            return lineasEnunciado;
+        }
+
+        int lineasPlantilla = alumnos
+            .Select(alumno => ContarLineasPracticoLocal(AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp)))
+            .Where(lineas => lineas > 0)
+            .DefaultIfEmpty(lineasEnunciado)
+            .Min();
+
+        return lineasPlantilla > 0 && lineasPlantilla < lineasEnunciado
+            ? lineasPlantilla
+            : lineasEnunciado;
+    }
+
+    static int RevisarCopiasTrabajosPresentados(int numeroTp, IReadOnlyList<TrabajoPresentadoLocal> trabajosPresentados) {
+        HashSet<int> legajosConCopia = new();
+        Dictionary<int, Alumno> alumnosPorLegajo = trabajosPresentados.ToDictionary(trabajo => trabajo.Alumno.Legajo, trabajo => trabajo.Alumno);
+        Dictionary<int, HashSet<int>> copiasPorLegajo = new();
+
+        for (int i = 0; i < trabajosPresentados.Count; i++) {
+            TrabajoPresentadoLocal actual = trabajosPresentados[i];
+            if (actual.LineasCodigo.Count == 0) {
+                continue;
+            }
+
+            for (int j = i + 1; j < trabajosPresentados.Count; j++) {
+                TrabajoPresentadoLocal otro = trabajosPresentados[j];
+                if (CompararTrabajos(actual, otro) is not { } copia) {
+                    continue;
+                }
+
+                actual.Alumno.Practico(numeroTp, Estado.Revision);
+                otro.Alumno.Practico(numeroTp, Estado.Revision);
+                legajosConCopia.Add(actual.Alumno.Legajo);
+                legajosConCopia.Add(otro.Alumno.Legajo);
+                RegistrarRelacionCopia(copiasPorLegajo, actual.Alumno.Legajo, otro.Alumno.Legajo);
+
+                Log.Warning(
+                    $"TP{numeroTp} copia: {actual.Alumno.Legajo} <-> " +
+                    $"{otro.Alumno.Legajo} | " +
+                    $"comunes={copia.LineasComunes,4}, max={copia.MaximoLineas,4}, similitud={copia.Porcentaje,6:P2}");
+            }
+        }
+
+        AsignarCodigosDeCopia(alumnosPorLegajo, copiasPorLegajo);
+        return legajosConCopia.Count;
+    }
+
+    static void RegistrarRelacionCopia(Dictionary<int, HashSet<int>> copiasPorLegajo, int legajoA, int legajoB) {
+        if (!copiasPorLegajo.TryGetValue(legajoA, out HashSet<int>? copiasA)) {
+            copiasA = new();
+            copiasPorLegajo[legajoA] = copiasA;
+        }
+
+        if (!copiasPorLegajo.TryGetValue(legajoB, out HashSet<int>? copiasB)) {
+            copiasB = new();
+            copiasPorLegajo[legajoB] = copiasB;
+        }
+
+        copiasA.Add(legajoB);
+        copiasB.Add(legajoA);
+    }
+
+    static void AsignarCodigosDeCopia(Dictionary<int, Alumno> alumnosPorLegajo, Dictionary<int, HashSet<int>> copiasPorLegajo) {
+        HashSet<int> visitados = new();
+
+        foreach (int legajo in copiasPorLegajo.Keys.Order()) {
+            if (!visitados.Add(legajo)) {
+                continue;
+            }
+
+            List<int> grupo = new();
+            Stack<int> pendientes = new();
+            pendientes.Push(legajo);
+
+            while (pendientes.Count > 0) {
+                int actual = pendientes.Pop();
+                grupo.Add(actual);
+
+                if (!copiasPorLegajo.TryGetValue(actual, out HashSet<int>? relacionados)) {
+                    continue;
+                }
+
+                foreach (int relacionado in relacionados) {
+                    if (visitados.Add(relacionado)) {
+                        pendientes.Push(relacionado);
+                    }
+                }
+            }
+
+            string codigo = string.Join(",", grupo.Order());
+            foreach (int legajoGrupo in grupo) {
+                if (alumnosPorLegajo.TryGetValue(legajoGrupo, out Alumno? alumno)) {
+                    alumno.Codigo = codigo;
+                }
+            }
+        }
+    }
+
+    static CopiaDetectada? CompararTrabajos(TrabajoPresentadoLocal actual, TrabajoPresentadoLocal otro) {
+        int maximoLineas = Math.Max(actual.LineasCodigo.Count, otro.LineasCodigo.Count);
+        if (maximoLineas == 0) {
+            return null;
+        }
+
+        int lineasComunes = actual.LineasCodigo.Count <= otro.LineasCodigo.Count
+            ? actual.LineasCodigo.Count(otro.LineasCodigo.Contains)
+            : otro.LineasCodigo.Count(actual.LineasCodigo.Contains);
+
+        double porcentaje = (double)lineasComunes / maximoLineas;
+        return porcentaje > 0.50
+            ? new(lineasComunes, maximoLineas, porcentaje)
+            : null;
+    }
+
+    static HashSet<string> ObtenerLineasCodigoNormalizadas(string rutaPractico) {
+        HashSet<string> lineas = new(StringComparer.Ordinal);
+        if (!Directory.Exists(rutaPractico)) {
+            return lineas;
+        }
+
+        foreach (string rutaArchivo in Directory.EnumerateFiles(rutaPractico, "*.cs", SearchOption.AllDirectories).Where(EsArchivoFuentePractico)) {
+            foreach (string linea in NormalizarLineasCodigo(File.ReadLines(rutaArchivo))) {
+                lineas.Add(linea);
+            }
+        }
+
+        return lineas;
+    }
+
+    static bool EsArchivoFuentePractico(string rutaArchivo) {
+        string[] partes = rutaArchivo.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return !partes.Any(parte => parte is "bin" or "obj" or ".vs");
+    }
+
+    static IEnumerable<string> NormalizarLineasCodigo(IEnumerable<string> lineas) {
+        bool dentroComentarioBloque = false;
+
+        foreach (string lineaOriginal in lineas) {
+            string sinComentarios = QuitarComentarios(lineaOriginal, ref dentroComentarioBloque);
+            string normalizada = QuitarEspacios(sinComentarios);
+            if (normalizada.Length > 0) {
+                yield return normalizada;
+            }
+        }
+    }
+
+    static string QuitarComentarios(string linea, ref bool dentroComentarioBloque) {
+        StringBuilder sb = new();
+        bool dentroString = false;
+        bool dentroStringVerbatim = false;
+        bool dentroChar = false;
+
+        for (int i = 0; i < linea.Length; i++) {
+            if (dentroComentarioBloque) {
+                int finBloque = linea.IndexOf("*/", i, StringComparison.Ordinal);
+                if (finBloque < 0) {
+                    break;
+                }
+
+                dentroComentarioBloque = false;
+                i = finBloque + 1;
+                continue;
+            }
+
+            if (dentroStringVerbatim) {
+                sb.Append(linea[i]);
+                if (linea[i] == '"' && i + 1 < linea.Length && linea[i + 1] == '"') {
+                    sb.Append(linea[++i]);
+                    continue;
+                }
+
+                if (linea[i] == '"') {
+                    dentroStringVerbatim = false;
+                }
+
+                continue;
+            }
+
+            if (dentroString) {
+                sb.Append(linea[i]);
+                if (linea[i] == '\\' && i + 1 < linea.Length) {
+                    sb.Append(linea[++i]);
+                    continue;
+                }
+
+                if (linea[i] == '"') {
+                    dentroString = false;
+                }
+
+                continue;
+            }
+
+            if (dentroChar) {
+                sb.Append(linea[i]);
+                if (linea[i] == '\\' && i + 1 < linea.Length) {
+                    sb.Append(linea[++i]);
+                    continue;
+                }
+
+                if (linea[i] == '\'') {
+                    dentroChar = false;
+                }
+
+                continue;
+            }
+
+            if (i + 1 < linea.Length && linea[i] == '/' && linea[i + 1] == '/') {
+                break;
+            }
+
+            if (i + 1 < linea.Length && linea[i] == '/' && linea[i + 1] == '*') {
+                dentroComentarioBloque = true;
+                i++;
+                continue;
+            }
+
+            if (linea[i] == '"') {
+                dentroStringVerbatim = EsInicioStringVerbatim(linea, i);
+                dentroString = !dentroStringVerbatim;
+                sb.Append(linea[i]);
+                continue;
+            }
+
+            if (linea[i] == '\'') {
+                dentroChar = true;
+                sb.Append(linea[i]);
+                continue;
+            }
+
+            sb.Append(linea[i]);
+        }
+
+        return sb.ToString();
+    }
+
+    static bool EsInicioStringVerbatim(string linea, int indiceComilla) =>
+        indiceComilla > 0 && linea[indiceComilla - 1] == '@' ||
+        indiceComilla > 1 && linea[indiceComilla - 2] == '@' && linea[indiceComilla - 1] == '$';
+
+    static string QuitarEspacios(string linea) {
+        StringBuilder sb = new(linea.Length);
+        foreach (char caracter in linea) {
+            if (!char.IsWhiteSpace(caracter)) {
+                sb.Append(caracter);
+            }
+        }
+
+        return sb.ToString();
+    }
+
     static bool PracticoParecePresentado(int numeroTp, int lineasTotales, int lineasAgregadas) =>
         numeroTp switch {
             1 => lineasTotales   >= 100,
             2 => lineasAgregadas >=  20,
-            3 => lineasAgregadas >= 150,
+            3 => lineasAgregadas >=  50,
             _ => lineasTotales   >= 100
         };
 
     static bool TieneAlgunPracticoPresentado(Alumno alumno) =>
         alumno.practicos.Any(estado => estado == Estado.Aprobado);
+
+    sealed record TrabajoPresentadoLocal(Alumno Alumno, string RutaPractico, HashSet<string> LineasCodigo);
+
+    readonly record struct CopiaDetectada(int LineasComunes, int MaximoLineas, double Porcentaje);
 
     static string MensajeFotoParcial(Alumno alumno) =>
         $"""

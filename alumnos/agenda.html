@@ -573,7 +573,7 @@
             <circle cx="6.5" cy="6.5" r="5.2"/>
             <line x1="10.3" y1="10.3" x2="14" y2="14"/>
           </svg>
-          <input type="search" id="search" placeholder="Buscar por nombre, legajo, GitHub o la clave sin-telefono" autocomplete="off">
+          <input type="search" id="search" placeholder="Buscar por nombre, legajo, GitHub, sin-telefono o tp1 aprobado / tp2 revision" autocomplete="off">
         </div>
         <div class="tabs">
           <button class="tab active" data-filter="C7" data-filter-group="commission" data-label="C7">C7</button>
@@ -788,6 +788,44 @@
         case '🟠': return 'Revisión';
         case '🔴': return 'Desaprobado';
         default: return 'Sin estado';
+      }
+    }
+
+    function normalizeSearchToken(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase();
+    }
+
+    function estadoDesdeBusqueda(value) {
+      switch (normalizeSearchToken(value)) {
+        case 'aprobado':
+        case 'aprobada':
+        case 'aprobados':
+        case 'aprobadas':
+          return '🟢';
+        case 'pendiente':
+        case 'pendientes':
+          return '🟡';
+        case 'revision':
+        case 'revisar':
+        case 'revisado':
+        case 'revisados':
+          return '🟠';
+        case 'desaprobado':
+        case 'desaprobada':
+        case 'desaprobados':
+        case 'desaprobadas':
+          return '🔴';
+        case 'sin-estado':
+        case 'sinestado':
+        case 'sin_estado':
+        case 'vacio':
+        case 'vacia':
+          return '⚪️';
+        default:
+          return null;
       }
     }
 
@@ -1006,23 +1044,62 @@
     }
 
     function parseSearchQuery(query) {
-      const normalized = query.toLowerCase();
+      const normalized = normalizeSearchToken(query);
       const terms = normalized.split(/[\s,]+/).filter(Boolean);
       const commissionTerms = ['c7', 'c9'].filter(term => terms.includes(term));
+      const practicoFilters = [];
+      const consumedIndexes = new Set();
+
+      for (let index = 0; index < terms.length; index++) {
+        const term = terms[index];
+        const tpMatch = term.match(/^tp(\d+)$/);
+        if (!tpMatch) continue;
+
+        const practico = Number.parseInt(tpMatch[1], 10);
+        let estado = null;
+
+        for (let cursor = index + 1; cursor < terms.length; cursor++) {
+          const candidate = terms[cursor];
+          if (candidate === 'para' || candidate === 'en') {
+            continue;
+          }
+
+          estado = estadoDesdeBusqueda(candidate);
+          if (estado) {
+            practicoFilters.push({ practico, estado });
+            consumedIndexes.add(index);
+            consumedIndexes.add(cursor);
+          }
+          break;
+        }
+      }
 
       return {
         requireSinTelefono: terms.includes('sin-telefono'),
         commissions: commissionTerms,
+        practicos: practicoFilters,
         text: terms
-          .filter(term => term !== 'sin-telefono' && term !== 'c7' && term !== 'c9')
+          .filter((term, index) => term !== 'sin-telefono' && term !== 'c7' && term !== 'c9' && term !== 'para' && term !== 'en' && !consumedIndexes.has(index))
           .join(' ')
           .trim(),
       };
     }
 
+    function matchesPracticoFilters(alumno, practicoFilters) {
+      if (!practicoFilters.length) {
+        return true;
+      }
+
+      const total = Math.max(totalPracticos, ...practicoFilters.map(filter => filter.practico));
+      const estados = normalizarEstados(alumno.practicosRaw || '', total);
+
+      return practicoFilters.every(filter => estados[filter.practico - 1] === filter.estado);
+    }
+
     function matchesSearch(alumno, parsed) {
       if (parsed.commissions.length > 0 && !parsed.commissions.includes(alumno.comision.toLowerCase())) return false;
       if (parsed.requireSinTelefono && !!alumno.telefono) return false;
+      if (!matchesPracticoFilters(alumno, parsed.practicos)) return false;
 
       if (!parsed.text) return true;
 

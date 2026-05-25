@@ -140,7 +140,6 @@ public sealed class AgendaWindow : Window {
         ]);
 
         Add(menu, searchLabel, searchField, listFrame, detailFrame, statusBar);
-        
     }
 
     private void RefreshFilteredContacts() {

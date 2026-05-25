@@ -501,7 +501,7 @@ static class AlumnosManager {
     }
 
     static string FormatearFilaTabla(params string?[] columnas) {
-        int[] anchos = [6, 30, 13, 3, 25, 20, 4, 4, -4, -4, 32];
+        int[] anchos = [6, 30, 13, 3, 25, 20, 4, 4, -4, -4, 0];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
@@ -603,6 +603,8 @@ static class AlumnosManager {
 
     static string AjustarColumna(string texto, int ancho = 20) {
         string valor = FormatearTexto(texto);
+        if (ancho == 0) { return valor; }
+
         bool derecha = ancho < 0;
         ancho = Math.Abs(ancho);
         if (valor.Length > ancho) { valor = valor[..ancho]; }

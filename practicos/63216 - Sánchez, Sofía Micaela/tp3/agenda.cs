@@ -159,7 +159,8 @@ public sealed class AgendaWindow : Window
 
         Add(menu, searchLabel, searchField, listFrame, detailFrame, statusBar);
     }
-     private void RefreshFilteredContacts()
+    
+    private void RefreshFilteredContacts()
     {
         string query = searchField?.Text?.ToString() ?? "";
         int currentId = SelectedContact()?.Id ?? 0;

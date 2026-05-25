@@ -1,7 +1,7 @@
-#:package Terminal.Gui@2.*
-#:package Microsoft.Data.Sqlite
-#:package Dapper
-#:package Dapper.Contrib
+#:package Terminal.Gui@1.*
+#:package Microsoft.Data.Sqlite@10.*
+#:package Dapper@2.*
+#:package Dapper.Contrib@2.0.78
 #:property LangVersion=preview
 
 using Dapper;
@@ -35,21 +35,21 @@ class Agenda : Window
 
         contactos = store.All();
 
-        Add(new MenuBar([
-            new("_Archivo",[
-                new("Importar","",Importar),
-                new("Exportar","",Exportar),
-                new("Salir","",()=>Application.RequestStop())
-            ]),
-            new("_Contactos",[
-                new("Nuevo","",Nuevo),
-                new("Editar","",Editar),
-                new("Eliminar","",Eliminar)
-            ]),
-            new("_Ver",[
-                new("Solo favoritos","",()=>{ fav=!fav; Filtrar(); })
-            ])
-        ]));
+        Add(new MenuBar(new MenuBarItem[] {
+            new("_Archivo", new MenuItem[] {
+                new("Importar", "", Importar),
+                new("Exportar", "", Exportar),
+                new("Salir", "", () => Application.RequestStop())
+            }),
+            new("_Contactos", new MenuItem[] {
+                new("Nuevo", "", Nuevo),
+                new("Editar", "", Editar),
+                new("Eliminar", "", Eliminar)
+            }),
+            new("_Ver", new MenuItem[] {
+                new("Solo favoritos", "", () => { fav = !fav; Filtrar(); })
+            })
+        }));
 
         Add(new Label("Buscar:"){ X=1,Y=1 });
 
@@ -188,7 +188,6 @@ Notas:
     void Exportar()
     {
         var d = new SaveDialog("Exportar","Guardar");
-        d.FileName = "contactos.json";
 
         Application.Run(d);
 
@@ -266,9 +265,7 @@ class Dialogo : Dialog
         {
             X=15,
             Y=7,
-            CheckedState=c.Favorito
-            ? CheckState.Checked
-            : CheckState.UnChecked
+            Checked = c.Favorito
         };
 
         no = new()
@@ -284,7 +281,7 @@ class Dialogo : Dialog
 
         var g = new Button("Guardar"){X=15,Y=15};
 
-        g.Accepting += _ =>
+        g.Clicked += () =>
         {
             if (string.IsNullOrWhiteSpace(n.Text.ToString()))
             {
@@ -303,7 +300,7 @@ class Dialogo : Dialog
             C.Telefonos = t.Text.ToString()!;
             C.Email = e.Text.ToString()!;
             C.Notas = no.Text.ToString()!;
-            C.Favorito = f.CheckedState == CheckState.Checked;
+            C.Favorito = f.Checked;
 
             Ok = true;
 
@@ -312,7 +309,7 @@ class Dialogo : Dialog
 
         var c2 = new Button("Cancelar"){X=30,Y=15};
 
-        c2.Accepting += _ => Application.RequestStop();
+        c2.Clicked += () => Application.RequestStop();
 
         AddButton(g);
         AddButton(c2);
