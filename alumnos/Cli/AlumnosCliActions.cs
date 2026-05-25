@@ -635,6 +635,7 @@ static class AlumnosCliActions {
         numeroTp switch {
             1 => lineasTotales   >= 100,
             2 => lineasAgregadas >=  20,
+            3 => lineasAgregadas >= 150,
             _ => lineasTotales   >= 100
         };
 
