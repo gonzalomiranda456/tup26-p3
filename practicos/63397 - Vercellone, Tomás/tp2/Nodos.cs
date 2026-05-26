@@ -28,22 +28,22 @@ abstract class NodoBinario : Nodo {
 }
 
 class SumaNodo : NodoBinario {
-    public SumaNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) {}
+    public SumaNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) { }
     public override int Evaluar(int x = 0) => izquierdo.Evaluar(x) + derecho.Evaluar(x);
 }
 
 class RestaNodo : NodoBinario {
-    public RestaNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) {}
+    public RestaNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) { }
     public override int Evaluar(int x = 0) => izquierdo.Evaluar(x) - derecho.Evaluar(x);
 }
 
 class MultiplicacionNodo : NodoBinario {
-    public MultiplicacionNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) {}
+    public MultiplicacionNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) { }
     public override int Evaluar(int x = 0) => izquierdo.Evaluar(x) * derecho.Evaluar(x);
 }
 
 class DivisionNodo : NodoBinario {
-    public DivisionNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) {}
+    public DivisionNodo(Nodo izquierdo, Nodo derecho) : base(izquierdo, derecho) { }
     public override int Evaluar(int x = 0) {
         var divisor = derecho.Evaluar(x);
         if (divisor == 0) throw new DivideByZeroException("División por cero.");

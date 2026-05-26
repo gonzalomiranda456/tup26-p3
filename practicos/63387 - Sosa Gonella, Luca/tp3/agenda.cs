@@ -1,7 +1,9 @@
-﻿using System.Text.Json;
-using Terminal.Gui;
-using Microsoft.Data.Sqlite;
-using Dapper.Contrib.Extensions;
+#!/usr/bin/env -S dotnet run
+#:package Dapper@2.1.35
+#:package Dapper.Contrib@2.0.78
+#:package Microsoft.Data.Sqlite@9.0.5
+#:package Terminal.Gui@1.14.0
+#:property PublishAot=false
 
 using System.Text.Json;
 using Terminal.Gui;
@@ -23,8 +25,7 @@ Application.Run();
 
 Application.Shutdown();
 
-public class AgendaWindow : Window
-{
+public class AgendaWindow : Window {
     private readonly SqliteAgendaStore store;
 
     private List<Contacto> contactos = new();
@@ -36,8 +37,7 @@ public class AgendaWindow : Window
 
     private bool soloFavoritos = false;
 
-    public AgendaWindow(SqliteAgendaStore store) : base("Agenda")
-    {
+    public AgendaWindow(SqliteAgendaStore store) : base("Agenda") {
         this.store = store;
 
         X = 0;
@@ -76,16 +76,14 @@ public class AgendaWindow : Window
 
         Add(menu);
 
-        var lblBuscar = new Label("Buscar:")
-        {
+        var lblBuscar = new Label("Buscar:") {
             X = 1,
             Y = 1
         };
 
         Add(lblBuscar);
 
-        buscador = new TextField("")
-        {
+        buscador = new TextField("") {
             X = 10,
             Y = 1,
             Width = 40
@@ -95,8 +93,7 @@ public class AgendaWindow : Window
 
         Add(buscador);
 
-        lista = new ListView()
-        {
+        lista = new ListView() {
             X = 1,
             Y = 3,
             Width = 40,
@@ -109,16 +106,14 @@ public class AgendaWindow : Window
 
         Add(lista);
 
-        var frame = new FrameView("Detalle")
-        {
+        var frame = new FrameView("Detalle") {
             X = 42,
             Y = 3,
             Width = Dim.Fill() - 1,
             Height = Dim.Fill() - 2
         };
 
-        detalle = new Label("")
-        {
+        detalle = new Label("") {
             X = 1,
             Y = 1,
             Width = Dim.Fill(),
@@ -129,8 +124,7 @@ public class AgendaWindow : Window
 
         Add(frame);
 
-        KeyPress += (e) =>
-        {
+        KeyPress += (e) => {
             if (e.KeyEvent.Key == Key.F2)
                 Nuevo();
 
@@ -147,8 +141,7 @@ public class AgendaWindow : Window
         ActualizarFiltro();
     }
 
-    private void ActualizarFiltro()
-    {
+    private void ActualizarFiltro() {
         string texto = buscador.Text.ToString()?.ToLower() ?? "";
 
         filtrados = contactos
@@ -172,10 +165,8 @@ public class AgendaWindow : Window
         MostrarDetalle();
     }
 
-    private void MostrarDetalle()
-    {
-        if (lista.SelectedItem < 0 || lista.SelectedItem >= filtrados.Count)
-        {
+    private void MostrarDetalle() {
+        if (lista.SelectedItem < 0 || lista.SelectedItem >= filtrados.Count) {
             detalle.Text = "";
             return;
         }
@@ -199,16 +190,14 @@ Notas:
 {c.Notas}";
     }
 
-    private Contacto? ContactoSeleccionado()
-    {
+    private Contacto? ContactoSeleccionado() {
         if (lista.SelectedItem < 0 || lista.SelectedItem >= filtrados.Count)
             return null;
 
         return filtrados[lista.SelectedItem];
     }
 
-    private void Nuevo()
-    {
+    private void Nuevo() {
         var dialog = new ContactDialog(new Contacto());
 
         Application.Run(dialog);
@@ -223,8 +212,7 @@ Notas:
         ActualizarFiltro();
     }
 
-    private void Editar()
-    {
+    private void Editar() {
         var seleccionado = ContactoSeleccionado();
 
         if (seleccionado == null)
@@ -244,8 +232,7 @@ Notas:
         ActualizarFiltro();
     }
 
-    private void Eliminar()
-    {
+    private void Eliminar() {
         var seleccionado = ContactoSeleccionado();
 
         if (seleccionado == null)
@@ -268,15 +255,13 @@ Notas:
         ActualizarFiltro();
     }
 
-    private void ToggleFavoritos()
-    {
+    private void ToggleFavoritos() {
         soloFavoritos = !soloFavoritos;
 
         ActualizarFiltro();
     }
 
-    private void AcercaDe()
-    {
+    private void AcercaDe() {
         MessageBox.Query(
             "Acerca de",
             "Agenda TUI TP3",
@@ -284,10 +269,8 @@ Notas:
         );
     }
 
-    private void Exportar()
-    {
-        try
-        {
+    private void Exportar() {
+        try {
             JsonAgendaIO.Exportar("salida.json", contactos);
 
             MessageBox.Query(
@@ -295,9 +278,7 @@ Notas:
                 "Exportado a salida.json",
                 "OK"
             );
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             MessageBox.ErrorQuery(
                 "Error",
                 ex.Message,
@@ -306,14 +287,11 @@ Notas:
         }
     }
 
-    private void Importar()
-    {
-        try
-        {
+    private void Importar() {
+        try {
             var nuevos = JsonAgendaIO.Importar("salida.json");
 
-            foreach (var c in nuevos)
-            {
+            foreach (var c in nuevos) {
                 c.Id = 0;
                 store.Insert(c);
             }
@@ -321,9 +299,7 @@ Notas:
             contactos = store.GetAll();
 
             ActualizarFiltro();
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             MessageBox.ErrorQuery(
                 "Error",
                 ex.Message,
@@ -333,26 +309,22 @@ Notas:
     }
 }
 
-public class ContactDialog : Dialog
-{
+public class ContactDialog : Dialog {
     public Contacto Contacto { get; private set; }
 
     public bool Aceptado { get; private set; }
 
-    public ContactDialog(Contacto contacto) : base("Contacto", 60, 20)
-    {
+    public ContactDialog(Contacto contacto) : base("Contacto", 60, 20) {
         Contacto = contacto;
 
-        var lblNombre = new Label("Nombre:")
-        {
+        var lblNombre = new Label("Nombre:") {
             X = 1,
             Y = 1
         };
 
         Add(lblNombre);
 
-        var txtNombre = new TextField(contacto.Nombre)
-        {
+        var txtNombre = new TextField(contacto.Nombre) {
             X = 15,
             Y = 1,
             Width = 40
@@ -360,16 +332,14 @@ public class ContactDialog : Dialog
 
         Add(txtNombre);
 
-        var lblTelefonos = new Label("Telefonos:")
-        {
+        var lblTelefonos = new Label("Telefonos:") {
             X = 1,
             Y = 3
         };
 
         Add(lblTelefonos);
 
-        var txtTelefonos = new TextField(contacto.Telefonos)
-        {
+        var txtTelefonos = new TextField(contacto.Telefonos) {
             X = 15,
             Y = 3,
             Width = 40
@@ -377,16 +347,14 @@ public class ContactDialog : Dialog
 
         Add(txtTelefonos);
 
-        var lblEmail = new Label("Email:")
-        {
+        var lblEmail = new Label("Email:") {
             X = 1,
             Y = 5
         };
 
         Add(lblEmail);
 
-        var txtEmail = new TextField(contacto.Email)
-        {
+        var txtEmail = new TextField(contacto.Email) {
             X = 15,
             Y = 5,
             Width = 40
@@ -394,16 +362,14 @@ public class ContactDialog : Dialog
 
         Add(txtEmail);
 
-        var lblNotas = new Label("Notas:")
-        {
+        var lblNotas = new Label("Notas:") {
             X = 1,
             Y = 7
         };
 
         Add(lblNotas);
 
-        var txtNotas = new TextView()
-        {
+        var txtNotas = new TextView() {
             X = 15,
             Y = 7,
             Width = 40,
@@ -413,27 +379,23 @@ public class ContactDialog : Dialog
 
         Add(txtNotas);
 
-        var chkFavorito = new CheckBox("Favorito", contacto.Favorito)
-        {
+        var chkFavorito = new CheckBox("Favorito", contacto.Favorito) {
             X = 15,
             Y = 13
         };
 
         Add(chkFavorito);
 
-        var btnGuardar = new Button("Guardar")
-        {
+        var btnGuardar = new Button("Guardar") {
             X = 15,
             Y = 15
         };
 
-        btnGuardar.Clicked += () =>
-        {
+        btnGuardar.Clicked += () => {
             string nombre = txtNombre.Text.ToString() ?? "";
             string email = txtEmail.Text.ToString() ?? "";
 
-            if (string.IsNullOrWhiteSpace(nombre))
-            {
+            if (string.IsNullOrWhiteSpace(nombre)) {
                 MessageBox.ErrorQuery(
                     "Error",
                     "El nombre es obligatorio",
@@ -443,8 +405,7 @@ public class ContactDialog : Dialog
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(email) && !email.Contains("@"))
-            {
+            if (!string.IsNullOrWhiteSpace(email) && !email.Contains("@")) {
                 MessageBox.ErrorQuery(
                     "Error",
                     "El email debe contener @",
@@ -467,14 +428,12 @@ public class ContactDialog : Dialog
 
         AddButton(btnGuardar);
 
-        var btnCancelar = new Button("Cancelar")
-        {
+        var btnCancelar = new Button("Cancelar") {
             X = 30,
             Y = 15
         };
 
-        btnCancelar.Clicked += () =>
-        {
+        btnCancelar.Clicked += () => {
             Application.RequestStop();
         };
 
@@ -482,19 +441,16 @@ public class ContactDialog : Dialog
     }
 }
 
-public class SqliteAgendaStore
-{
+public class SqliteAgendaStore {
     private readonly string connectionString;
 
-    public SqliteAgendaStore(string path)
-    {
+    public SqliteAgendaStore(string path) {
         connectionString = $"Data Source={path}";
 
         CrearTabla();
     }
 
-    private void CrearTabla()
-    {
+    private void CrearTabla() {
         using var db = new SqliteConnection(connectionString);
 
         db.Open();
@@ -516,8 +472,7 @@ CREATE TABLE IF NOT EXISTS Contactos(
         cmd.ExecuteNonQuery();
     }
 
-    public List<Contacto> GetAll()
-    {
+    public List<Contacto> GetAll() {
         using var db = new SqliteConnection(connectionString);
 
         db.Open();
@@ -535,10 +490,8 @@ ORDER BY Nombre
 
         var lista = new List<Contacto>();
 
-        while (reader.Read())
-        {
-            lista.Add(new Contacto
-            {
+        while (reader.Read()) {
+            lista.Add(new Contacto {
                 Id = reader.GetInt32(0),
                 Nombre = reader.GetString(1),
                 Telefonos = reader.IsDBNull(2) ? "" : reader.GetString(2),
@@ -551,8 +504,7 @@ ORDER BY Nombre
         return lista;
     }
 
-    public void Insert(Contacto contacto)
-    {
+    public void Insert(Contacto contacto) {
         using var db = new SqliteConnection(connectionString);
 
         db.Open();
@@ -576,8 +528,7 @@ VALUES
         cmd.ExecuteNonQuery();
     }
 
-    public void Update(Contacto contacto)
-    {
+    public void Update(Contacto contacto) {
         using var db = new SqliteConnection(connectionString);
 
         db.Open();
@@ -606,8 +557,7 @@ WHERE Id = $id
         cmd.ExecuteNonQuery();
     }
 
-    public void Delete(Contacto contacto)
-    {
+    public void Delete(Contacto contacto) {
         using var db = new SqliteConnection(connectionString);
 
         db.Open();
@@ -622,12 +572,9 @@ WHERE Id = $id
     }
 }
 
-public static class JsonAgendaIO
-{
-    public static void Exportar(string path, List<Contacto> contactos)
-    {
-        var options = new JsonSerializerOptions
-        {
+public static class JsonAgendaIO {
+    public static void Exportar(string path, List<Contacto> contactos) {
+        var options = new JsonSerializerOptions {
             WriteIndented = true
         };
 
@@ -636,8 +583,7 @@ public static class JsonAgendaIO
         File.WriteAllText(path, json);
     }
 
-    public static List<Contacto> Importar(string path)
-    {
+    public static List<Contacto> Importar(string path) {
         if (!File.Exists(path))
             throw new Exception("El archivo JSON no existe");
 
@@ -648,8 +594,7 @@ public static class JsonAgendaIO
     }
 }
 
-public sealed class Contacto
-{
+public sealed class Contacto {
     public int Id { get; set; }
 
     public string Nombre { get; set; } = "";
@@ -662,11 +607,9 @@ public sealed class Contacto
 
     public bool Favorito { get; set; }
 
-    public Contacto Clone()
-    {
-        
-        return new Contacto
-        {
+    public Contacto Clone() {
+
+        return new Contacto {
             Id = Id,
             Nombre = Nombre,
             Telefonos = Telefonos,

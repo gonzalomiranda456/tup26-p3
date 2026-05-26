@@ -43,10 +43,10 @@ Compila = `dotnet run` terminó sin error o la aplicación quedó ejecutándose 
 |  63330 | Cuevas, Joel Alejandro          |     No     |   --    |
 |  63341 | Carrer, Juan Cruz               |     Sí     |   Sí    |
 |  63345 | García, Franco Tomás            |     Sí     |   Sí    |
-|  63350 | Páez Carabajal, Santiago        |     Sí     |   No    |
+|  63350 | Páez Carabajal, Santiago        |     Sí     |   No    | Proyecto
 |  63354 | Perondi, Luciano                |     Sí     |   Sí    |
 |  63385 | Almaraz Sintora, Nahuel         |     Sí     |   Sí    |
-|  63387 | Sosa Gonella, Luca              |     Sí     |   Sí    |
+|  63387 | Sosa Gonella, Luca              |     Sí     |   Sí    | Proyecto
 |  63388 | López, Leandro Joel             |     Sí     |   No    |
 |  63389 | Pereyra Petroni, Nicolas        |     Sí     |   Sí    |
 |  63393 | Ritorto, Lucca                  |     Sí     |   No    |

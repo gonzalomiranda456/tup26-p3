@@ -16,7 +16,7 @@ public class Compilador {
     }
 
     private string Peek() => pos < tokens.Length ? tokens[pos] : "";
-    private string Eat()  => tokens[pos++];
+    private string Eat() => tokens[pos++];
 
     public Nodo Procesar() {
         if (tokens.Length == 0) throw new Exception("Error: Entrada vacía.");

@@ -117,36 +117,36 @@ static class AlumnosCliApp {
             ObtenerOpcionesPrincipales());
 
         return opcion.Command switch {
-            "listar"         => ["listar"],
-            "auditoria"      => SolicitarMenuAuditoria(),
-            "exportar"       => SolicitarMenuExportar(),
+            "listar" => ["listar"],
+            "auditoria" => SolicitarMenuAuditoria(),
+            "exportar" => SolicitarMenuExportar(),
             "crear-carpetas" => ["crear-carpetas"],
-            "publicar"       => ConstruirArgumentosPublicarPractico(),
-            "prs"            => SolicitarMenuPrs(),
-            "asistencias"    => SolicitarMenuAsistencias(),
-            "salir"          => null,
-            _                => Array.Empty<string>()
+            "publicar" => ConstruirArgumentosPublicarPractico(),
+            "prs" => SolicitarMenuPrs(),
+            "asistencias" => SolicitarMenuAsistencias(),
+            "salir" => null,
+            _ => Array.Empty<string>()
         };
     }
 
     static string[] SolicitarMenuAuditoria() {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Auditoría[/] · Elegí una auditoría", [
-                new("sin-github",                  "Sin GitHub",                   "Filtrar alumnos sin usuario GitHub"),
-                new("sin-telefono",                "Sin teléfono",                 "Filtrar alumnos sin teléfono"),
-                new("sin-foto",                    "Sin foto",                     "Filtrar alumnos sin foto"),
-                new("tp-no-presentado",            "TP no presentado",             "Elegir un TP y listar alumnos que adeudan ese práctico"),
-                new("sin-practicos",               "Sin prácticos",                "Listar alumnos que no presentaron ningún práctico"),
-                new("limpiar-proyectos-practicos", "Limpiar Proyectos Prácticos",  "Eliminar bin, obj, .vs y cachés dentro de prácticos"),
-                new("volver",                      "Volver",                       "Regresar al menú principal")
+                new("sin-github",                  "Sin GitHub",        "Filtrar alumnos sin usuario GitHub"),
+                new("sin-telefono",                "Sin teléfono",      "Filtrar alumnos sin teléfono"),
+                new("sin-foto",                    "Sin foto",          "Filtrar alumnos sin foto"),
+                new("tp-no-presentado",            "TP no presentado",  "Elegir un TP y listar alumnos que adeudan ese práctico"),
+                new("sin-practicos",               "Sin prácticos",     "Listar alumnos que no presentaron ningún práctico"),
+                new("limpiar-proyectos-practicos", "Limpiar Prácticos", "Eliminar bin, obj, .vs y cachés dentro de prácticos"),
+                new("volver",                      "Volver",            "Regresar al menú principal")
             ]);
 
         return opcion.Command switch {
-            "sin-github"        => ["sin-github"],
-            "sin-telefono"      => ["sin-telefono"],
-            "sin-foto"          => ["sin-foto"],
-            "tp-no-presentado"  => ["tp-no-presentado", PedirTrabajoPractico()],
-            "sin-practicos"     => ["sin-practicos"],
+            "sin-github" => ["sin-github"],
+            "sin-telefono" => ["sin-telefono"],
+            "sin-foto" => ["sin-foto"],
+            "tp-no-presentado" => ["tp-no-presentado", PedirTrabajoPractico()],
+            "sin-practicos" => ["sin-practicos"],
             "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
         };
@@ -164,8 +164,8 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "guardar" => ConstruirArgumentosExportacion("guardar"),
-            "json"    => ConstruirArgumentosExportacion("json"),
-            "vcf"     => ConstruirArgumentosExportacion("vcf"),
+            "json" => ConstruirArgumentosExportacion("json"),
+            "vcf" => ConstruirArgumentosExportacion("vcf"),
             "informar-estado" => ["informar-estado"],
             _ => Array.Empty<string>()
         };
@@ -185,11 +185,11 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "prs" => ["prs"],
-            "normalizar-prs"        => ConstruirArgumentosNormalizarPrs(),
-            "bajar-prs"             => ConstruirArgumentosBajarPrs(),
-            "publicar"              => ConstruirArgumentosPublicarPractico(),
-            "cerrar-prs"            => ConstruirArgumentosCerrarPrs(),
-            "revisar-presentados"   => ["revisar-presentados", PedirTrabajoPractico()],
+            "normalizar-prs" => ConstruirArgumentosNormalizarPrs(),
+            "bajar-prs" => ConstruirArgumentosBajarPrs(),
+            "publicar" => ConstruirArgumentosPublicarPractico(),
+            "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
+            "revisar-presentados" => ["revisar-presentados", PedirTrabajoPractico()],
             _ => Array.Empty<string>()
         };
     }
@@ -207,12 +207,12 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "registrar-asistencias"  => ["registrar-asistencias"],
-            "contar-asistencias"     => ["contar-asistencias"],
-            "wapp-grupos"            => ["wapp-grupos"],
+            "registrar-asistencias" => ["registrar-asistencias"],
+            "contar-asistencias" => ["contar-asistencias"],
+            "wapp-grupos" => ["wapp-grupos"],
             "wapp-recuperar-tp1-tp2" => ConstruirArgumentosWappRecuperarTp1Tp2(),
-            "wapp-foto-parcial"      => ConstruirArgumentosWappFotoParcial(),
-            "registrar-respuestas"   => ["registrar-respuestas"],
+            "wapp-foto-parcial" => ConstruirArgumentosWappFotoParcial(),
+            "registrar-respuestas" => ["registrar-respuestas"],
             _ => Array.Empty<string>()
         };
     }
@@ -222,7 +222,7 @@ static class AlumnosCliApp {
             new SelectionPrompt<InteractiveChoice>()
                 .Title(titulo)
                 .PageSize(12)
-                .UseConverter(choice => $"[green]{choice.Label, -22}[/] [grey] {choice.Description}[/]")
+                .UseConverter(choice => $"[green]{choice.Label,-22}[/] [grey] {choice.Description}[/]")
                 .AddChoices(opciones));
 
     static IReadOnlyList<InteractiveChoice> ObtenerOpcionesPrincipales() => [
@@ -285,7 +285,7 @@ static class AlumnosCliApp {
         string? tpArg = seleccion switch {
             "TP1" => "1",
             "TP2" => "2",
-            _     => null
+            _ => null
         };
 
         bool enviar = AnsiConsole.Confirm("¿Enviar WhatsApp reales ahora?", false);
@@ -327,9 +327,9 @@ static class AlumnosCliApp {
     }
 
     static bool EsAliasAyuda(string valor) =>
-        string.Equals(valor, "ayuda",  StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor, "help",   StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor, "-h",     StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "ayuda", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "help", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor, "-h", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(valor, "--help", StringComparison.OrdinalIgnoreCase);
 
     sealed record InteractiveChoice(string Command, string Label, string Description);

@@ -11,15 +11,13 @@ namespace calculadora;
 //              | numero
 //              | 'x' | 'X'
 
-class Compilador
-{
+class Compilador {
     private string _texto = "";
     private int _pos;
 
     // ─── API pública ─────────────────────────────────────────────────────────
 
-    public Nodo Compilar(string expresion)
-    {
+    public Nodo Compilar(string expresion) {
         _texto = expresion.Trim();
         _pos = 0;
 
@@ -37,12 +35,10 @@ class Compilador
 
     // ─── Expresion := Termino { ('+' | '-') Termino } ────────────────────────
 
-    private Nodo ParsearExpresion()
-    {
+    private Nodo ParsearExpresion() {
         Nodo nodo = ParsearTermino();
 
-        while (true)
-        {
+        while (true) {
             SkipEspacios();
             if (_pos >= _texto.Length) break;
 
@@ -59,12 +55,10 @@ class Compilador
 
     // ─── Termino := Factor { ('*' | '/') Factor } ───────────────────────────
 
-    private Nodo ParsearTermino()
-    {
+    private Nodo ParsearTermino() {
         Nodo nodo = ParsearFactor();
 
-        while (true)
-        {
+        while (true) {
             SkipEspacios();
             if (_pos >= _texto.Length) break;
 
@@ -81,8 +75,7 @@ class Compilador
 
     // ─── Factor := unario | '(' Expresion ')' | numero | x ──────────────────
 
-    private Nodo ParsearFactor()
-    {
+    private Nodo ParsearFactor() {
         SkipEspacios();
 
         if (_pos >= _texto.Length)
@@ -91,23 +84,20 @@ class Compilador
         char c = _texto[_pos];
 
         // Unario positivo (no cambia nada)
-        if (c == '+')
-        {
+        if (c == '+') {
             _pos++;
             return ParsearFactor();
         }
 
         // Unario negativo
-        if (c == '-')
-        {
+        if (c == '-') {
             _pos++;
             Nodo operando = ParsearFactor();
             return new NegativoNodo(operando);
         }
 
         // Paréntesis
-        if (c == '(')
-        {
+        if (c == '(') {
             _pos++;
             Nodo interior = ParsearExpresion();
             SkipEspacios();
@@ -120,15 +110,13 @@ class Compilador
         }
 
         // Variable x / X
-        if (c == 'x' || c == 'X')
-        {
+        if (c == 'x' || c == 'X') {
             _pos++;
             return new VariableNodo();
         }
 
         // Número entero
-        if (char.IsDigit(c))
-        {
+        if (char.IsDigit(c)) {
             int inicio = _pos;
             while (_pos < _texto.Length && char.IsDigit(_texto[_pos]))
                 _pos++;
@@ -141,8 +129,7 @@ class Compilador
 
     // ─── Utilidades ──────────────────────────────────────────────────────────
 
-    private void SkipEspacios()
-    {
+    private void SkipEspacios() {
         while (_pos < _texto.Length && _texto[_pos] == ' ')
             _pos++;
     }

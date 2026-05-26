@@ -22,7 +22,7 @@ static class AlumnosCliActions {
     }
 
     public static int ListarSinFoto() {
-        Alumnos alumnos  = CargarAlumnos();
+        Alumnos alumnos = CargarAlumnos();
         int actualizados = AlumnosManager.SincronizarEstadoFotosDesdeCarpetas(alumnos);
 
         if (actualizados > 0) {
@@ -164,10 +164,10 @@ static class AlumnosCliActions {
 
             var detallePr = gh.ObtenerEstado(pr.Numero);
             int cantidadArchivos = gh.ListarArchivos(pr.Numero).Count;
-            int cantidadLineas   = gh.CantidadLineas(pr.Numero);
-            int cantidadCommits  = gh.Commits(pr.Numero).Count;
-            string estado        = detallePr.Estado == "open" ? "abierto" : detallePr.Estado == "closed" ? "cerrado" : "sin dato";
-            string mergeable     = detallePr.EsMergeable ? "mergeable" : "con conflictos";
+            int cantidadLineas = gh.CantidadLineas(pr.Numero);
+            int cantidadCommits = gh.Commits(pr.Numero).Count;
+            string estado = detallePr.Estado == "open" ? "abierto" : detallePr.Estado == "closed" ? "cerrado" : "sin dato";
+            string mergeable = detallePr.EsMergeable ? "mergeable" : "con conflictos";
             int tp = GitHub.ExtraerTP(pr.Titulo);
             string carpetaTp = tp > 0 ? $"tp{tp}" : string.Empty;
             List<string> archivosTp = string.IsNullOrWhiteSpace(carpetaTp)
@@ -236,9 +236,9 @@ static class AlumnosCliActions {
             return 1;
         }
 
-        string carpetaTp     = CarpetaTrabajoPractico(numeroTp);
+        string carpetaTp = CarpetaTrabajoPractico(numeroTp);
         string rutaEnunciado = AppPaths.EnunciadoPracticoDirectory(carpetaTp);
-        int lineasEnunciado  = ObtenerLineasBaseEnunciado(numeroTp, carpetaTp, rutaEnunciado, alumnos);
+        int lineasEnunciado = ObtenerLineasBaseEnunciado(numeroTp, carpetaTp, rutaEnunciado, alumnos);
 
         Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
         List<TrabajoPresentadoLocal> trabajosPresentados = new();
@@ -246,7 +246,7 @@ static class AlumnosCliActions {
 
         foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
             string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
-            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
+            int lineasTotales = ContarLineasPracticoLocal(rutaPractico);
             int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
             alumno.Codigo = string.Empty;
@@ -287,7 +287,7 @@ static class AlumnosCliActions {
             }
 
             alumno.Presente = false;
-            alumno.Examen(1, alumno.Asistencias switch{ >= 8 => Estado.Aprobado, >= 4 => Estado.Pendiente, _ => Estado.Desaprobado });
+            alumno.Examen(1, alumno.Asistencias switch { >= 8 => Estado.Aprobado, >= 4 => Estado.Pendiente, _ => Estado.Desaprobado });
         }
 
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
@@ -364,8 +364,8 @@ static class AlumnosCliActions {
                 _ => alumno.EstadoPractico(1) != Estado.Aprobado && alumno.EstadoPractico(2) != Estado.Aprobado
             })
             .OrderBy(alumno => alumno.Comision)
-            .ThenBy(alumno  => alumno.NombreCompleto)
-            .ThenBy(alumno  => alumno.Legajo)
+            .ThenBy(alumno => alumno.NombreCompleto)
+            .ThenBy(alumno => alumno.Legajo)
             .ToList();
 
         string etiqueta = numeroTp is int tp ? $"TP{tp}" : "TP1 y TP2";
@@ -426,8 +426,8 @@ static class AlumnosCliActions {
         List<Alumno> destinatarios = alumnos
             .Where(alumno => !alumno.ConFoto)
             .OrderBy(alumno => alumno.Comision)
-            .ThenBy(alumno  => alumno.NombreCompleto)
-            .ThenBy(alumno  => alumno.Legajo)
+            .ThenBy(alumno => alumno.NombreCompleto)
+            .ThenBy(alumno => alumno.Legajo)
             .ToList();
 
         if (destinatarios.Count == 0) {
@@ -629,8 +629,8 @@ static class AlumnosCliActions {
 
         DayOfWeek dia = mensaje.Fecha.DayOfWeek;
         TimeSpan hora = mensaje.Fecha.TimeOfDay;
-        return 
-            dia  >= DayOfWeek.Monday      && dia  <= DayOfWeek.Thursday &&
+        return
+            dia >= DayOfWeek.Monday && dia <= DayOfWeek.Thursday &&
             hora >= new TimeSpan(8, 0, 0) && hora <= new TimeSpan(12, 30, 0);
     }
 
@@ -893,10 +893,10 @@ static class AlumnosCliActions {
 
     static bool PracticoParecePresentado(int numeroTp, int lineasTotales, int lineasAgregadas) =>
         numeroTp switch {
-            1 => lineasTotales   >= 100,
-            2 => lineasAgregadas >=  20,
-            3 => lineasAgregadas >=  50,
-            _ => lineasTotales   >= 100
+            1 => lineasTotales >= 100,
+            2 => lineasAgregadas >= 20,
+            3 => lineasAgregadas >= 50,
+            _ => lineasTotales >= 100
         };
 
     static bool TieneAlgunPracticoPresentado(Alumno alumno) =>

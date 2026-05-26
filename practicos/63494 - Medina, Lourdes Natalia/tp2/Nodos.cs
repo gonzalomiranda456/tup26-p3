@@ -39,31 +39,32 @@ abstract class NodoBinario : Nodo {
 }
 
 class SumaNodo : NodoBinario {
-    public SumaNodo(Nodo izq , Nodo der) : base(izq, der) { }
+    public SumaNodo(Nodo izq, Nodo der) : base(izq, der) { }
 
     public override int Evaluar(int x) => izquierda.Evaluar(x) + derecha.Evaluar(x);
 
 }
 
 class RestaNodo : NodoBinario {
-    public RestaNodo(Nodo izq , Nodo der) : base(izq, der) { }
+    public RestaNodo(Nodo izq, Nodo der) : base(izq, der) { }
 
     public override int Evaluar(int x) => izquierda.Evaluar(x) - derecha.Evaluar(x);
 
 }
- class MultiplicacionNodo : NodoBinario {
-    public MultiplicacionNodo(Nodo izq , Nodo der) : base(izq, der) { }
+class MultiplicacionNodo : NodoBinario {
+    public MultiplicacionNodo(Nodo izq, Nodo der) : base(izq, der) { }
 
     public override int Evaluar(int x) => izquierda.Evaluar(x) * derecha.Evaluar(x);
-    
-    }
+
+}
 
 class DivisionNodo : NodoBinario {
-    public DivisionNodo(Nodo izq , Nodo der) : base(izq, der) { }
+    public DivisionNodo(Nodo izq, Nodo der) : base(izq, der) { }
 
-    public override int Evaluar(int x) { int divisor = derecha.Evaluar(x); 
-    if (divisor == 0) throw new DivideByZeroException();
+    public override int Evaluar(int x) {
+        int divisor = derecha.Evaluar(x);
+        if (divisor == 0) throw new DivideByZeroException();
 
-    return izquierda.Evaluar(x) / divisor;
+        return izquierda.Evaluar(x) / divisor;
     }
 }

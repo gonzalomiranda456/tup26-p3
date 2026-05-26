@@ -2,8 +2,7 @@ namespace calculadora;
 
 // ─── Suite de pruebas automáticas ────────────────────────────────────────────
 
-static class Pruebas
-{
+static class Pruebas {
     record Caso(string Expresion, int X, int Esperado, string? ErrorEsperado = null);
 
     private static readonly Caso[] Casos =
@@ -56,33 +55,25 @@ static class Pruebas
 
     // ─── Ejecutar ─────────────────────────────────────────────────────────────
 
-    public static void Ejecutar()
-    {
+    public static void Ejecutar() {
         var compilador = new Compilador();
         int pasadas = 0, falladas = 0;
 
         Console.WriteLine("── Pruebas de evaluación ──────────────────────────────");
 
-        foreach (var c in Casos)
-        {
-            try
-            {
+        foreach (var c in Casos) {
+            try {
                 Nodo ast = compilador.Compilar(c.Expresion);
                 int resultado = ast.Evaluar(c.X);
 
-                if (resultado == c.Esperado)
-                {
+                if (resultado == c.Esperado) {
                     Console.WriteLine($"  ✓  \"{c.Expresion}\" con x={c.X} → {resultado}");
                     pasadas++;
-                }
-                else
-                {
+                } else {
                     Console.WriteLine($"  ✗  \"{c.Expresion}\" con x={c.X} → {resultado} (esperado {c.Esperado})");
                     falladas++;
                 }
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 Console.WriteLine($"  ✗  \"{c.Expresion}\" con x={c.X} → EXCEPCIÓN: {ex.Message} (esperado {c.Esperado})");
                 falladas++;
             }
@@ -91,17 +82,13 @@ static class Pruebas
         Console.WriteLine();
         Console.WriteLine("── Pruebas de errores ─────────────────────────────────");
 
-        foreach (var c in CasosError)
-        {
-            try
-            {
+        foreach (var c in CasosError) {
+            try {
                 Nodo ast = compilador.Compilar(c.Expresion);
                 int resultado = ast.Evaluar(c.X);
                 Console.WriteLine($"  ✗  [{c.Descripcion}] no generó error (resultado={resultado})");
                 falladas++;
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 Console.WriteLine($"  ✓  [{c.Descripcion}] → {ex.Message}");
                 pasadas++;
             }

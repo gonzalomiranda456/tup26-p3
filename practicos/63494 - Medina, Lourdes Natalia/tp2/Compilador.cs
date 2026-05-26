@@ -1,7 +1,7 @@
 using System;
 
 class Compilador {
-   private static string texto = "";
+    private static string texto = "";
     private static int pos;
 
     public static Nodo Parse(string expresion) {
@@ -21,7 +21,7 @@ class Compilador {
         return nodo;
     }
 
-    private static char Actual => 
+    private static char Actual =>
         pos < texto.Length ? texto[pos] : '\0';
 
     private static void Avanzar() => pos++;
@@ -41,19 +41,17 @@ class Compilador {
             if (Actual == '+') {
                 Avanzar();
                 nodo = new SumaNodo(nodo, ParseTermino());
-            } 
-            else if (Actual == '-') {
+            } else if (Actual == '-') {
                 Avanzar();
                 nodo = new RestaNodo(nodo, ParseTermino());
-            } 
-            else {
+            } else {
                 break;
             }
         }
 
         return nodo;
     }
-   
+
     private static Nodo ParseTermino() {
         var nodo = ParseFactor();
 
@@ -63,12 +61,10 @@ class Compilador {
             if (Actual == '*') {
                 Avanzar();
                 nodo = new MultiplicacionNodo(nodo, ParseFactor());
-            } 
-            else if (Actual == '/') {
+            } else if (Actual == '/') {
                 Avanzar();
                 nodo = new DivisionNodo(nodo, ParseFactor());
-            } 
-            else {
+            } else {
                 break;
             }
         }
@@ -76,17 +72,17 @@ class Compilador {
         return nodo;
     }
 
-    private static Nodo ParseFactor(){
-         SaltarEspacios();
-         if (Actual == '+'){
+    private static Nodo ParseFactor() {
+        SaltarEspacios();
+        if (Actual == '+') {
             Avanzar();
             return ParseFactor();
         }
-        if (Actual == '-'){
+        if (Actual == '-') {
             Avanzar();
             return new NegativoNodo(ParseFactor());
         }
-        if (Actual == '('){
+        if (Actual == '(') {
             Avanzar();
             var nodo = ParseExpresion();
             SaltarEspacios();
@@ -95,17 +91,16 @@ class Compilador {
             Avanzar();
             return nodo;
         }
-        if (char.IsDigit(Actual)){
+        if (char.IsDigit(Actual)) {
             int inicio = pos;
             while (char.IsDigit(Actual))
                 Avanzar();
-            
+
             int numero = int.Parse(texto.Substring(inicio, pos - inicio));
             return new NumeroNodo(numero);
         }
 
-        if (Actual == 'x' || Actual == 'X')
-        {
+        if (Actual == 'x' || Actual == 'X') {
             Avanzar();
             return new VariableNodo();
         }

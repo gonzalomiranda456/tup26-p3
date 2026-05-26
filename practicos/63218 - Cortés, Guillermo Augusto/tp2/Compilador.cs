@@ -6,10 +6,9 @@ class Compilador {
     private string input = "";
     private int pos = 0;
     public static Nodo Parse(string expresion) {
-        if (string.IsNullOrWhiteSpace(expresion)) throw new FormatException ("Token inesperado");
+        if (string.IsNullOrWhiteSpace(expresion)) throw new FormatException("Token inesperado");
 
-        var p = new Compilador
-        {
+        var p = new Compilador {
             input = expresion,
             pos = 0
         };
@@ -21,58 +20,42 @@ class Compilador {
 
         return nodo;
     }
-    private Nodo ParseExpresion()
-    {
+    private Nodo ParseExpresion() {
         var nodo = ParseTermino();
-        while (true)
-        {
+        while (true) {
             SaltarEspacios();
-            
-            if(Match('+'))
-            {
+
+            if (Match('+')) {
                 nodo = new Suma(nodo, ParseTermino());
-            }
-            else if (Match('-'))
-            {
+            } else if (Match('-')) {
                 nodo = new Resta(nodo, ParseTermino());
-            }
-            else
-            {
+            } else {
                 break;
-            }           
+            }
         }
         return nodo;
     }
-    private Nodo ParseTermino()
-    {
+    private Nodo ParseTermino() {
         var nodo = ParseFactor();
-        while (true)
-        {
+        while (true) {
             SaltarEspacios();
-            if (Match('*'))
-            {
+            if (Match('*')) {
                 nodo = new Multiplicacion(nodo, ParseFactor());
-            }
-            else if (Match('/'))
-            {
+            } else if (Match('/')) {
                 nodo = new Division(nodo, ParseFactor());
-            }
-            else
-            {
+            } else {
                 break;
             }
         }
         return nodo;
     }
 
-    private Nodo ParseFactor()
-    {
+    private Nodo ParseFactor() {
         SaltarEspacios();
         if (Match('+')) return ParseFactor();
         if (Match('-')) return new Negativo(ParseFactor());
 
-        if (Match('('))
-        {
+        if (Match('(')) {
             var nodo = ParseExpresion();
             if (!Match(')')) throw new FormatException("Se esperaba ')'");
             return nodo;
@@ -80,8 +63,7 @@ class Compilador {
 
         if (char.IsDigit(Peek())) return ParseNumero();
 
-        if (char.ToLower(Peek()) == 'x')
-        {
+        if (char.ToLower(Peek()) == 'x') {
             pos++;
             return new Variable();
         }
@@ -90,24 +72,20 @@ class Compilador {
     }
 
     private char Peek() => pos < input.Length ? input[pos] : '\0';
-    private bool Match(char c)
-    {
-        if (Peek() == c)
-        {
+    private bool Match(char c) {
+        if (Peek() == c) {
             pos++;
             return true;
         }
         return false;
     }
 
-    private void SaltarEspacios()
-    {
+    private void SaltarEspacios() {
         while (char.IsWhiteSpace(Peek())) pos++;
     }
 
-    private Nodo ParseNumero()
-    {
-        int inicio= pos;
+    private Nodo ParseNumero() {
+        int inicio = pos;
         while (char.IsDigit(Peek())) pos++;
         var texto = input[inicio..pos];
         return new Numero(int.Parse(texto));

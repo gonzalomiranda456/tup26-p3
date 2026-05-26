@@ -421,7 +421,7 @@ static class AlumnosManager {
                 alumno.Nota,
                 alumno.Codigo,
                 Practicos = alumno.practicos.Select(e => e.ToEmoji()).ToList(),
-                Examenes  = alumno.examenes.Select(e => e.ToEmoji()).ToList()
+                Examenes = alumno.examenes.Select(e => e.ToEmoji()).ToList()
             });
 
             JsonSerializerOptions opciones = new() {

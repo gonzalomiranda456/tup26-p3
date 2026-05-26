@@ -9,7 +9,7 @@ static class Program {
 
 
         var expresion = Console.ReadLine() ?? "";
-        if(string.IsNullOrWhiteSpace(expresion)) {
+        if (string.IsNullOrWhiteSpace(expresion)) {
             Console.WriteLine("No se ingresó ninguna expresión. Saliendo...");
             return;
         }

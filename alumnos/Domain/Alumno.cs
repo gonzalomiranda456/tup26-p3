@@ -6,18 +6,18 @@ namespace Tup26.AlumnosApp;
 public class Alumno {
     public int Legajo;
     public string Comision = "";
-    public string Nombre   = "";
+    public string Nombre = "";
     public string Apellido = "";
     public string Telefono = "";
-    public string GitHub   = "";
-    public bool TieneFoto  = false;
-    public bool Presente   = false;
+    public string GitHub = "";
+    public bool TieneFoto = false;
+    public bool Presente = false;
     public int Asistencias = 0;
-    public int Nota          = 0;
-    public string Codigo   = "";
+    public int Nota = 0;
+    public string Codigo = "";
 
     public List<Estado> practicos = new();
-    public List<Estado> examenes  = new();
+    public List<Estado> examenes = new();
 
     public string NombreCompleto => $"{Apellido}, {Nombre}";
     public string CarpetaNombre => $"{Legajo} - {NombreCompleto}";
@@ -27,17 +27,17 @@ public class Alumno {
     public bool ConFoto => TieneFoto;
 
     public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto, bool presente = false, int asistencias = 0, int nota = 0, string codigo = "") {
-        Legajo      = legajo;
-        Comision    = NormalizarComision(comision);
-        Nombre      = NormalizarNombre(nombre);
-        Apellido    = NormalizarNombre(apellido);
-        Telefono    = NormalizarTelefono(telefono);
-        GitHub      = NormalizarGitHub(github);
-        TieneFoto   = tieneFoto;
-        Presente    = presente;
+        Legajo = legajo;
+        Comision = NormalizarComision(comision);
+        Nombre = NormalizarNombre(nombre);
+        Apellido = NormalizarNombre(apellido);
+        Telefono = NormalizarTelefono(telefono);
+        GitHub = NormalizarGitHub(github);
+        TieneFoto = tieneFoto;
+        Presente = presente;
         Asistencias = asistencias;
-        Nota          = nota;
-        Codigo      = codigo.Trim();
+        Nota = nota;
+        Codigo = codigo.Trim();
     }
 
     public static int Comparar(Alumno a, Alumno b) {

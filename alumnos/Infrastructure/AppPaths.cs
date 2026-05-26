@@ -7,18 +7,18 @@ readonly record struct LimpiezaCompilacionPracticosResultado(IReadOnlyList<strin
 
 static class AppPaths {
     static readonly string dataDirectory = ResolverDirectorioDatos();
-    static readonly string[] extensionesFotoAlumno           = [".png", ".jpg", ".jpeg"];
+    static readonly string[] extensionesFotoAlumno = [".png", ".jpg", ".jpeg"];
     static readonly string[] directoriosCompilacionPracticos = ["bin", "obj", ".vs"];
     static readonly string[] sufijosArchivosCacheCompilacion = [".lscache", ".suo", ".userosscache", ".sln.docstates"];
 
-    public static string DataDirectory       => dataDirectory;
-    public static string RepoRoot            => Directory.GetParent(DataDirectory)?.FullName ?? DataDirectory;
-    public static string ArchivoAlumnos      => Path.Combine(DataDirectory, "alumnos.md");
-    public static string ArchivoVcf          => Path.Combine(DataDirectory, "alumnos.vcf");
-    public static string ArchivoEstadoRepo   => Path.Combine(RepoRoot, "ESTADO.md");
-    public static string PracticosDirectory  => Path.Combine(RepoRoot, "practicos");
+    public static string DataDirectory => dataDirectory;
+    public static string RepoRoot => Directory.GetParent(DataDirectory)?.FullName ?? DataDirectory;
+    public static string ArchivoAlumnos => Path.Combine(DataDirectory, "alumnos.md");
+    public static string ArchivoVcf => Path.Combine(DataDirectory, "alumnos.vcf");
+    public static string ArchivoEstadoRepo => Path.Combine(RepoRoot, "ESTADO.md");
+    public static string PracticosDirectory => Path.Combine(RepoRoot, "practicos");
     public static string EnunciadosDirectory => Path.Combine(RepoRoot, "enunciados");
-    public static string ArchivoJsonAlumnos  => Path.Combine(DataDirectory, "alumnos.json");
+    public static string ArchivoJsonAlumnos => Path.Combine(DataDirectory, "alumnos.json");
 
     public static string EnunciadoPracticoDirectory(string practico) =>
         Path.Combine(EnunciadosDirectory, practico);
@@ -244,7 +244,7 @@ static class AppPaths {
 
     public static void RenombrarCarpetaAlumno(string origen, Alumno alumno) =>
         RenombrarCarpeta(origen, PracticoAlumnoDirectory(alumno));
-    
+
 
     public static bool ExisteFotoPerfil(string rutaFotos, Alumno alumno) =>
         ExisteArchivo(FotoPerfilOrigen(rutaFotos, alumno));
@@ -383,7 +383,7 @@ static class AppPaths {
         AsegurarDirectorio(destino);
 
         foreach (string archivoOrigen in ListarArchivos(origen)) {
-            string nombreArchivo  = Path.GetFileName(archivoOrigen);
+            string nombreArchivo = Path.GetFileName(archivoOrigen);
             string archivoDestino = Path.Combine(destino, nombreArchivo);
 
             if (!forzar && ExisteArchivo(archivoDestino)) {
@@ -394,7 +394,7 @@ static class AppPaths {
         }
 
         foreach (string subdirectorioOrigen in ListarDirectorios(origen)) {
-            string nombreSubdirectorio  = Path.GetFileName(subdirectorioOrigen);
+            string nombreSubdirectorio = Path.GetFileName(subdirectorioOrigen);
             string subdirectorioDestino = Path.Combine(destino, nombreSubdirectorio);
             CopiarCarpeta(subdirectorioOrigen, subdirectorioDestino, forzar);
         }

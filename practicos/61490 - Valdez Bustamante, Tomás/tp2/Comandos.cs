@@ -2,8 +2,7 @@ namespace calculadora;
 
 // ─── Resultado del análisis de argumentos ────────────────────────────────────
 
-enum ModoEjecucion
-{
+enum ModoEjecucion {
     Directo,
     Interactivo,
     Ayuda,
@@ -18,16 +17,13 @@ record ComandoParsed(
 
 // ─── Procesador de argumentos ────────────────────────────────────────────────
 
-static class Comandos
-{
-    public static ComandoParsed Parsear(string[] args)
-    {
+static class Comandos {
+    public static ComandoParsed Parsear(string[] args) {
         if (args.Length == 0)
             return new ComandoParsed(ModoEjecucion.Interactivo);
 
         // Flags de una sola opción
-        if (args.Length == 1)
-        {
+        if (args.Length == 1) {
             string flag = args[0].ToLower();
             if (flag is "--help" or "-h")
                 return new ComandoParsed(ModoEjecucion.Ayuda);
@@ -37,8 +33,7 @@ static class Comandos
         }
 
         // Modo directo: expresion + valor
-        if (args.Length == 2)
-        {
+        if (args.Length == 2) {
             string expresion = args[0];
 
             if (!int.TryParse(args[1], out int valor))
@@ -51,8 +46,7 @@ static class Comandos
             "Error: argumentos inválidos. Use --help para ver las opciones disponibles.");
     }
 
-    public static void MostrarAyuda()
-    {
+    public static void MostrarAyuda() {
         Console.WriteLine("""
             calculadora — Evalúa expresiones aritméticas con la variable x
 

@@ -33,14 +33,11 @@ Opciones:
                     var x = int.Parse(valor);
                     var funcion = Compilador.Parse(expresion);
                     Console.WriteLine(funcion.Evaluar(x));
-                } 
-                catch (FormatException e) {
+                } catch (FormatException e) {
                     Console.WriteLine("Error: " + e.Message);
-                }
-                catch (DivideByZeroException) {
+                } catch (DivideByZeroException) {
                     Console.WriteLine("Error: División por cero");
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     Console.WriteLine("Error: " + e.Message);
                 }
                 return true;
