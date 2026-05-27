@@ -7,7 +7,6 @@ static class Program {
         Console.WriteLine("\n== Evaluación de Expresiones Matemáticas ==\n");
         Console.Write("Ingrese una expresión matemática con la variable 'x' (ej: (x - 1) * (x - 8/4) + 3): \n>  ");
 
-
         var expresion = Console.ReadLine() ?? "";
         if (expresion.IsWhiteSpace()) {
             Console.WriteLine("No se ingresó ninguna expresión. Saliendo...");
