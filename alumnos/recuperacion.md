@@ -41,54 +41,54 @@ Dada la enorme cantidad de irregularidades detectadas en el TP3, se procedió a 
 > [!IMPORTANT]
 > Plazo para entregar el TP3: **sábado 29 de mayo**
 
-| Legajo | Alumno                            | Practicos | Ast.  | 1P   | "Grupos" |
-|:-----:|:--------------------------------- |:----------- |:---- |:----:|:--------:|
-| 61161 |  González, Thomas Ezequiel        | 🟢🟢🟠⚪️⚪️⚪️ |   10 |    5 |  `- - C` |
-| 63207 |  Saravia, César Nahum             | 🟢🟢🟠⚪️⚪️⚪️ |    9 |   10 |  `- - B` |
-| 63213 |  Marina Noguera, Morena Giovann   | 🟢🟢🟠⚪️⚪️⚪️ |   11 |    9 |  `- - C` |
-| 63216 |  Sánchez, Sofía Micaela           | 🟢🟢🟠⚪️⚪️⚪️ |   11 |   10 |  `- - B` |
-| 63300 |  Álvarez, Hernán Fabricio         | 🟢🟢🟠⚪️⚪️⚪️ |    9 |   10 |  `- - B` |
-| 63354 |  Perondi, Luciano                 | 🟢🟢🟠⚪️⚪️⚪️ |    8 |   10 |  `- - A` |
-| 63456 |  Ávila Lahr, Joaquín              | 🟢🟢🟠⚪️⚪️⚪️ |   12 |   10 |  `- - A` |
-
+| Legajo | Alumno                           | TP 123 | Ast.  | 1P   | "Grupos" |
+|:-----:|:--------------------------------- |:------ |:---- |:----:|:--------:|
+| 61161 |  González, Thomas Ezequiel        | 🟢🟢🟠 |   10 |    5 |  `- - C` |
+| 63207 |  Saravia, César Nahum             | 🟢🟢🟠 |    9 |   10 |  `- - B` |
+| 63213 |  Marina Noguera, Morena Giovann   | 🟢🟢🟠 |   11 |    9 |  `- - C` |
+| 63216 |  Sánchez, Sofía Micaela           | 🟢🟢🟠 |   11 |   10 |  `- - B` |
+| 63300 |  Álvarez, Hernán Fabricio         | 🟢🟢🟠 |    9 |   10 |  `- - B` |
+| 63354 |  Perondi, Luciano                 | 🟢🟢🟠 |    8 |   10 |  `- - A` |
+| 63456 |  Ávila Lahr, Joaquín              | 🟢🟢🟠 |   12 |   10 |  `- - A` |
+|       | ・・・・・・・・・・・・・・・・・ |
 
 ## Rehacer TP1 para continuar en carrera para promocionar la materia
 > [!IMPORTANT]
 > Plazo para entregar el TP1: **sábado 29 de mayo**
 
-| Legajo | Alumno                           | Practicos | Ast.  | 1P   | "Grupos" |
-|:-----:|:--------------------------------- |:----------- |:---- |:----:|:--------:|
-| 62844 |  Guzmán, Luciano Leonel           | 🟠🟢🟢⚪️⚪️⚪️ |   11 |   10 |  `D - -` | 
-| 63182 |  González Rojas, Emmanuel         | 🟠🟢🟢⚪️⚪️⚪️ |   13 |   10 |  `D - -` |
-| 63397 |  Vercellone, Tomás                | 🟠🟢🔴⚪️⚪️⚪️ |   10 |    9 |  `B - -` |
-| 63493 |  Busnelli, Bruno                  | 🟠🟢🔴⚪️⚪️⚪️ |    6 |   10 |  `E - -` |
-| 63647 |  Paz, Valentina                   | 🟠🟢🟢⚪️⚪️⚪️ |    9 |   10 |  `B - -` |
-
+| Legajo | Alumno                          | TP 123 | Ast.  | 1P   | "Grupos" |
+|:-----:|:--------------------------------- |:------ |:---- |:----:|:--------:|
+| 62844 |  Guzmán, Luciano Leonel           | 🟠🟢🟢 |   11 |   10 |  `D - -` | 
+| 63182 |  González Rojas, Emmanuel         | 🟠🟢🟢 |   13 |   10 |  `D - -` |
+| 63397 |  Vercellone, Tomás                | 🟠🟢🔴 |   10 |    9 |  `B - -` |
+| 63493 |  Busnelli, Bruno                  | 🟠🟢🔴 |    6 |   10 |  `E - -` |
+| 63647 |  Paz, Valentina                   | 🟠🟢🟢 |    9 |   10 |  `B - -` |
+|       | ・・・・・・・・・・・・・・・・・ |
 
 ## Rehacer TP1 y TP2 para continuar en carrera para promocionar la materia
 > [!IMPORTANT]
 > Plazo para entregar el TP1 y TP2: **miércoles 2 de junio**
 
-| Legajo | Alumno                           | Practicos | Ast.  | 1P   | "Grupos" |
-|:-----:|:--------------------------------- |:----------- |:---- |:----:|:--------:|
-| 61026 |  Thompson, María José             | 🟠🟠🟢⚪️⚪️⚪️ |   12 |    9 |  `F C -` |
-| 61490 |  Valdez Bustamante, Tomás         | 🟠🟠🔴⚪️⚪️⚪️ |   13 |    6 |  `A A -` |
-| 63150 |  Carlino, Joaquín                 | 🟠🟠🔴⚪️⚪️⚪️ |   13 |   10 |  `A A -` |
-
+| Legajo | Alumno                          | TP 123 | Ast.  | 1P   | "Grupos" |
+|:-----:|:--------------------------------- |:------ |:---- |:----:|:--------:|
+| 61026 |  Thompson, María José             | 🟠🟠🟢 |   12 |    9 |  `F C -` |
+| 61490 |  Valdez Bustamante, Tomás         | 🟠🟠🔴 |   13 |    6 |  `A A -` |
+| 63150 |  Carlino, Joaquín                 | 🟠🟠🔴 |   13 |   10 |  `A A -` |
+|       | ・・・・・・・・・・・・・・・・・ |
 
 ## Rehacer TP1, TP2 y TP3 para no recursar la materia
 > [!IMPORTANT]
 > Plazo para entregar el TP1, TP2 y TP3: **sábado 5 de junio**
 
-| Legajo | Alumno                           | Practicos | Ast.  | 1P   | "Grupos" |
-|:-----:|:--------------------------------- |:----------- |:---- |:----:|:--------:|
-| 61489 |  Gómez, Tomás                     | 🟠🟠🟠⚪️⚪️⚪️ |   12 |    9 |  `F C C` |
-| 61641 |  Figueroa, Nahuel Ramón           | 🟠🟠🟠⚪️⚪️⚪️ |   11 |    4 |  `F C C` |
-| 61801 |  Benega, Maximiliano Abraham      | 🟠🟠🟠⚪️⚪️⚪️ |    7 |    6 |  `F C C` |
-| 63218 |  Cortés, Guillermo Augusto        | 🟠🟠🟠⚪️⚪️⚪️ |   11 |   10 |  `G B B` |
-| 63341 |  Carrer, Juan Cruz                | 🟠🟠🟠⚪️⚪️⚪️ |    8 |   10 |  `G B B` |
-| 63345 |  García, Franco Tomás             | 🟠🟠🟠⚪️⚪️⚪️ |    6 |   10 |  `E B B` |
-| 63494 |  Medina, Lourdes Natalia          | 🟠🟠🟠⚪️⚪️⚪️ |    9 |   10 |  `C D B` |
-| 63737 |  Galván, Rocío Julieta            | 🟠🟠🟠⚪️⚪️⚪️ |   10 |   10 |  `G D B` |
-
+| Legajo | Alumno                          | TP 123 | Ast.  | 1P   | "Grupos" |
+|:-----:|:--------------------------------- |:------ |:---- |:----:|:--------:|
+| 61489 |  Gómez, Tomás                     | 🟠🟠🟠 |   12 |    9 |  `F C C` |
+| 61641 |  Figueroa, Nahuel Ramón           | 🟠🟠🟠 |   11 |    4 |  `F C C` |
+| 61801 |  Benega, Maximiliano Abraham      | 🟠🟠🟠 |    7 |    6 |  `F C C` |
+| 63218 |  Cortés, Guillermo Augusto        | 🟠🟠🟠 |   11 |   10 |  `G B B` |
+| 63341 |  Carrer, Juan Cruz                | 🟠🟠🟠 |    8 |   10 |  `G B B` |
+| 63345 |  García, Franco Tomás             | 🟠🟠🟠 |    6 |   10 |  `E B B` |
+| 63494 |  Medina, Lourdes Natalia          | 🟠🟠🟠 |    9 |   10 |  `C D B` |
+| 63737 |  Galván, Rocío Julieta            | 🟠🟠🟠 |   10 |   10 |  `G D B` |
+|       | ・・・・・・・・・・・・・・・・・ |
 
