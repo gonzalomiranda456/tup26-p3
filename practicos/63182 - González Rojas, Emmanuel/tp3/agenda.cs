@@ -324,7 +324,9 @@ public sealed class AgendaWindow : Window
         try
         {
             string ruta = dialogo.FilePaths.FirstOrDefault() ?? "";
-            if (string.IsNullOrEmpty(ruta)) return;
+            
+            if (string.IsNullOrEmpty(ruta)) 
+                return;
 
             List<Contacto> importados = JsonAgendaIO.Importar(ruta);
 

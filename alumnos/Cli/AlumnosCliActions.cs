@@ -3,6 +3,16 @@ using Spectre.Console;
 namespace Tup26.AlumnosApp;
 
 static class AlumnosCliActions {
+
+    const double UmbralCopia = 0.90;
+    //  60% -> 91
+    //  70% -> 64
+    //  75% -> 56
+    //  80% -> 45
+    //  90% -> 41
+    //  95% -> 35
+    //  99% -> 31
+    // 100% -> 24
     public static int Listar() {
         Alumnos alumnos = CargarAlumnos();
         AlumnosManager.Listar(alumnos);
@@ -246,10 +256,10 @@ static class AlumnosCliActions {
 
         foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
             string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
-            int lineasTotales = ContarLineasPracticoLocal(rutaPractico);
+            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
             int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
-            alumno.Codigo = string.Empty;
+            // alumno.Codigo = string.Empty;
 
             Estado estado = Estado.Desaprobado;
             if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
@@ -258,7 +268,6 @@ static class AlumnosCliActions {
             }
 
             alumno.Practico(numeroTp, estado);
-            Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
         }
 
         int copias = RevisarCopiasTrabajosPresentados(numeroTp, trabajosPresentados);
@@ -267,6 +276,17 @@ static class AlumnosCliActions {
         if (trabajosPresentados.Count > 0 || habiaCodigos) {
             AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         }
+
+        foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
+            string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
+            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
+            int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
+
+            alumno.Codigo = string.Empty;
+
+            var estado = alumno.EstadoPractico(numeroTp);
+            Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
+            }
 
         Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, copias={copias}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
         return 0;
@@ -667,24 +687,20 @@ static class AlumnosCliActions {
 
             for (int j = i + 1; j < trabajosPresentados.Count; j++) {
                 TrabajoPresentadoLocal otro = trabajosPresentados[j];
-                if (CompararTrabajos(actual, otro) is not { } copia) {
-                    continue;
-                }
+                if (CompararTrabajos(actual, otro) is not { } copia) { continue; }
 
                 actual.Alumno.Practico(numeroTp, Estado.Revision);
                 otro.Alumno.Practico(numeroTp, Estado.Revision);
+
                 legajosConCopia.Add(actual.Alumno.Legajo);
                 legajosConCopia.Add(otro.Alumno.Legajo);
                 RegistrarRelacionCopia(copiasPorLegajo, actual.Alumno.Legajo, otro.Alumno.Legajo);
 
-                Log.Warning(
-                    $"TP{numeroTp} copia: {actual.Alumno.Legajo} <-> " +
-                    $"{otro.Alumno.Legajo} | " +
-                    $"comunes={copia.LineasComunes,4}, max={copia.MaximoLineas,4}, similitud={copia.Porcentaje,6:P2}");
+                Log.Warning( $"TP{numeroTp} | {actual.Alumno.Legajo} <-> {otro.Alumno.Legajo} | {copia.LineasComunes,3} de {copia.MaximoLineas,4} >>{copia.Porcentaje,6:P0}");
             }
         }
 
-        AsignarCodigosDeCopia(alumnosPorLegajo, copiasPorLegajo);
+        AsignarCodigosDeCopia(alumnosPorLegajo, copiasPorLegajo, numeroTp);
         return legajosConCopia.Count;
     }
 
@@ -703,7 +719,7 @@ static class AlumnosCliActions {
         copiasB.Add(legajoA);
     }
 
-    static void AsignarCodigosDeCopia(Dictionary<int, Alumno> alumnosPorLegajo, Dictionary<int, HashSet<int>> copiasPorLegajo) {
+    static void AsignarCodigosDeCopia(Dictionary<int, Alumno> alumnosPorLegajo, Dictionary<int, HashSet<int>> copiasPorLegajo, int numeroTp) {
         HashSet<int> visitados = new();
 
         foreach (int legajo in copiasPorLegajo.Keys.Order()) {
@@ -733,14 +749,16 @@ static class AlumnosCliActions {
             string codigo = string.Join(",", grupo.Order());
             foreach (int legajoGrupo in grupo) {
                 if (alumnosPorLegajo.TryGetValue(legajoGrupo, out Alumno? alumno)) {
-                    alumno.Codigo = codigo;
+                    string anterior = numeroTp == 1 ? "" : alumno.Codigo;
+                    alumno.Codigo = $"{anterior} TP{numeroTp}:{codigo}".Trim();
+                    Console.WriteLine($"{numeroTp} -> {anterior} | {alumno.Codigo}");
                 }
             }
         }
     }
 
     static CopiaDetectada? CompararTrabajos(TrabajoPresentadoLocal actual, TrabajoPresentadoLocal otro) {
-        int maximoLineas = Math.Max(actual.LineasCodigo.Count, otro.LineasCodigo.Count);
+        int maximoLineas = Math.Min(actual.LineasCodigo.Count, otro.LineasCodigo.Count);
         if (maximoLineas == 0) {
             return null;
         }
@@ -750,9 +768,7 @@ static class AlumnosCliActions {
             : otro.LineasCodigo.Count(actual.LineasCodigo.Contains);
 
         double porcentaje = (double)lineasComunes / maximoLineas;
-        return porcentaje > 0.50
-            ? new(lineasComunes, maximoLineas, porcentaje)
-            : null;
+        return porcentaje >= UmbralCopia? new(lineasComunes, maximoLineas, porcentaje) : null;
     }
 
     static HashSet<string> ObtenerLineasCodigoNormalizadas(string rutaPractico) {
@@ -779,10 +795,11 @@ static class AlumnosCliActions {
         bool dentroComentarioBloque = false;
 
         foreach (string lineaOriginal in lineas) {
-            string sinComentarios = QuitarComentarios(lineaOriginal, ref dentroComentarioBloque);
+            var aux = lineaOriginal.Replace("{", string.Empty).Replace("}", string.Empty);
+            string sinComentarios = QuitarComentarios(aux, ref dentroComentarioBloque);
             string normalizada = QuitarEspacios(sinComentarios);
             if (normalizada.Length > 0) {
-                yield return normalizada;
+                yield return normalizada.ToLowerInvariant();
             }
         }
     }
@@ -893,10 +910,10 @@ static class AlumnosCliActions {
 
     static bool PracticoParecePresentado(int numeroTp, int lineasTotales, int lineasAgregadas) =>
         numeroTp switch {
-            1 => lineasTotales >= 100,
+            1 => lineasTotales   >= 100,
             2 => lineasAgregadas >= 20,
             3 => lineasAgregadas >= 50,
-            _ => lineasTotales >= 100
+            _ => lineasTotales   >= 100
         };
 
     static bool TieneAlgunPracticoPresentado(Alumno alumno) =>

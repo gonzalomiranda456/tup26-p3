@@ -889,8 +889,8 @@
     }
 
     function notaClass(nota) {
-      if (nota >= 9) return 'grade-green';
-      if (nota >= 5) return 'grade-yellow';
+      if (nota >= 8) return 'grade-green';
+      if (nota >= 4) return 'grade-yellow';
       return 'grade-red';
     }
 
@@ -899,7 +899,7 @@
       const inits   = initials(alumno.apellido, alumno.nombre);
       const comBadge = `badge-comision-${alumno.comision.toLowerCase()}`;
       const codigoLegajoNoCoincide = alumno.codigoLegajo != null && alumno.codigoLegajo !== alumno.legajo;
-      const codigoBadge = `${alumno.codigo.length > 0 ? "🚨" : (alumno.nota > 8 ? "🎖️" : "")}`;
+      const codigoBadge = `${alumno.codigo.length > 0 ? "🚨" : (alumno.nota >= 8 ? "🎖️" : "")}`;
       const notaHtml = alumno.nota != null
         ? `<span class="grade-badge ${notaClass(alumno.nota)}">${alumno.nota}${codigoBadge}</span>`
         : '';

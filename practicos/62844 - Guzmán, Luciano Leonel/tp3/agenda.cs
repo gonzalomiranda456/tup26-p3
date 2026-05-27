@@ -209,10 +209,21 @@ public sealed class AgendaWindow : Window
         try
         {
             string ruta = dialogo.FilePaths.FirstOrDefault() ?? "";
-            if (string.IsNullOrEmpty(ruta)) return;
+            
+            if (string.IsNullOrEmpty(ruta)) 
+                return;
+            
             List<Contacto> importados = JsonAgendaIO.Importar(ruta);
-            if (MessageBox.Query("Importar", $"Se agregarán {importados.Count} contactos", "Aceptar", "Cancelar") != 0) return;
-            foreach (Contacto c in importados) { c.Id = 0; store.Insertar(c); }
+            
+            if (MessageBox.Query("Importar", $"Se agregarán {importados.Count} contactos", "Aceptar", "Cancelar") != 0) 
+                return;
+            
+            foreach (Contacto c in importados) 
+            { 
+                c.Id = 0; 
+                store.Insertar(c); 
+            }
+
             contactos = store.ObtenerTodos();
             AplicarFiltros();
             SetEstado($"Importados {importados.Count} contactos");

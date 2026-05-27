@@ -495,13 +495,13 @@ static class AlumnosManager {
 
         Alumno alumno = new(legajo, comisionActual, nombre, apellido, ExtraerTelefono(columnas[2]), ExtraerGitHub(columnas[4]), ExtraerBool(columnas[3]), ExtraerBool(columnas[7]), ExtraerInt(columnas[8]), nota, codigo);
         CargarEstados(alumno.practicos, columnas[5]);
-        CargarEstados(alumno.examenes, columnas[6]);
+        CargarEstados(alumno.examenes,  columnas[6]);
 
         return alumno;
     }
 
     static string FormatearFilaTabla(params string?[] columnas) {
-        int[] anchos = [6, 30, 13, 3, 25, 20, 4, 4, -4, -4, 0];
+        int[] anchos = [6, 30, 13, 3, 25, 20, 8, 4, -4, -4, 0];
         return FormatearFilaConAnchos(anchos, columnas);
     }
 
@@ -589,11 +589,11 @@ static class AlumnosManager {
     static string ToSiNo(this bool valor) => valor ? "Sí" : "No";
 
     static string FormatearFila(Alumno a) {
-        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Nota.ToString(), a.Codigo);
+        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(12), a.examenes.ToString(4), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Nota.ToString(), a.Codigo);
     }
 
     static string FormatearFilaListado(Alumno a) {
-        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(10), a.examenes.ToString(10), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Nota.ToString());
+        return FormatearFilaTabla(a.Legajo.ToString(), a.NombreCompleto, a.Telefono, a.TieneFoto.ToSiNo(), a.GitHub, a.practicos.ToString(12), a.examenes.ToString(4), a.Presente.ToSiNo(), a.Asistencias.ToString(), a.Nota.ToString());
     }
 
     static string FormatearFilaEstadoInformer(Alumno alumno) {
