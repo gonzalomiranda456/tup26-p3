@@ -40,7 +40,7 @@
 Dada la enorme cantidad de irregularidades detectadas en el TP3, se procedió a analizar detalladamente los trabajos prácticos anteriores.
 
 
-## Rehacer TP3 para poder Promocionar
+## Rehacer TP3 _(para Promocionar)_
 > [!IMPORTANT]
 > Plazo para entregar el TP3: 
 > **sábado 29 de mayo**
@@ -58,7 +58,7 @@ Legajo  Alumno                     TP     As.  1P  Grupos
 ```
 
 
-## Rehacer TP1 para poder Promocionar
+## Rehacer TP1 _(para Promocionar)_
 > [!IMPORTANT]
 > Plazo para entregar el TP1: 
 > **sábado 29 de mayo**
@@ -74,7 +74,7 @@ Legajo  Alumno                     TP     As.  1P  Grupos
 ```
 
 
-## Rehacer TP1 y TP2 para poder Promocionar
+## Rehacer TP1 y TP2 _(para Promocionar)_
 > [!IMPORTANT]
 > Plazo para entregar el TP1 y TP2:
 > **miércoles 2 de junio**
@@ -88,7 +88,7 @@ Legajo  Alumno                     TP     As.  1P  Grupos
 ```
 
 
-## Rehacer TP1, TP2 y TP3 para No Recursar
+## Rehacer TP1, TP2 y TP3 _(para No Recursar)_
 > [!IMPORTANT]
 > Plazo para entregar el TP1, TP2 y TP3: **sábado 5 de junio**
 

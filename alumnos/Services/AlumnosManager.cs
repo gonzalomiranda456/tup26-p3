@@ -28,6 +28,10 @@ Servicio estático para leer, transformar y exportar la información de alumnos.
     - `practico`: nombre del práctico.
     - `forzar`: sobrescribe el destino si ya existe.
 
+- `PublicarRehacer(alumnos, practico)`: normaliza carpetas de alumnos, borra el práctico destino y copia el enunciado.
+    - `alumnos`: colección a procesar.
+    - `practico`: nombre del práctico.
+
 - `CopiarFotoPerfil(alumnos, rutaFotos)`: copia fotos de perfil a las carpetas de alumnos cuando corresponde.
     - `alumnos`: colección a procesar.
     - `rutaFotos`: carpeta base de fotos origen.
@@ -230,6 +234,30 @@ static class AlumnosManager {
         CopiarEnunciadoPracticosEnCarpetasNormalizadas(alumnosPublicables, nombrePractico, forzar);
     }
 
+    public static void PublicarRehacer(IEnumerable<Alumno> alumnos, string practico) {
+        string nombrePractico = practico.Trim();
+
+        if (!PuedeCopiarEnunciadoPractico(nombrePractico, crearBasePracticos: true)) {
+            return;
+        }
+
+        List<Alumno> alumnosPublicables = new();
+        foreach (Alumno alumno in alumnos) {
+            if (AsegurarCarpetaAlumnoNormalizada(alumno)) {
+                alumnosPublicables.Add(alumno);
+            }
+        }
+
+        if (alumnosPublicables.Count == 0) {
+            Log.Info("No hay alumnos para republicar.");
+            return;
+        }
+
+        foreach (Alumno alumno in alumnosPublicables) {
+            RepublicarEnunciadoPractico(alumno, nombrePractico);
+        }
+    }
+
     public static void CopiarFotoPerfil(IEnumerable<Alumno> alumnos, string rutaFotos) {
         if (!AppPaths.ExisteDirectorioPracticos()) {
             Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
@@ -355,6 +383,18 @@ static class AlumnosManager {
             Log.Info($"Enunciado copiado: {copia.Origen} -> {copia.Destino}");
         } catch (Exception ex) {
             Log.Error($"Error al copiar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
+        }
+    }
+
+    static void RepublicarEnunciadoPractico(Alumno alumno, string nombrePractico) {
+        try {
+            string rutaDestino = AppPaths.BorrarPracticoAlumno(alumno, nombrePractico);
+            Log.Warning($"Carpeta borrada: {rutaDestino}");
+
+            CopiaRuta copia = AppPaths.CopiarEnunciadoPractico(alumno, nombrePractico, forzar: true);
+            Log.Info($"Enunciado republicado: {copia.Origen} -> {copia.Destino}");
+        } catch (Exception ex) {
+            Log.Error($"Error al republicar el enunciado para {alumno.CarpetaNombre}: {ex.Message}");
         }
     }
 

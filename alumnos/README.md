@@ -54,6 +54,7 @@ dotnet run -- revisar-presentados 3
 
 - `crear-carpetas`: crea o normaliza las carpetas de prácticos de cada alumno.
 - `publicar <tp> [--forzar]`: copia el enunciado del práctico indicado a la carpeta de cada alumno.
+- `publicar-rehacer <tp>`: borra y republica el práctico solo en alumnos cuyo estado para ese TP sea Revisar.
 
 ### Pull requests y presentaciones
 

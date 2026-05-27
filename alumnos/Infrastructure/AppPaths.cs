@@ -269,6 +269,18 @@ static class AppPaths {
         return new(origen, destino);
     }
 
+    public static string BorrarPracticoAlumno(Alumno alumno, string practico) {
+        string nombrePractico = practico.Trim();
+        string carpetaPractico = nombrePractico.ToLower();
+        string destino = PracticoAlumnoSubdirectory(alumno, carpetaPractico);
+
+        if (ExisteDirectorio(destino)) {
+            Directory.Delete(destino, recursive: true);
+        }
+
+        return destino;
+    }
+
     public static IEnumerable<PerfilMarkdown> LeerPerfilesMarkdown(string rutaPerfiles) {
         if (!ExisteDirectorio(rutaPerfiles)) {
             yield break;
