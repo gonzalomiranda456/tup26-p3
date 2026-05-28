@@ -75,9 +75,9 @@ Acciones disponibles desde la interfaz:
 
 --- 
 ### Apuntes de clase relacionados:
-- [ASP.NET Core Minimal API](../../apuntes/02.350-Tutorial-minimal-api.md)
-- [Entity Framework Core](../../apuntes/02.050-Tutorial-entity-framework-core.md)
-- [Terminal.Gui](../../apuntes/02.300-Terminal-gui.md)
+- [ASP.NET Core Minimal API](../../../apuntes/02.350-Tutorial-minimal-api.md)
+- [Entity Framework Core](../../../apuntes/02.050-Tutorial-entity-framework-core.md)
+- [Terminal.Gui](../../../apuntes/02.300-Terminal-gui.md)
 
 
 ### Documentación oficial de las tecnologías utilizadas:
