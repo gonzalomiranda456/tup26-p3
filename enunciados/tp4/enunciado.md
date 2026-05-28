@@ -60,6 +60,7 @@ Exponer los siguientes endpoints:
 > Al registrar un movimiento de stock, el servidor debe **actualizar el stock del producto** en la misma operación.
 
 ### Aplicación TUI (`catalogo.cs`)
+
 La interfaz debe implementar un layout **maestro/detalle**:
 
 - **Panel izquierdo (maestro):** lista de productos con código, nombre, precio y stock actual.
@@ -70,14 +71,16 @@ La interfaz debe implementar un layout **maestro/detalle**:
 - Debera poder elegir las funciones desde un menú o mediante atajos de teclado.
 
 Acciones disponibles desde la interfaz:
+
 - **Productos:** agregar, modificar y eliminar.
 - **Movimientos de stock:** registrar una compra, venta o ajuste para el producto seleccionado.
 
 --- 
+
 ### Apuntes de clase relacionados:
-- [ASP.NET Core Minimal API](../../../apuntes/02.350-Tutorial-minimal-api.md)
-- [Entity Framework Core](../../../apuntes/02.050-Tutorial-entity-framework-core.md)
-- [Terminal.Gui](../../../apuntes/02.300-Terminal-gui.md)
+- [ASP.NET Core Minimal API](../../apuntes/02.350-Tutorial-minimal-api.md)
+- [Entity Framework Core](../../apuntes/02.050-Tutorial-entity-framework-core.md)
+- [Terminal.Gui](../../apuntes/02.300-Terminal-gui.md)
 
 
 ### Documentación oficial de las tecnologías utilizadas:
