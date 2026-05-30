@@ -46,11 +46,13 @@ class WAppService {
     readonly TimeSpan timeout;
     readonly Dictionary<string, ContactoWhatsApp?> contactosPorAutor = new(StringComparer.OrdinalIgnoreCase);
 
-    public WAppService(string? store = null, TimeSpan? timeout = null) {
+    public WAppService(string? store = null, TimeSpan? timeout = null, bool sincronizar = true) {
         this.store = store;
         this.timeout = timeout ?? TimeSpan.FromMinutes(5);
 
-        Sincronizar();
+        if (sincronizar) {
+            Sincronizar();
+        }
     }
 
     static void ValidarNoVacio(string valor, string parametro) {

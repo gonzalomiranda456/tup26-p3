@@ -377,12 +377,59 @@ static class AlumnosCliActions {
     }
 
     public static int WappGrupos() {
-        WAppService wapp = new();
+        Alumnos alumnos = CargarAlumnos();
 
-        foreach (var grupo in wapp.Grupos()) {
+        Log.Info("Listando grupos y participantes desde la base local de wacli.");
+        Log.Info($"Base principal: {AppPaths.WacliDatabase(null)}");
+        Log.Info($"Base de sesión: {AppPaths.WacliSessionDatabase(null)}");
+
+        if (!AppPaths.ExisteArchivo(AppPaths.WacliDatabase(null))) {
+            Log.Error("No existe la base principal de wacli. Ejecutá wacli o sincronizá WhatsApp antes de listar grupos.");
+            return 1;
+        }
+
+        if (!AppPaths.ExisteArchivo(AppPaths.WacliSessionDatabase(null))) {
+            Log.Error("No existe la base de sesión de wacli. Ejecutá wacli o sincronizá WhatsApp antes de listar participantes.");
+            return 1;
+        }
+
+        WAppService wapp = new(sincronizar: false);
+        List<GrupoWhatsApp> grupos;
+
+        try {
+            grupos = wapp.Grupos();
+        } catch (Exception ex) {
+            Log.Error($"No se pudieron listar grupos desde la base local de wacli: {ex.Message}");
+            return 1;
+        }
+
+        if (grupos.Count == 0) {
+            Log.Warning("No se encontraron grupos en la base local de wacli.");
+            return 0;
+        }
+
+        Log.Info($"Grupos encontrados: {grupos.Count}");
+
+        foreach (var grupo in grupos) {
             Log.WriteLine($"Grupo: {grupo.Group}");
-            foreach (var contacto in wapp.Participantes(grupo.Group)) {
-                Log.WriteLine($"  - {contacto.Name,-30} {contacto.PhoneNumber} {contacto.Jid}");
+            try {
+                List<ContactoWhatsApp> participantes = wapp.Participantes(grupo.Jid);
+                Log.WriteLine($"  Participantes: {participantes.Count}");
+                foreach (var contacto in participantes) {
+                    Alumno? alumno = alumnos.BuscarPorTelefono(contacto.PhoneNumber);
+                    string datosAlumno = alumno is null
+                        ? "SIN ALUMNO"
+                        : $"{alumno.Comision} | {alumno.Legajo} | {alumno.NombreCompleto}";
+                    string linea = $"  - {contacto.Name,-30} {contacto.PhoneNumber,-15} {contacto.Jid,-28} | {datosAlumno}";
+
+                    if (alumno is null) {
+                        Log.Error(linea);
+                    } else {
+                        Log.WriteLine(linea);
+                    }
+                }
+            } catch (Exception ex) {
+                Log.Error($"  No se pudieron listar participantes de '{grupo.Group}': {ex.Message}");
             }
         }
 

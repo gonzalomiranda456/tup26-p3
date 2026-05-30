@@ -148,7 +148,7 @@ static class AlumnosCliApp {
             "sin-github" => ["sin-github"],
             "sin-telefono" => ["sin-telefono"],
             "sin-foto" => ["sin-foto"],
-            "tp-no-presentado" => ["tp-no-presentado", PedirTrabajoPractico()],
+            "tp-no-presentado" => ConstruirArgumentosTpNoPresentado(),
             "sin-practicos" => ["sin-practicos"],
             "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
@@ -166,9 +166,9 @@ static class AlumnosCliApp {
             ]);
 
         return opcion.Command switch {
-            "guardar" => ConstruirArgumentosExportacion("guardar"),
-            "json" => ConstruirArgumentosExportacion("json"),
-            "vcf" => ConstruirArgumentosExportacion("vcf"),
+            "guardar" => ConstruirArgumentosExportacion("Guardar Markdown", "guardar"),
+            "json" => ConstruirArgumentosExportacion("Exportar JSON", "json"),
+            "vcf" => ConstruirArgumentosExportacion("Exportar vCard", "vcf"),
             "informar-estado" => ["informar-estado"],
             _ => Array.Empty<string>()
         };
@@ -194,7 +194,7 @@ static class AlumnosCliApp {
             "publicar" => ConstruirArgumentosPublicarPractico(),
             "publicar-rehacer" => ConstruirArgumentosPublicarRehacer(),
             "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
-            "revisar-presentados" => ["revisar-presentados", PedirTrabajoPractico()],
+            "revisar-presentados" => ConstruirArgumentosRevisarPresentados(),
             _ => Array.Empty<string>()
         };
     }
@@ -242,99 +242,195 @@ static class AlumnosCliApp {
             new("salir",          "Salir",                  "Cerrar la aplicación")
         ];
 
-    static string[] ConstruirArgumentosExportacion(string comando) {
+    static string[] ConstruirArgumentosExportacion(string accion, string comando) {
+        InteractiveChoice modoRuta = PedirOpcion(
+            $"[bold cyan]{accion}[/] · Elegí la ruta de salida", [
+                new("predeterminada", "Predeterminada", "Usar la ruta de salida configurada"),
+                new("personalizada",  "Personalizada",  "Ingresar una ruta manualmente"),
+                new("cancelar",       "Cancelar",       "Volver al menú sin ejecutar")
+            ]);
+
+        if (modoRuta.Command == "cancelar") { return Array.Empty<string>(); }
+        if (modoRuta.Command == "predeterminada") { return [comando]; }
+
         string ruta = AnsiConsole.Prompt(
-            new TextPrompt<string>($"Ruta de salida para [green]{comando}[/] ([grey]vacío = predeterminada[/]):")
+            new TextPrompt<string>($"[bold cyan]{accion}[/] · Ruta de salida ([grey]vacío = cancelar[/]):")
                 .AllowEmpty());
 
-        return string.IsNullOrWhiteSpace(ruta) ? [comando] : [comando, ruta.Trim()];
+        return string.IsNullOrWhiteSpace(ruta)
+            ? Array.Empty<string>()
+            : [comando, ruta.Trim()];
     }
 
     static string[] ConstruirArgumentosNormalizarPrs() {
-        bool simular = AnsiConsole.Confirm("¿Ejecutar en modo simulación?", true);
+        string modo = PedirModoEjecucion("Normalizar PRs");
 
-        return simular ? ["normalizar-prs", "--simular"] : ["normalizar-prs"];
+        return modo switch {
+            "simular" => ["normalizar-prs", "--simular"],
+            "ejecutar" => ["normalizar-prs"],
+            _ => Array.Empty<string>()
+        };
+    }
+
+    static string[] ConstruirArgumentosTpNoPresentado() {
+        string? trabajoPractico = PedirTrabajoPractico("TP no presentado");
+
+        return trabajoPractico is null
+            ? Array.Empty<string>()
+            : ["tp-no-presentado", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosBajarPrs() {
-        string trabajoPractico = PedirTrabajoPractico();
-        bool forzar = AnsiConsole.Confirm("¿Sobrescribir archivos ya existentes?", false);
+        string? trabajoPractico = PedirTrabajoPractico("Bajar PRs");
+        if (trabajoPractico is null) { return Array.Empty<string>(); }
 
-        return forzar
-            ? ["bajar-prs", trabajoPractico, "--forzar"]
-            : ["bajar-prs", trabajoPractico];
+        string sobrescritura = PedirModoSobrescritura("Bajar PRs");
+
+        return sobrescritura switch {
+            "conservar" => ["bajar-prs", trabajoPractico],
+            "sobrescribir" => ["bajar-prs", trabajoPractico, "--forzar"],
+            _ => Array.Empty<string>()
+        };
     }
 
     static string[] ConstruirArgumentosPublicarPractico() {
-        string trabajoPractico = PedirTrabajoPractico();
-        bool forzar = AnsiConsole.Confirm("¿Sobrescribir archivos ya existentes?", false);
+        string? trabajoPractico = PedirTrabajoPractico("Publicar práctico");
+        if (trabajoPractico is null) { return Array.Empty<string>(); }
 
-        return forzar
-            ? ["publicar", trabajoPractico, "--forzar"]
-            : ["publicar", trabajoPractico];
+        string sobrescritura = PedirModoSobrescritura("Publicar práctico");
+
+        return sobrescritura switch {
+            "conservar" => ["publicar", trabajoPractico],
+            "sobrescribir" => ["publicar", trabajoPractico, "--forzar"],
+            _ => Array.Empty<string>()
+        };
     }
 
     static string[] ConstruirArgumentosPublicarRehacer() {
-        string trabajoPractico = PedirTrabajoPractico();
+        string? trabajoPractico = PedirTrabajoPractico("Publicar Rehacer");
+
+        if (trabajoPractico is null) { return Array.Empty<string>(); }
+
         return ["publicar-rehacer", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosCerrarPrs() {
-        bool filtrarPorTp = AnsiConsole.Confirm("¿Querés cerrar sólo los PRs de un TP específico?", false);
+        InteractiveChoice alcance = PedirOpcion(
+            "[bold cyan]Cerrar PRs[/] · Elegí el alcance", [
+                new("todos",    "Todos",     "Cerrar todos los PRs abiertos"),
+                new("por-tp",   "Por TP",    "Cerrar sólo los PRs de un trabajo práctico"),
+                new("cancelar", "Cancelar",  "Volver al menú sin ejecutar")
+            ]);
 
-        return filtrarPorTp
-            ? ["cerrar-prs", PedirTrabajoPractico()]
-            : ["cerrar-prs"];
+        return alcance.Command switch {
+            "todos" => ["cerrar-prs"],
+            "por-tp" => ConstruirArgumentosCerrarPrsPorTp(),
+            _ => Array.Empty<string>()
+        };
+    }
+
+    static string[] ConstruirArgumentosCerrarPrsPorTp() {
+        string? trabajoPractico = PedirTrabajoPractico("Cerrar PRs");
+
+        return trabajoPractico is null
+            ? Array.Empty<string>()
+            : ["cerrar-prs", trabajoPractico];
+    }
+
+    static string[] ConstruirArgumentosRevisarPresentados() {
+        string? trabajoPractico = PedirTrabajoPractico("Revisar presentados");
+
+        return trabajoPractico is null
+            ? Array.Empty<string>()
+            : ["revisar-presentados", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosWappRecuperarTp1Tp2() {
-        string seleccion = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("¿Qué TP querés recuperar?")
-                .AddChoices("TP1", "TP2", "Ambos (TP1 y TP2)"));
+        InteractiveChoice seleccion = PedirOpcion(
+            "[bold cyan]Recuperar TP1/TP2 por WhatsApp[/] · Elegí qué TP recuperar", [
+                new("1",        "TP1",      "Enviar aviso por TP1"),
+                new("2",        "TP2",      "Enviar aviso por TP2"),
+                new("ambos",    "Ambos",    "Enviar aviso por TP1 y TP2"),
+                new("cancelar", "Cancelar", "Volver al menú sin ejecutar")
+            ]);
 
-        string? tpArg = seleccion switch {
-            "TP1" => "1",
-            "TP2" => "2",
+        if (seleccion.Command == "cancelar") { return Array.Empty<string>(); }
+
+        string? tpArg = seleccion.Command switch {
+            "1" => "1",
+            "2" => "2",
             _ => null
         };
 
-        bool enviar = AnsiConsole.Confirm("¿Enviar WhatsApp reales ahora?", false);
+        string modo = PedirModoEjecucion("Recuperar TP1/TP2 por WhatsApp", "Enviar mensajes reales");
+        if (modo == "cancelar") { return Array.Empty<string>(); }
 
         List<string> args = ["wapp-recuperar-tp1-tp2"];
         if (tpArg is not null) args.Add(tpArg);
-        if (!enviar) args.Add("--simular");
+        if (modo == "simular") args.Add("--simular");
         return [.. args];
     }
 
     static string[] ConstruirArgumentosWappFotoParcial() {
-        bool enviar = AnsiConsole.Confirm("¿Enviar WhatsApp reales ahora?", false);
+        string modo = PedirModoEjecucion("Foto para el parcial por WhatsApp", "Enviar mensajes reales");
 
-        return enviar
-            ? ["wapp-foto-parcial"]
-            : ["wapp-foto-parcial", "--simular"];
+        return modo switch {
+            "simular" => ["wapp-foto-parcial", "--simular"],
+            "ejecutar" => ["wapp-foto-parcial"],
+            _ => Array.Empty<string>()
+        };
     }
 
-    static string PedirTrabajoPractico() {
+    static string PedirModoEjecucion(string accion, string etiquetaEjecucion = "Ejecutar cambios reales") {
+        InteractiveChoice opcion = PedirOpcion(
+            $"[bold cyan]{accion}[/] · Elegí el modo de ejecución", [
+                new("simular",  "Simulación", etiquetaEjecucion == "Enviar mensajes reales" ? "Previsualizar sin enviar mensajes" : "Previsualizar sin aplicar cambios"),
+                new("ejecutar", "Real",       etiquetaEjecucion),
+                new("cancelar", "Cancelar",   "Volver al menú sin ejecutar")
+            ]);
+
+        return opcion.Command;
+    }
+
+    static string PedirModoSobrescritura(string accion) {
+        InteractiveChoice opcion = PedirOpcion(
+            $"[bold cyan]{accion}[/] · Elegí cómo manejar archivos existentes", [
+                new("conservar",     "Conservar",     "No reemplazar archivos ya existentes"),
+                new("sobrescribir",  "Sobrescribir",  "Reemplazar archivos ya existentes"),
+                new("cancelar",      "Cancelar",      "Volver al menú sin ejecutar")
+            ]);
+
+        return opcion.Command;
+    }
+
+    static string? PedirTrabajoPractico(string accion) {
         IReadOnlyList<EnunciadoPracticoDisponible> practicos = AppPaths.ListarEnunciadosPracticos();
         if (practicos.Count == 0) {
-            return AnsiConsole.Prompt(
-                new TextPrompt<string>("Trabajo práctico ([green]TP1[/] o [green]1[/]):")
+            string valor = AnsiConsole.Prompt(
+                new TextPrompt<string>($"[bold cyan]{accion}[/] · Trabajo práctico ([green]TP1[/] o [green]1[/], [grey]vacío = cancelar[/]):")
                     .PromptStyle("cyan")
+                    .AllowEmpty()
                     .Validate(valor =>
-                        AlumnosCliActions.EsTrabajoPracticoValido(valor)
+                        string.IsNullOrWhiteSpace(valor) || AlumnosCliActions.EsTrabajoPracticoValido(valor)
                             ? ValidationResult.Success()
                             : ValidationResult.Error(AlumnosCliActions.MensajeTrabajoPracticoInvalido(valor))));
+
+            return string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
         }
 
-        EnunciadoPracticoDisponible seleccionado = AnsiConsole.Prompt(
-            new SelectionPrompt<EnunciadoPracticoDisponible>()
-                .Title($"Trabajo práctico · se encontraron [green]{practicos.Count}[/] en [grey]{AppPaths.EnunciadosDirectory}[/]")
-                .PageSize(12)
-                .UseConverter(practico => $"[green]TP{practico.Numero}[/] [grey]{practico.Carpeta}[/]")
-                .AddChoices(practicos));
+        List<InteractiveChoice> opciones = [
+            .. practicos.Select(practico => new InteractiveChoice(practico.Carpeta, $"TP{practico.Numero}", practico.Carpeta)),
+            new("cancelar", "Cancelar", "Volver al menú sin ejecutar")
+        ];
 
-        return seleccionado.Carpeta;
+        InteractiveChoice seleccionado = AnsiConsole.Prompt(
+            new SelectionPrompt<InteractiveChoice>()
+                .Title($"[bold cyan]{accion}[/] · Elegí el trabajo práctico\n[grey]Se encontraron {practicos.Count} en {AppPaths.EnunciadosDirectory}[/]")
+                .PageSize(12)
+                .UseConverter(choice => $"[green]{choice.Label,-22}[/] [grey] {choice.Description}[/]")
+                .AddChoices(opciones));
+
+        return seleccionado.Command == "cancelar" ? null : seleccionado.Command;
     }
 
     static bool EsAliasAyuda(string valor) =>

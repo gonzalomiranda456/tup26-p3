@@ -196,26 +196,53 @@ class GitHub {
 
 
     public int NormalizarTitulos(Alumnos alumnos, bool simular = false) {
-        List<(int Numero, string Titulo)> prs = PullRequests(false);
+        List<(int Numero, string Titulo)> prs = PullRequests(soloAbiertos: true);
         int count = 0;
+        int omitidos = 0;
 
         foreach ((int Numero, string Titulo) pr in prs) {
             int legajo = ExtraerLegajo(pr.Titulo);
+            int numeroTp = ExtraerTP(pr.Titulo);
+
+            if (legajo <= 0) {
+                if (omitidos++ == 0) {
+                    Log.Error("= PRs sin información suficiente para normalizar =");
+                }
+
+                Log.Error($"No se puede normalizar PR #{pr.Numero}: falta legajo en el título.\n > {pr.Titulo}");
+                continue;
+            }
+
+            if (numeroTp <= 0) {
+                if (omitidos++ == 0) {
+                    Log.Error("= PRs sin información suficiente para normalizar =");
+                }
+
+                Log.Error($"No se puede normalizar PR #{pr.Numero}: falta TP en el título.\n > {pr.Titulo}");
+                continue;
+            }
+
             Alumno? alumno = alumnos.BuscarPorLegajo(legajo);
+            if (alumno is null) {
+                if (omitidos++ == 0) {
+                    Log.Error("= PRs sin información suficiente para normalizar =");
+                }
 
-            if (alumno != null) {
-                string nuevoTitulo = $"{legajo} - TP{ExtraerTP(pr.Titulo)} - {alumno.NombreCompleto}";
+                Log.Error($"No se puede normalizar PR #{pr.Numero}: el legajo {legajo} no está en alumnos.md.\n > {pr.Titulo}");
+                continue;
+            }
 
-                if (nuevoTitulo != pr.Titulo) {
-                    if (count++ == 0) {
-                        Log.Info("= PRs a actualizar =");
-                    }
+            string nuevoTitulo = $"{legajo} - TP{numeroTp} - {alumno.NombreCompleto}";
 
-                    Log.Info($"Actualizando PR #{pr.Numero}:\n > {pr.Titulo}\n < {nuevoTitulo}");
+            if (nuevoTitulo != pr.Titulo) {
+                if (count++ == 0) {
+                    Log.Info("= PRs a actualizar =");
+                }
 
-                    if (!simular) {
-                        CambiarTitulo(pr.Numero, nuevoTitulo);
-                    }
+                Log.Info($"Actualizando PR #{pr.Numero}:\n > {pr.Titulo}\n < {nuevoTitulo}");
+
+                if (!simular) {
+                    CambiarTitulo(pr.Numero, nuevoTitulo);
                 }
             }
         }
@@ -224,6 +251,10 @@ class GitHub {
             Log.Info("No se encontraron PRs para actualizar.");
         } else {
             Log.Info($"Total de PRs a actualizar: {count}");
+        }
+
+        if (omitidos > 0) {
+            Log.Error($"Total de PRs sin información suficiente: {omitidos}");
         }
 
         return count;
