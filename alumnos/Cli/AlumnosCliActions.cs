@@ -186,8 +186,16 @@ static class AlumnosCliActions {
     public static int RevisarPullRequests() {
         Alumnos alumnos = CargarAlumnos();
         GitHub gh = new();
+        List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
+            "Revisar PRs",
+            "Consultando pull requests abiertos...",
+            actualizarEstado => {
+                actualizarEstado("Leyendo pull requests abiertos desde GitHub...");
+                return gh.PullRequests();
+            });
 
-        foreach (var pr in gh.PullRequests()) {
+        foreach (var pr in prs) {
+            Log.Info($"Consultando PR #{pr.Numero}: {pr.Titulo}");
             int legajo = GitHub.ExtraerLegajo(pr.Titulo);
             Alumno? alumno = alumnos.BuscarPorLegajo(legajo);
 
@@ -222,7 +230,13 @@ static class AlumnosCliActions {
 
     public static int NormalizarPullRequests(bool simular) {
         Alumnos alumnos = CargarAlumnos();
-        new GitHub().NormalizarTitulos(alumnos, simular);
+        EjecutarConIndicador(
+            "Normalizar PRs",
+            simular ? "Simulando normalización de PRs..." : "Normalizando títulos de PRs...",
+            actualizarEstado => {
+                actualizarEstado("Leyendo PRs abiertos y verificando títulos...");
+                new GitHub().NormalizarTitulos(alumnos, simular);
+            });
         return 0;
     }
 
@@ -234,12 +248,26 @@ static class AlumnosCliActions {
         }
 
         GitHub gh = new();
-        IEnumerable<(int Numero, string Titulo)> prs = gh.PullRequests(tp: numeroTp);
+        List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
+            "Bajar PRs",
+            $"Consultando PRs de TP{numeroTp}...",
+            actualizarEstado => {
+                actualizarEstado($"Leyendo PRs de TP{numeroTp} desde GitHub...");
+                return gh.PullRequests(tp: numeroTp);
+            });
 
-        foreach (var pr in prs) {
-            gh.BajarArchivosAlumno(pr.Numero, forzar);
+        if (prs.Count == 0) {
+            Log.Error($"No se encontraron PRs de TP{numeroTp} para bajar.");
+            return 1;
         }
 
+        int indice = 0;
+        foreach (var pr in prs) {
+            indice++;
+            Log.Info($"\nBajando PR {indice}/{prs.Count}: #{pr.Numero} | {pr.Titulo}");
+            gh.BajarArchivosAlumno(pr.Numero, forzar);
+        }
+        Log.Info($"\nResumen: {prs.Count} PR(s) de TP{numeroTp} procesados. Forzar: {forzar}");
         return 0;
     }
 
@@ -247,7 +275,13 @@ static class AlumnosCliActions {
         GitHub gh = new();
 
         if (string.IsNullOrWhiteSpace(trabajoPractico)) {
-            gh.CerrarPRsAbiertos();
+            EjecutarConIndicador(
+                "Cerrar PRs",
+                "Cerrando PRs abiertos...",
+                actualizarEstado => {
+                    actualizarEstado("Consultando y cerrando PRs abiertos...");
+                    gh.CerrarPRsAbiertos();
+                });
             return 0;
         }
 
@@ -257,7 +291,13 @@ static class AlumnosCliActions {
             return 1;
         }
 
-        gh.CerrarPRsAbiertos(numeroTp);
+        EjecutarConIndicador(
+            "Cerrar PRs",
+            $"Cerrando PRs abiertos de TP{numeroTp}...",
+            actualizarEstado => {
+                actualizarEstado($"Consultando y cerrando PRs abiertos de TP{numeroTp}...");
+                gh.CerrarPRsAbiertos(numeroTp);
+            });
         return 0;
     }
 
@@ -278,21 +318,30 @@ static class AlumnosCliActions {
         List<TrabajoPresentadoLocal> trabajosPresentados = new();
         bool habiaCodigos = alumnos.Any(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
 
-        foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
-            string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
-            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
-            int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
+        Alumno[] alumnosOrdenados = alumnos.OrderBy(alumno => alumno.Legajo).ToArray();
+        AnsiConsole.Progress()
+            .AutoClear(false)
+            .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
+            .Start(ctx => {
+                var tarea = ctx.AddTask($"Revisando presentados TP{numeroTp}", maxValue: alumnosOrdenados.Length);
+                foreach (Alumno alumno in alumnosOrdenados) {
+                    tarea.Description = $"Revisando {alumno.Legajo}";
+                    string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
+                    int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
+                    int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
-            // alumno.Codigo = string.Empty;
+                    // alumno.Codigo = string.Empty;
 
-            Estado estado = Estado.Desaprobado;
-            if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
-                estado = Estado.Aprobado;
-                trabajosPresentados.Add(new(alumno, rutaPractico, ObtenerLineasCodigoNormalizadas(rutaPractico)));
-            }
+                    Estado estado = Estado.Desaprobado;
+                    if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
+                        estado = Estado.Aprobado;
+                        trabajosPresentados.Add(new(alumno, rutaPractico, ObtenerLineasCodigoNormalizadas(rutaPractico)));
+                    }
 
-            alumno.Practico(numeroTp, estado);
-        }
+                    alumno.Practico(numeroTp, estado);
+                    tarea.Increment(1);
+                }
+            });
 
         int copias = RevisarCopiasTrabajosPresentados(numeroTp, trabajosPresentados);
         int marcados = alumnos.Count(alumno => alumno.EstadoPractico(numeroTp) == Estado.Aprobado);
@@ -349,8 +398,8 @@ static class AlumnosCliActions {
         AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .SpinnerStyle(Style.Parse("cyan"))
-            .Start("Preparando relevamiento de asistencias...", contexto =>
-                CargarAsistenciasHastaHoy(alumnos, estado => contexto.Status(estado)));
+            .Start("Contar asistencias · Preparando relevamiento...", contexto =>
+                CargarAsistenciasHastaHoy(alumnos, estado => contexto.Status($"Contar asistencias · {estado}")));
 
         Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
         AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
@@ -366,8 +415,8 @@ static class AlumnosCliActions {
         AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .SpinnerStyle(Style.Parse("cyan"))
-            .Start("Registrando respuestas de WhatsApp...", contexto =>
-                CargarCodigosDesdeWhatsApp(alumnos, estado => contexto.Status(estado)));
+            .Start("Registrar respuestas · Preparando lectura de WhatsApp...", contexto =>
+                CargarCodigosDesdeWhatsApp(alumnos, estado => contexto.Status($"Registrar respuestas · {estado}")));
 
         IEnumerable<Alumno> conCodigo = alumnos.Where(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
         AlumnosManager.Listar(conCodigo, "Alumnos con código registrado");
@@ -482,7 +531,13 @@ static class AlumnosCliActions {
                 Log.WriteLine(mensaje);
             }
         } else {
-            WAppService wapp = new();
+            WAppService wapp = EjecutarConIndicador(
+                "Recuperar TP1/TP2 por WhatsApp",
+                "Sincronizando WhatsApp...",
+                actualizarEstado => {
+                    actualizarEstado("Sincronizando WhatsApp antes de enviar mensajes...");
+                    return new WAppService();
+                });
             AnsiConsole.Progress()
                 .AutoClear(false)
                 .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
@@ -543,7 +598,13 @@ static class AlumnosCliActions {
                 Log.WriteLine(mensaje);
             }
         } else {
-            WAppService wapp = new();
+            WAppService wapp = EjecutarConIndicador(
+                "Foto para el parcial por WhatsApp",
+                "Sincronizando WhatsApp...",
+                actualizarEstado => {
+                    actualizarEstado("Sincronizando WhatsApp antes de enviar mensajes...");
+                    return new WAppService();
+                });
             AnsiConsole.Progress()
                 .AutoClear(false)
                 .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
@@ -596,6 +657,21 @@ static class AlumnosCliActions {
         Log.WriteLine($"Alumnos cargados: {alumnos.Count()}");
         return alumnos;
     }
+
+    static void EjecutarConIndicador(string accion, string estadoInicial, Action<Action<string>> ejecutar) {
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("cyan"))
+            .Start($"{accion} · {estadoInicial}", contexto =>
+                ejecutar(estado => contexto.Status($"{accion} · {estado}")));
+    }
+
+    static T EjecutarConIndicador<T>(string accion, string estadoInicial, Func<Action<string>, T> ejecutar) =>
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("cyan"))
+            .Start($"{accion} · {estadoInicial}", contexto =>
+                ejecutar(estado => contexto.Status($"{accion} · {estado}")));
 
     static string ResolverRuta(string? ruta, string rutaPorDefecto) =>
         string.IsNullOrWhiteSpace(ruta) ? rutaPorDefecto : ruta;

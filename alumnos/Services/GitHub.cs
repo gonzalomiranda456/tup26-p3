@@ -427,12 +427,11 @@ class GitHub {
 
         List<string> archivosDirectorio = ListarArchivosDirectorio(numeroPR, carpetaAlumno, carpetaRemota);
         if (archivosDirectorio.Count == 0) {
-            Log.Warning($"PR #{numeroPR}: no se encontraron archivos dentro de '{carpetaAlumno}/{carpetaRemota}/'.");
+            Log.Error($"PR #{numeroPR}: no se encontraron archivos dentro de '{carpetaAlumno}/{carpetaRemota}/'.");
             return;
         }
 
-        string? salida = Ejecutar($"Error al bajar archivos del PR #{numeroPR}",
-            $"/pulls/{numeroPR}/files", "--paginate", "--jq", ".[] | \"\\(.filename)\\t\\(.raw_url)\"");
+        string? salida = Ejecutar($"Error al bajar archivos del PR #{numeroPR}", $"/pulls/{numeroPR}/files", "--paginate", "--jq", ".[] | \"\\(.filename)\\t\\(.raw_url)\"");
 
         if (salida is null) { return; }
 
@@ -460,7 +459,7 @@ class GitHub {
                 int cantidadLineas = ContarLineas(contenido);
                 string rutaArchivo = AppPaths.GuardarArchivoDescargadoRelativo(rutaDestino, rutaRelativa, contenido, forzar);
                 string rutaLocalRelativa = $"{carpetaRemota}/{rutaRelativa}";
-                Log.Info($"  - {rutaLocalRelativa} | L:{cantidadLineas,4}\n      {rutaArchivo}");
+                Log.Info($"  - {rutaLocalRelativa,-30} | L:{cantidadLineas,4}");
                 cantidadDescargas++;
             } catch (Exception ex) {
                 Log.Error($"Error al descargar el archivo desde '{linea}': {ex.Message}");
@@ -489,9 +488,8 @@ class GitHub {
 
         string carpetaTp = $"tp{numeroTp}";
         string carpetaAlumno = Path.GetFileName(rutaCarpetaAlumno!);
-        string rutaDestino = Path.Combine(rutaCarpetaAlumno!, carpetaTp);
+        string rutaDestino   = Path.Combine(rutaCarpetaAlumno!, carpetaTp);
 
-        Log.Info($"PR #{numeroPR:000} | {carpetaAlumno} | {carpetaTp}");
         BajarDirectorio(numeroPR, carpetaAlumno, carpetaTp, rutaDestino, forzar);
     }
 

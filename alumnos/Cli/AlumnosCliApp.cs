@@ -93,6 +93,7 @@ static class AlumnosCliApp {
             if (args.Length == 0) { continue; }
 
             AnsiConsole.WriteLine();
+            MostrarComandoEnEjecucion(args);
             int codigo = app.Run(args);
             AnsiConsole.WriteLine();
 
@@ -102,6 +103,47 @@ static class AlumnosCliApp {
             Console.ReadKey(intercept: true);
             AnsiConsole.Clear();
         }
+    }
+
+    static void MostrarComandoEnEjecucion(string[] args) {
+        string descripcion = DescribirComando(args);
+        AnsiConsole.MarkupLine($"[bold cyan]Ejecutando:[/] {Markup.Escape(descripcion)}");
+        AnsiConsole.MarkupLine($"[grey]Comando:[/] {Markup.Escape(string.Join(" ", args))}");
+        AnsiConsole.WriteLine();
+    }
+
+    static string DescribirComando(string[] args) {
+        if (args.Length == 0) { return "acción interactiva"; }
+
+        string detalle = args.Length > 1 ? $" ({string.Join(" ", args[1..])})" : string.Empty;
+        return args[0] switch {
+            "listar" => "Listar alumnos",
+            "sin-github" => "Listar alumnos sin GitHub",
+            "sin-telefono" => "Listar alumnos sin teléfono",
+            "sin-foto" => "Listar alumnos sin foto",
+            "tp-no-presentado" => $"Listar alumnos que no presentaron TP{detalle}",
+            "sin-practicos" => "Listar alumnos sin prácticos presentados",
+            "limpiar-proyectos-practicos" => "Limpiar proyectos prácticos",
+            "guardar" => "Guardar alumnos en Markdown",
+            "json" => "Exportar alumnos a JSON",
+            "vcf" => "Exportar alumnos a vCard",
+            "informar-estado" => "Informar estado",
+            "crear-carpetas" => "Crear carpetas",
+            "publicar" => $"Publicar práctico{detalle}",
+            "publicar-rehacer" => $"Publicar Rehacer{detalle}",
+            "prs" => "Revisar pull requests",
+            "normalizar-prs" => "Normalizar PRs",
+            "bajar-prs" => $"Bajar PRs{detalle}",
+            "cerrar-prs" => $"Cerrar PRs{detalle}",
+            "revisar-presentados" => $"Revisar presentados{detalle}",
+            "registrar-asistencias" => "Registrar asistencias",
+            "contar-asistencias" => "Contar asistencias desde WhatsApp",
+            "wapp-grupos" => "Listar grupos y participantes de WhatsApp",
+            "wapp-recuperar-tp1-tp2" => "Recuperar TP1/TP2 por WhatsApp",
+            "wapp-foto-parcial" => "Pedir foto para el parcial por WhatsApp",
+            "registrar-respuestas" => "Registrar respuestas de WhatsApp",
+            _ => args[0]
+        };
     }
 
     public static string[]? SolicitarComandoInteractivo() {
