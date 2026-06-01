@@ -79,7 +79,79 @@ class CatalogoRepositorio {
             db.SaveChanges();
         }
     }
+// ── Métodos de Producto ──────────────────────────────────────────────────
 
-    public Producto? TraerProducto() =>
-        db.Productos.OrderBy(p => p.Id).FirstOrDefault();
+    public List<Producto> TraerTodos() => db.Productos.ToList();
+
+    public Producto? TraerProducto(int id) => db.Productos.Find(id);
+
+    public void CrearProducto(Producto p) {
+        db.Productos.Add(p);
+        db.SaveChanges();
+    }
+
+    public bool ModificarProducto(int id, Producto pActualizado) {
+        var p = db.Productos.Find(id);
+        if (p is null) return false;
+
+        p.Codigo = pActualizado.Codigo;
+        p.Nombre = pActualizado.Nombre;
+        p.Precio = pActualizado.Precio;
+        
+        db.SaveChanges();
+        return true;
+    }
+
+    public bool EliminarProducto(int id) {
+        var p = db.Productos.Find(id);
+        if (p is null) return false;
+
+        db.Productos.Remove(p);
+        db.SaveChanges();
+        return true;
+    }
+
+    // ── Métodos de Movimiento ────────────────────────────────────────────────
+    public List<MovimientoDeProducto> TraerMovimientos(int productoId) =>
+        db.Movimientos
+           .Where(m => m.ProductoId == productoId)
+           .OrderByDescending(m => m.Fecha)
+           .ToList();
+
+    public MovimientoDeProducto RegistrarMovimiento(int productoId, MovimientoDeProducto dto) {
+        var producto = db.Productos.Find(productoId);
+        
+        if (producto is null) 
+            throw new KeyNotFoundException("Producto no encontrado.");
+
+        if (dto.Cantidad <= 0 && dto.Tipo != "Ajuste") 
+            throw new ArgumentException("La cantidad debe ser siempre positiva.");
+
+        var movimiento = new MovimientoDeProducto {
+            ProductoId = productoId,
+            Tipo = dto.Tipo,
+            Cantidad = dto.Cantidad,
+            Fecha = DateTime.Now
+        };
+
+        if (movimiento.Tipo == "Compra") {
+            producto.Stock += movimiento.Cantidad;
+        } 
+        else if (movimiento.Tipo == "Venta") {
+            if (producto.Stock < movimiento.Cantidad) {
+                throw new ArgumentException("Stock insuficiente para realizar la venta.");
+            }
+            producto.Stock -= movimiento.Cantidad;
+        } 
+        else if (movimiento.Tipo == "Ajuste") {
+            producto.Stock = movimiento.Cantidad;
+        } 
+        else {
+            throw new ArgumentException("Tipo de movimiento inválido. Use: Compra, Venta o Ajuste.");
+        }
+        db.Movimientos.Add(movimiento);
+        db.SaveChanges();
+
+        return movimiento;
+    }
 }
