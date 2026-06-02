@@ -22,11 +22,49 @@ using (var scope = app.Services.CreateScope()) {
 
 // ── Endpoints ─────────────────────────────────────────────────────────────
 
-app.MapGet("/producto", (CatalogoRepositorio repositorio) => {
-    var producto = repositorio.TraerProducto();
-    if(producto is null) return Results.NotFound();
+app.MapGet("/producto", (CatalogoRepositorio repo) => {
+return Results.Ok(repo.TraerTodos());
+});
 
-    return Results.Ok(producto);
+app.MapGet("/productos/{id}", (int id, CatalogoRepositorio repo) => {
+    var producto = repo.TraerProducto(id);
+    return producto is not null ? Results.Ok(producto) : Results.NotFound();
+});
+
+app.MapPost("/productos", (Producto producto, CatalogoRepositorio repo) => {
+    repo.CrearProducto(producto);
+    return Results.Created($"/productos/{producto.Id}", producto);
+});
+
+app.MapPut("/productos/{id}", (int id, Producto productoActualizado, CatalogoRepositorio repo) => {
+    var exito = repo.ModificarProducto(id, productoActualizado);
+    return exito ? Results.NoContent() : Results.NotFound();
+});
+
+app.MapDelete("/productos/{id}", (int id, CatalogoRepositorio repo) => {
+    var exito = repo.EliminarProducto(id);
+    return exito ? Results.NoContent() : Results.NotFound();
+});
+
+
+// ── Endpoints de Movimientos ──────────────────────────────────────────────
+
+app.MapGet("/productos/{productoId}/movimientos", (int productoId, CatalogoRepositorio repo) => {
+    var movimientos = repo.TraerMovimientos(productoId);
+    return Results.Ok(movimientos);
+});
+
+app.MapPost("/productos/{productoId}/movimientos", (int productoId, MovimientoDeProducto movimiento, CatalogoRepositorio repo) => {
+    try {
+        var nuevoMovimiento = repo.RegistrarMovimiento(productoId, movimiento);
+        return Results.Created($"/productos/{productoId}/movimientos/{nuevoMovimiento.Id}", nuevoMovimiento);
+    } 
+    catch (ArgumentException ex) {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (KeyNotFoundException) {
+        return Results.NotFound("Producto no encontrado.");
+    }
 });
 
 app.Run("http://localhost:5050");
@@ -46,7 +84,7 @@ public class Producto {
 public class MovimientoDeProducto {
     public int Id { get; set; }
     public int ProductoId { get; set; }
-    public string Tipo { get; set; } = ""; // Compra, Venta o Ajuste
+    public string Tipo { get; set; } = ""; 
     public int Cantidad { get; set; }
     public DateTime Fecha { get; set; }
 }
