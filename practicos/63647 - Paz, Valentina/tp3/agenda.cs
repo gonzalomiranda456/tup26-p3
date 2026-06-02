@@ -1,8 +1,8 @@
-#!/usr/bin/env -S dotnet run
-#:package Terminal.Gui@*
-#:package Dapper@*
-#:package Dapper.Contrib@*
-#:package Microsoft.Data.Sqlite@*
+﻿#!/usr/bin/env -S dotnet run
+#:package Terminal.Gui@2.0.1
+#:package Dapper@2.1.35
+#:package Dapper.Contrib@2.0.123
+#:package Microsoft.Data.Sqlite@8.0.5
 #:property PublishAot=false
 
 using System;

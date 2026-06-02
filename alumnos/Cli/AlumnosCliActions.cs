@@ -230,19 +230,16 @@ static class AlumnosCliActions {
 
     public static int NormalizarPullRequests(bool simular) {
         Alumnos alumnos = CargarAlumnos();
-        EjecutarConIndicador(
-            "Normalizar PRs",
-            simular ? "Simulando normalización de PRs..." : "Normalizando títulos de PRs...",
-            actualizarEstado => {
-                actualizarEstado("Leyendo PRs abiertos y verificando títulos...");
-                new GitHub().NormalizarTitulos(alumnos, simular);
-            });
+        Log.Info(simular ? "Simulando normalización de PRs..." : "Normalizando títulos de PRs...");
+        Log.Info("Leyendo PRs abiertos y verificando títulos...");
+        new GitHub().NormalizarTitulos(alumnos, simular);
         return 0;
     }
 
-    public static int BajarPullRequests(string trabajoPractico, bool forzar) {
-        int numeroTp = ObtenerNumeroTP(trabajoPractico);
-        if (numeroTp <= 0) {
+    public static int BajarPullRequests(string? trabajoPractico, bool forzar) {
+        bool bajarTodos = EsTodosLosTrabajosPracticos(trabajoPractico);
+        int numeroTp = bajarTodos ? 0 : ObtenerNumeroTP(trabajoPractico);
+        if (!bajarTodos && numeroTp <= 0) {
             Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
             return 1;
         }
@@ -250,24 +247,37 @@ static class AlumnosCliActions {
         GitHub gh = new();
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Bajar PRs",
-            $"Consultando PRs de TP{numeroTp}...",
+            bajarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs con archivos de TP{numeroTp}...",
             actualizarEstado => {
-                actualizarEstado($"Leyendo PRs de TP{numeroTp} desde GitHub...");
-                return gh.PullRequests(tp: numeroTp);
+                actualizarEstado("Leyendo PRs abiertos desde GitHub...");
+                return gh.PullRequests();
             });
 
         if (prs.Count == 0) {
-            Log.Error($"No se encontraron PRs de TP{numeroTp} para bajar.");
+            Log.Error("No se encontraron PRs abiertos para bajar.");
             return 1;
         }
 
         int indice = 0;
+        int procesados = 0;
+        int trabajosProcesados = 0;
         foreach (var pr in prs) {
             indice++;
-            Log.Info($"\nBajando PR {indice}/{prs.Count}: #{pr.Numero} | {pr.Titulo}");
-            gh.BajarArchivosAlumno(pr.Numero, forzar);
+            Log.Info($"\nRevisando PR {indice}/{prs.Count}: #{pr.Numero} | {pr.Titulo}");
+            int trabajos = gh.BajarArchivosAlumno(pr.Numero, forzar, bajarTodos ? null : numeroTp, informarOmitidos: bajarTodos);
+            if (trabajos > 0) {
+                procesados++;
+                trabajosProcesados += trabajos;
+            }
         }
-        Log.Info($"\nResumen: {prs.Count} PR(s) de TP{numeroTp} procesados. Forzar: {forzar}");
+
+        string alcance = bajarTodos ? "todos los TP detectados" : $"TP{numeroTp}";
+        Log.Info($"\nResumen: {procesados}/{prs.Count} PR(s) procesados para {alcance}. TPs bajados: {trabajosProcesados}. Forzar: {forzar}");
+        if (procesados == 0) {
+            Log.Error($"No se encontraron PRs con archivos para {alcance}.");
+            return 1;
+        }
+
         return 0;
     }
 
@@ -646,6 +656,12 @@ static class AlumnosCliActions {
 
         return numeroTp;
     }
+
+    public static bool EsTodosLosTrabajosPracticos(string? valor) =>
+        string.IsNullOrWhiteSpace(valor) ||
+        string.Equals(valor.Trim(), "todos", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor.Trim(), "todo", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(valor.Trim(), "all", StringComparison.OrdinalIgnoreCase);
 
     public static bool EsTrabajoPracticoValido(string? valor) => ObtenerNumeroTP(valor) > 0;
 

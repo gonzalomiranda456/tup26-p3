@@ -183,14 +183,16 @@ public class AgendaWindow : Window
 
     private void ActualizarDetalle()
     {
-        if (contactosFiltrados.Count == 0) {
+        if (contactosFiltrados.Count == 0)
+        {
             txtDetalle.Text = "";
             return;
         }
 
         int index = lstContactos.SelectedItem;
 
-        if (index < 0 || index >= contactosFiltrados.Count) {
+        if (index < 0 || index >= contactosFiltrados.Count)
+        {
             txtDetalle.Text = "";
             return;
         }
@@ -214,7 +216,8 @@ Notas:
 {c.Notas}";
     }
 
-    private Contacto ObtenerSeleccionado() {
+    private Contacto ObtenerSeleccionado()
+    {
         int index = lstContactos.SelectedItem;
 
         if (index < 0 || index >= contactosFiltrados.Count)
@@ -223,7 +226,8 @@ Notas:
         return contactosFiltrados[index];
     }
 
-    private void NuevoContacto() {
+    private void NuevoContacto()
+    {
         var dialog = new ContactDialog(new Contacto());
 
         Application.Run(dialog);
@@ -238,7 +242,8 @@ Notas:
         AplicarFiltros();
     }
 
-    private void EditarContacto() {
+    private void EditarContacto()
+    {
         var seleccionado = ObtenerSeleccionado();
 
         if (seleccionado == null)

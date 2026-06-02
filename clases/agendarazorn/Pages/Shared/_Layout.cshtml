@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@@picocss/pico@2/css/pico.min.css" />
+
+    <style>
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .acciones {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        .contacto-link {
+            display: block;
+            padding: .35rem .5rem;
+            border-radius: .4rem;
+            text-decoration: none;
+        }
+
+        .contacto-link:hover {
+            background: var(--pico-muted-border-color);
+        }
+
+        @@media (max-width: 800px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <script src="https://unpkg.com/htmx.org@@2.0.4"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

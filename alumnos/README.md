@@ -60,7 +60,7 @@ dotnet run -- revisar-presentados 3
 
 - `prs`: revisa pull requests de los alumnos.
 - `normalizar-prs [--simular]`: ajusta títulos de pull requests.
-- `bajar-prs <tp> [--forzar]`: descarga archivos del práctico indicado desde los PRs.
+- `bajar-prs [tp] [--forzar]`: descarga archivos desde los PRs; sin `tp` baja todos los prácticos detectados por carpetas `tpN`.
 - `cerrar-prs [tp]`: cierra todos los PRs abiertos, o solo los del práctico indicado.
 - `revisar-presentados <tp>`: marca presentaciones a partir del código local de cada carpeta.
 	- `TP1`: presentado si tiene al menos 100 líneas totales.

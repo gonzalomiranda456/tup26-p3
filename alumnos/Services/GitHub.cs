@@ -38,6 +38,10 @@ Servicio para interactuar con la API de GitHub mediante `gh api`.
     - `carpetaAlumnoRemota`: carpeta remota del alumno, por ejemplo `63341 - Carrer, Juan Cruz`.
     - `directorioRemoto`: carpeta del repositorio a filtrar, por ejemplo `tp1`.
 
+- `ListarTPsPresentados(numeroPR, carpetaAlumnoRemota)`: devuelve los números de TP con archivos dentro de carpetas `tpN` de un alumno en un PR.
+    - `numeroPR`: número del pull request.
+    - `carpetaAlumnoRemota`: carpeta remota del alumno, por ejemplo `63341 - Carrer, Juan Cruz`.
+
 - `CantidadLineasAgregadasDirectorio(numeroPR, carpetaAlumnoRemota, directorioRemoto)`: suma las líneas agregadas dentro de la carpeta de un alumno y un práctico del PR.
     - `numeroPR`: número del pull request.
     - `carpetaAlumnoRemota`: carpeta remota del alumno, por ejemplo `63341 - Carrer, Juan Cruz`.
@@ -202,7 +206,6 @@ class GitHub {
 
         foreach ((int Numero, string Titulo) pr in prs) {
             int legajo = ExtraerLegajo(pr.Titulo);
-            int numeroTp = ExtraerTP(pr.Titulo);
 
             if (legajo <= 0) {
                 if (omitidos++ == 0) {
@@ -210,15 +213,6 @@ class GitHub {
                 }
 
                 Log.Error($"No se puede normalizar PR #{pr.Numero}: falta legajo en el título.\n > {pr.Titulo}");
-                continue;
-            }
-
-            if (numeroTp <= 0) {
-                if (omitidos++ == 0) {
-                    Log.Error("= PRs sin información suficiente para normalizar =");
-                }
-
-                Log.Error($"No se puede normalizar PR #{pr.Numero}: falta TP en el título.\n > {pr.Titulo}");
                 continue;
             }
 
@@ -232,14 +226,27 @@ class GitHub {
                 continue;
             }
 
-            string nuevoTitulo = $"{legajo} - TP{numeroTp} - {alumno.NombreCompleto}";
+            List<int> tpsPresentados = ListarTPsPresentados(pr.Numero, alumno.CarpetaNombre);
+            if (tpsPresentados.Count == 0) {
+                if (omitidos++ == 0) {
+                    Log.Error("= PRs sin información suficiente para normalizar =");
+                }
+
+                Log.Error($"No se puede normalizar PR #{pr.Numero}: no se encontraron archivos en carpetas tpN de {alumno.CarpetaNombre}.\n > {pr.Titulo}");
+                continue;
+            }
+
+            string trabajosPracticos = string.Join("", tpsPresentados);
+            string nuevoTitulo = $"{legajo} - TP{trabajosPracticos} - {alumno.NombreCompleto}";
 
             if (nuevoTitulo != pr.Titulo) {
                 if (count++ == 0) {
                     Log.Info("= PRs a actualizar =");
                 }
 
-                Log.Info($"Actualizando PR #{pr.Numero}:\n > {pr.Titulo}\n < {nuevoTitulo}");
+                Log.Info($"{(simular ? "Cambiaría" : "Actualizando")} PR #{pr.Numero}:");
+                Log.Info($" > {pr.Titulo}");
+                Log.Info($" < {nuevoTitulo}");
 
                 if (!simular) {
                     CambiarTitulo(pr.Numero, nuevoTitulo);
@@ -310,6 +317,10 @@ class GitHub {
             .Select(NormalizarRutaRemota)
             .Where(nombreRemoto => TryObtenerRutaRelativaDirectorio(nombreRemoto, carpetaAlumno, carpetaRemota, out _))
             .ToList();
+    }
+
+    public List<int> ListarTPsPresentados(int numeroPR, string carpetaAlumnoRemota) {
+        return TPsPresentadosDesdeArchivos(ListarArchivos(numeroPR), carpetaAlumnoRemota);
     }
 
     public int CantidadLineasAgregadasDirectorio(int numeroPR, string carpetaAlumnoRemota, string directorioRemoto) {
@@ -467,30 +478,51 @@ class GitHub {
         }
     }
 
-    public void BajarArchivosAlumno(int numeroPR, bool forzar = false) {
+    public int BajarArchivosAlumno(int numeroPR, bool forzar = false, int? numeroTpSolicitado = null, bool informarOmitidos = true) {
         string? titulo = ObtenerTituloPR(numeroPR);
         if (string.IsNullOrWhiteSpace(titulo)) {
-            return;
+            return 0;
         }
 
         int legajo = ExtraerLegajo(titulo);
-        int numeroTp = ExtraerTP(titulo);
-        if (legajo <= 0 || numeroTp <= 0) {
-            Log.Warning($"Se omite PR #{numeroPR}: no se pudo resolver legajo o TP desde el título '{titulo}'.");
-            return;
+        if (legajo <= 0) {
+            if (informarOmitidos) {
+                Log.Warning($"Se omite PR #{numeroPR}: no se pudo resolver legajo desde el título '{titulo}'.");
+            }
+            return 0;
         }
 
         string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(legajo);
         if (!AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno)) {
-            Log.Warning($"Se omite PR #{numeroPR}: no se encontró carpeta única para legajo {legajo}.");
-            return;
+            if (informarOmitidos) {
+                Log.Warning($"Se omite PR #{numeroPR}: no se encontró carpeta única para legajo {legajo}.");
+            }
+            return 0;
         }
 
-        string carpetaTp = $"tp{numeroTp}";
         string carpetaAlumno = Path.GetFileName(rutaCarpetaAlumno!);
-        string rutaDestino   = Path.Combine(rutaCarpetaAlumno!, carpetaTp);
+        List<int> tpsPresentados = ListarTPsPresentados(numeroPR, carpetaAlumno);
+        if (numeroTpSolicitado is int tpSolicitado) {
+            tpsPresentados = tpsPresentados.Where(tp => tp == tpSolicitado).ToList();
+        }
 
-        BajarDirectorio(numeroPR, carpetaAlumno, carpetaTp, rutaDestino, forzar);
+        if (tpsPresentados.Count == 0) {
+            string detalle = numeroTpSolicitado is int tp
+                ? $"tp{tp}"
+                : "carpetas tpN";
+            if (informarOmitidos) {
+                Log.Warning($"Se omite PR #{numeroPR}: no se encontraron archivos en {detalle} de '{carpetaAlumno}'.");
+            }
+            return 0;
+        }
+
+        foreach (int numeroTp in tpsPresentados) {
+            string carpetaTp = $"tp{numeroTp}";
+            string rutaDestino = Path.Combine(rutaCarpetaAlumno!, carpetaTp);
+            BajarDirectorio(numeroPR, carpetaAlumno, carpetaTp, rutaDestino, forzar);
+        }
+
+        return tpsPresentados.Count;
     }
 
     public bool Merge(int numeroPR) {
@@ -639,20 +671,78 @@ class GitHub {
             return false;
         }
 
-        int ultimoIndice = segmentos.Length - 1;
-        int indiceDirectorio = ultimoIndice - 1;
-        int indiceAlumno = ultimoIndice - 2;
+        for (int i = 0; i <= segmentos.Length - 3; i++) {
+            if (!EsCarpetaAlumnoEsperada(segmentos[i], carpetaAlumnoNormalizada)) {
+                continue;
+            }
 
-        if (!string.Equals(segmentos[indiceAlumno], carpetaAlumnoNormalizada, StringComparison.OrdinalIgnoreCase)) {
+            if (!string.Equals(segmentos[i + 1], directorioNormalizado, StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
+
+            rutaRelativa = string.Join('/', segmentos[(i + 2)..]);
+            return !string.IsNullOrWhiteSpace(rutaRelativa);
+        }
+
+        return false;
+    }
+
+
+    static List<int> TPsPresentadosDesdeArchivos(IEnumerable<string> nombresRemotos, string carpetaAlumnoRemota) {
+        string carpetaAlumno = NormalizarRutaRemota(carpetaAlumnoRemota);
+        if (string.IsNullOrWhiteSpace(carpetaAlumno)) {
+            return new();
+        }
+
+        HashSet<int> trabajosPracticos = new();
+        foreach (string nombreRemoto in nombresRemotos) {
+            if (TryObtenerTpDesdeRutaAlumno(nombreRemoto, carpetaAlumno, out int numeroTp)) {
+                trabajosPracticos.Add(numeroTp);
+            }
+        }
+
+        return trabajosPracticos.Order().ToList();
+    }
+
+
+    static bool TryObtenerTpDesdeRutaAlumno(string nombreRemoto, string carpetaAlumnoRemota, out int numeroTp) {
+        numeroTp = 0;
+
+        string nombreNormalizado = NormalizarRutaRemota(nombreRemoto);
+        string carpetaAlumnoNormalizada = NormalizarRutaRemota(carpetaAlumnoRemota);
+        if (string.IsNullOrWhiteSpace(nombreNormalizado) || string.IsNullOrWhiteSpace(carpetaAlumnoNormalizada)) {
             return false;
         }
 
-        if (!string.Equals(segmentos[indiceDirectorio], directorioNormalizado, StringComparison.OrdinalIgnoreCase)) {
+        string[] segmentos = nombreNormalizado.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segmentos.Length < 3) {
             return false;
         }
 
-        rutaRelativa = segmentos[ultimoIndice];
-        return !string.IsNullOrWhiteSpace(rutaRelativa);
+        for (int i = 0; i <= segmentos.Length - 3; i++) {
+            if (!EsCarpetaAlumnoEsperada(segmentos[i], carpetaAlumnoNormalizada)) {
+                continue;
+            }
+
+            Match match = Regex.Match(segmentos[i + 1], @"^tp(\d+)$", RegexOptions.IgnoreCase);
+            if (!match.Success) {
+                continue;
+            }
+
+            return int.TryParse(match.Groups[1].Value, out numeroTp) && numeroTp > 0;
+        }
+
+        return false;
+    }
+
+
+    static bool EsCarpetaAlumnoEsperada(string segmentoRemoto, string carpetaAlumnoRemota) {
+        int legajoEsperado = ExtraerLegajo(carpetaAlumnoRemota);
+        if (legajoEsperado > 0) {
+            return ExtraerLegajo(segmentoRemoto) == legajoEsperado;
+        }
+
+        return string.Equals(segmentoRemoto, carpetaAlumnoRemota, StringComparison.OrdinalIgnoreCase);
     }
 
 

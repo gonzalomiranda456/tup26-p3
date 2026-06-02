@@ -24,7 +24,10 @@ class TrabajoPracticoSettings : CommandSettings {
     public string TrabajoPractico { get; init; } = string.Empty;
 }
 
-sealed class BajarPrsSettings : TrabajoPracticoSettings {
+sealed class BajarPrsSettings : CommandSettings {
+    [CommandArgument(0, "[tp]")]
+    public string? TrabajoPractico { get; init; }
+
     [CommandOption("--forzar")]
     public bool Forzar { get; init; }
 }

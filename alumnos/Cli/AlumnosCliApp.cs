@@ -323,13 +323,27 @@ static class AlumnosCliApp {
     }
 
     static string[] ConstruirArgumentosBajarPrs() {
-        string? trabajoPractico = PedirTrabajoPractico("Bajar PRs");
-        if (trabajoPractico is null) { return Array.Empty<string>(); }
+        InteractiveChoice alcance = PedirOpcion(
+            "[bold cyan]Bajar PRs[/] · Elegí el alcance", [
+                new("todos",    "Todos",    "Bajar todos los TPs detectados en cada PR"),
+                new("por-tp",   "Por TP",   "Bajar solo los PRs que tienen archivos de un TP"),
+                new("cancelar", "Cancelar", "Volver al menú sin ejecutar")
+            ]);
+
+        if (alcance.Command == "cancelar") { return Array.Empty<string>(); }
+
+        string? trabajoPractico = null;
+        if (alcance.Command == "por-tp") {
+            trabajoPractico = PedirTrabajoPractico("Bajar PRs");
+            if (trabajoPractico is null) { return Array.Empty<string>(); }
+        }
 
         string sobrescritura = PedirModoSobrescritura("Bajar PRs");
 
         return sobrescritura switch {
+            "conservar" when trabajoPractico is null => ["bajar-prs"],
             "conservar" => ["bajar-prs", trabajoPractico],
+            "sobrescribir" when trabajoPractico is null => ["bajar-prs", "--forzar"],
             "sobrescribir" => ["bajar-prs", trabajoPractico, "--forzar"],
             _ => Array.Empty<string>()
         };
