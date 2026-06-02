@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using SQLitePCL;
 
 // ── Configuración ──────────────────────────────────────────────────────────
 
@@ -41,11 +42,22 @@ app.MapGet("/productos/{id:int}", (int id, Repositorio repositorio) =>
     return Results.Ok(producto);
 });
 
-app.MapPost("/productos", (Repositorio repositorio) => { });
+app.MapPost("/productos", async (Producto nuevo, Repositorio repositorio) =>
+{
+    await repositorio.AgregarProducto(nuevo);
+    return Results.Ok(nuevo);
+});
 
-app.MapPut("/productos/{id:int}", (int id, Producto producto, Repositorio repositorio) => { });
+app.MapPut("/productos/{id:int}", async (int id, Producto actualizacion, Repositorio repositorio) => 
+{
+    await repositorio.Actualizar(id, actualizacion);
+    return Results.Ok(actualizacion);
+});
 
-app.MapDelete("/productos/{id:int}", (int id, Repositorio repositorio) => { });
+app.MapDelete("/productos/{id:int}", async (int id, Repositorio repositorio) => { 
+    await repositorio.Eliminar(id);
+    return Results.Ok();
+});
 //Movimiento de productos///
 
 app.MapGet("/productos/{id:int}/movimientos", (int id, Repositorio repositorio) =>
@@ -56,6 +68,7 @@ app.MapGet("/productos/{id:int}/movimientos", (int id, Repositorio repositorio) 
 });
 
 app.MapPost("/productos/{id:int}/movimientos", (int id, Repositorio repositorio) => { });
+
 
 
 app.Run("http://localhost:3000");
@@ -151,7 +164,34 @@ class Repositorio
     public List<Movimiento> TraerMovimiento(int id) =>
     db.Movimientos.Where(m => m.ProductoId == id).ToList();
 
-    public Producto? Actualizar(int id) => db.Productos.FirstOrDefault(p => p.Id == id);
+    async public Task<Producto> AgregarProducto(Producto producto) {
+
+        db.Productos.Add(producto);
+        await db.SaveChangesAsync();
+        return producto;
+    }
+    async public Task<Producto?> Actualizar(int id, Producto actualizacion)
+    {
+     var cambio = db.Productos.FirstOrDefault(p=>p.Id==id);
+    
+    if (cambio is not null) return null;
+    cambio?.Nombre = actualizacion.Nombre;
+    cambio?.Precio = actualizacion.Precio;
+    cambio?.Stock = actualizacion.Stock;
+    cambio?.Cant = actualizacion.Cant;
+    cambio?.Unidadmedida = actualizacion.Unidadmedida;
+    await db.SaveChangesAsync();
+    return cambio;
+    }
+
+    async public Task<bool> Eliminar (int id)
+    {
+        var eliminado = db.Productos.FirstOrDefault(p => p.Id == id);
+        if (eliminado is null) return false;
+        db.Productos.Remove(eliminado);
+        await db.SaveChangesAsync();
+        return true;
+    }
 
 }
 
