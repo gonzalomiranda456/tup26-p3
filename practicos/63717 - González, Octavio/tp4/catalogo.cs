@@ -54,6 +54,7 @@ catch (Exception e)
 {
     Console.Error.WriteLine($"{e.Message}");
 }
+
 // ── Interfaz TUI ──────────────────────────────────────────────────────────
 
 ConfigurationManager.Enable(ConfigLocations.All);
@@ -162,19 +163,33 @@ using (IApplication app = Application.Create().Init())
     var detalles = new TextView
     {
         Text = string.Join("\n\n", movimientos.Select(m => $"""
-    ID:    {m.Id} | Cod:   {m.ProductoId}
-    Nombre: {m.Tipo}
-    Precio: ${m.Cantidad}
-    Stock : {producto.Stock}
-    Fecha: {m.Fecha}
+    
+        ID Movimiento: {m.Id}
+
+        Tipo:          {m.Tipo switch
+                        {
+                            1 => "Compra",
+                            2 => "Venta",
+                            3 => "Ajuste",
+                            _ => "No asignado"
+                        }}
+
+        Descripcion:   {m.ProductoId}
+
+        Cantidad:      {m.Cantidad}
+
+        Stock :        {producto.Stock} unidades
+
+        Fecha:         {m.Fecha}
+
     """)),
         X = 0,
         Y = 0,
         Width = Dim.Fill(),
         Height = Dim.Fill(),
         ReadOnly = true,
-        SchemeName = "esquedetalle"
-
+        SchemeName = "esquedetalle",
+        WordWrap=true
     };
     detalle.Add(detalles, buscar);
 
