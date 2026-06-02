@@ -72,14 +72,14 @@ var esquemagui = new Scheme
 
 var dialogo = new Scheme
 {
-    Normal = new Terminal.Gui.Drawing.Attribute(Color.White, Color.Green)
+    Normal = new Terminal.Gui.Drawing.Attribute(Color.Green, fondo),
+    Focus = new Terminal.Gui.Drawing.Attribute(Color.BrightCyan, fondo)
 };
 var esquemabotones = new Scheme
 {
-    Normal = new Terminal.Gui.Drawing.Attribute(Color.White, Color.Black),
-    Focus = new Terminal.Gui.Drawing.Attribute(Color.Black, Color.White),
-    HotNormal = new Terminal.Gui.Drawing.Attribute(Color.Red, Color.Black),
-    HotFocus = new Terminal.Gui.Drawing.Attribute(Color.Red, Color.White)
+    Normal = new Terminal.Gui.Drawing.Attribute(Color.Green, Color.Black),
+    Focus = new Terminal.Gui.Drawing.Attribute(Color.Black, Color.Green),
+
 };
 
 SchemeManager.AddScheme("esquemabotones", esquemabotones);
@@ -108,7 +108,7 @@ var dialogosalir = new Dialog
 };
 var seguro = new Label
 {
-    Text = " ¿Seguro desea salir? ",
+    Text = "",
     X = Pos.Center(),
     Y = Pos.Center()
 };
@@ -116,19 +116,18 @@ var seguro = new Label
 dialogosalir.Border.LineStyle = LineStyle.Rounded;
 dialogosalir.Border.Thickness = new Thickness(1);
 
-var salir = new Button
+var confirmar = new Button
 {
-    Title = "Salir",
     IsDefault = true,
     SchemeName = "esquemabotones"
 };
 var cancelar = new Button
 {
-    Title = "Cancelar",
     SchemeName = "esquemabotones"
 };
+
 dialogosalir.Add(seguro);
-dialogosalir.AddButton(salir);
+dialogosalir.AddButton(confirmar);
 dialogosalir.AddButton(cancelar);
 
 //Menu
@@ -137,7 +136,7 @@ var menu = new MenuBar
 {
     Menus = [
         new MenuBarItem("_Archivo", [
-            new MenuItem("_Agregar", "", () => {}),
+            new MenuItem("_Agregar", "", () => AgregarProducto()),
             new MenuItem("Salir", "", () => app.RequestStop())
         ]),
         new MenuBarItem("_Movimientos", [
@@ -181,15 +180,22 @@ var maestro = new FrameView
 var panelmaestro = new ListView
 {
     X = 0,
-    Y = 0,
+    Y = 1,
     Width = Dim.Fill(),
     Height = Dim.Fill(1),
     CanFocus = true
 };
 
+var cabeceramaestro = new Label
+{
+    Text = "ID Nombre     Cant. UM",
+    X = 0,
+    Y = 0,
+    SchemeName = "Esquemaestro"
+};
 
 sourceabstraccion(productos);
-maestro.Add(panelmaestro);
+maestro.Add(cabeceramaestro, panelmaestro);
 
 //detalle
 
@@ -259,6 +265,9 @@ gui.KeyDown += (sender, e) =>
 {
     if (e.KeyCode == Key.Esc)
     {
+        seguro.Text = " ¿Seguro desea salir? ";
+        confirmar.Title = "Confirmar";
+        cancelar.Title = "Cancelar";
         e.Handled = true;
         app.Run(dialogosalir);
     }
@@ -269,7 +278,7 @@ cancelar.Accepting += (_, e) =>
     app!.RequestStop();
     e.Handled = true;
 };
-salir.Accepting += (_, e) =>
+confirmar.Accepting += (_, e) =>
 {
     app.RequestStop();
     cerrarapp = true;
@@ -284,6 +293,136 @@ app.Run(gui);
 //funciones locales -----------------------------
 
 
+void AgregarProducto()
+{
+    var dialogo = new Dialog
+    {
+        X = Pos.Center(),
+        Y = Pos.Center(),
+        Width = 55,
+        Height = 20,
+        SchemeName = "dialogo",
+        Title = "Agregar Producto"
+    };
+
+    dialogo.Border.LineStyle = LineStyle.Rounded;
+    dialogo.Border.Thickness = new Thickness(1);
+
+    var nombre = new Label
+    {
+        Text = "Nombre:",
+        X = 2,
+        Y = 1
+    };
+    var txtnombre = new TextField()
+    {
+        Text = "", X = 18, Y = 1, Width = 30, SchemeName = "dialogo"
+    };
+
+    var precio = new Label
+    {
+        Text = "Precio:", X = 2, Y = 3
+    };
+    var txtprecio = new TextField()
+    {
+        Text = "", X = 18, Y = 3, Width = 15,SchemeName = "dialogo"
+    };
+
+    var stock = new Label
+    {
+        Text = "Stock:", X = 2, Y = 5
+    };
+    var txtstock = new TextField()
+    { Text = "", X = 18, Y = 5, Width = 15, SchemeName = "dialogo"};
+
+    var cant = new Label
+    {
+        Text = "Cantidad Medida:", X = 2, Y = 7
+    };
+    var txtcant = new TextField()
+    {
+        Text = "", X = 18, Y = 7, Width = 15, SchemeName = "dialogo"
+    };
+
+    var unidadmedida = new Label
+    {
+        Text = "Unidad Medida:", X = 2, Y = 9
+    };
+    var txtunidadmedida = new TextField()
+    {
+        Text = "", X = 18, Y = 9, Width = 20, SchemeName = "dialogo"
+    };
+
+    var btnGuardar = new Button
+    {
+        Title = "_Guardar",
+        IsDefault = true,
+        SchemeName = "esquemabotones"
+    };
+
+    var btnCancelar = new Button
+    {
+        Title = "_Cancelar",
+        SchemeName = "esquemabotones"
+    };
+
+    btnCancelar.Accepting += (s, e) =>
+    {
+        app.RequestStop();
+        e.Handled = true;
+    };
+
+    btnGuardar.Accepting += (s, e) =>
+    {
+        string name = txtnombre.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+        {
+            MessageBox.ErrorQuery(app, "Error", "El nombre debe tener mas de 1 caracter.", "OK");
+            txtnombre.SetFocus();
+            return;
+        }
+
+        if (!decimal.TryParse(txtprecio.Text, out decimal price) || price < 0)
+        {
+            MessageBox.ErrorQuery(app, "Error", "El precio debe ser un numero positivo.", "OK");
+            txtprecio.SetFocus();
+            return;
+        }
+
+        if (!int.TryParse(txtstock.Text, out int stockVal) || stockVal < 0)
+        {
+            MessageBox.ErrorQuery(app, "Error", "El stock debe ser un numero entero mayor o igual a 0.", "OK");
+            txtstock.SetFocus();
+            return;
+        }
+
+        if (!int.TryParse(txtcant.Text, out int cantVal) || cantVal <= 0)
+        {
+            MessageBox.ErrorQuery(app, "Error", "La cantidad debe ser un numero entero mayor a 0.", "OK");
+            txtcant.SetFocus();
+            return;
+        }
+
+        string unit = txtunidadmedida.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(unit))
+        {
+            MessageBox.ErrorQuery(app, "Error", "La unidad de medida es requerida.", "OK");
+            txtunidadmedida.SetFocus();
+            return;
+        }
+
+        app.RequestStop();
+        e.Handled = true;
+    };
+
+    dialogo.Add(nombre, txtnombre, precio, txtprecio, stock, txtstock, cant, txtcant, unidadmedida, txtunidadmedida);
+    dialogo.AddButton(btnGuardar);
+    dialogo.AddButton(btnCancelar);
+
+    app.Run(dialogo);
+}
+
+
 void FiltrarProductos()
 {
     string busqueda = input.Text?.Trim() ?? "";
@@ -294,7 +433,7 @@ void FiltrarProductos()
         return;
     }
     var productosfiltrados = productos
-    .Where(p => p.Nombre.Contains(busqueda)
+    .Where(p => p.Nombre.ToLower().Contains(busqueda)
     || 
     p.Id.ToString().Contains(busqueda))
     .ToList();
@@ -305,7 +444,7 @@ void FiltrarProductos()
 void sourceabstraccion (List<ProductoDto> uso)
 {
     panelmaestro.SetSource(new ObservableCollection<string>(uso
-    .Select(p => "ID " + p.Id + " - " + p.Nombre + " " + p.cant + p.unidadmedida)
+    .Select(p => $"{p.Id,-2} {p.Nombre,-10} {p.cant,3} {p.unidadmedida}")
     .ToList()
     ));
 }
