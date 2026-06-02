@@ -39,11 +39,52 @@ ventana.Add(detalleProducto);
 
 app.Run(ventana);
 
-static async Task<ProductoDto> CargarProductoAsync (HttpClient http) {
-    const string url = "http://localhost:5050/producto";
-    return await http.GetFromJsonAsync<ProductoDto>(url) ?? throw new HttpRequestException("El servidor devolvió un producto vacío");
+// ── Cliente HTTP ──────────────────────────────────────────────────────────
+
+public class CatalogoApiClient
+{
+    private readonly HttpClient _http;
+
+    public CatalogoApiClient(string baseUrl)
+    {
+        _http = new HttpClient { BaseAddress = new Uri(baseUrl) };
+    }
+
+    public async Task<List<Producto>> GetProductosAsync() =>
+        await _http.GetFromJsonAsync<List<Producto>>("/productos") ?? new();
+
+    public async Task CrearProductoAsync(Producto producto) =>
+        await _http.PostAsJsonAsync("/productos", producto);
+
+    public async Task ActualizarProductoAsync(Producto producto) =>
+        await _http.PutAsJsonAsync($"/productos/{producto.Id}", producto);
+
+    public async Task EliminarProductoAsync(int id) =>
+        await _http.DeleteAsync($"/productos/{id}");
+
+    public async Task<List<MovimientoDeProducto>> GetMovimientosAsync(int productoId) =>
+        await _http.GetFromJsonAsync<List<MovimientoDeProducto>>($"/productos/{productoId}/movimientos") ?? new();
+
+    public async Task RegistrarMovimientoAsync(int productoId, MovimientoDeProducto movimiento) =>
+        await _http.PostAsJsonAsync($"/productos/{productoId}/movimientos", movimiento);
 }
 
-// ── DTO ───────────────────────────────────────────────────────────────────
+// ── Modelos de Datos ──────────────────────────────────────────────────────
 
-record ProductoDto(int Id, string Codigo, string Nombre, decimal Precio, int Stock);
+public class Producto 
+{
+    public int Id { get; set; }
+    public string Codigo { get; set; } = "";
+    public string Nombre { get; set; } = "";
+    public decimal Precio { get; set; }
+    public int Stock { get; set; }
+}
+
+public class MovimientoDeProducto 
+{
+    public int Id { get; set; }
+    public int ProductoId { get; set; }
+    public string Tipo { get; set; } = ""; 
+    public int Cantidad { get; set; }
+    public DateTime Fecha { get; set; }
+}
