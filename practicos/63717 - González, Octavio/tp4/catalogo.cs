@@ -726,7 +726,7 @@ async Task Refrescardetalle(int? indice)
         detalle.Text = "Nada seleccionado";
         return;
     }
-    var prodseleccionado = productos[indice.Value];
+    var prodseleccionado = productos.FirstOrDefault(p => p.Id == productos[indice.Value].Id) ?? productos[indice.Value];
 
     List<MovimientoDto> movimientosDelProducto = new();
     try
