@@ -130,13 +130,15 @@ dialogosalir.Add(seguro);
 dialogosalir.AddButton(confirmar);
 dialogosalir.AddButton(cancelar);
 
+ListView panelmaestro = null!;
+
 //Menu
 
 var menu = new MenuBar
 {
     Menus = [
         new MenuBarItem("_Archivo", [
-            new MenuItem("_Agregar", "", () => AgregarProducto()),
+            new MenuItem("_Agregar", "", () => DialogoProducto(null)),
             new MenuItem("Salir", "", () => app.RequestStop())
         ]),
         new MenuBarItem("_Movimientos", [
@@ -177,7 +179,7 @@ var maestro = new FrameView
 
 };
 
-var panelmaestro = new ListView
+panelmaestro = new ListView
 {
     X = 0,
     Y = 1,
@@ -293,64 +295,109 @@ app.Run(gui);
 //funciones locales -----------------------------
 
 
-void AgregarProducto()
+void DialogoProducto(ProductoDto? productoAEditar = null)
 {
     var dialogo = new Dialog
     {
         X = Pos.Center(),
         Y = Pos.Center(),
         Width = 55,
-        Height = 20,
+        Height = 22,
         SchemeName = "dialogo",
-        Title = "Agregar Producto"
+        Title = productoAEditar is null ? "Agregar Producto" : "Editar Producto"
     };
 
     dialogo.Border.LineStyle = LineStyle.Rounded;
     dialogo.Border.Thickness = new Thickness(1);
 
+    var codigo = new Label
+    {
+        Text = "Código:",
+        X = 2,
+        Y = 1
+    };
+    var txtcodigo = new TextField()
+    {
+        Text = productoAEditar?.Codigo ?? "",
+        X = 18,
+        Y = 1,
+        Width = 20,
+        SchemeName = "dialogo"
+    };
+
     var nombre = new Label
     {
         Text = "Nombre:",
         X = 2,
-        Y = 1
+        Y = 3
     };
     var txtnombre = new TextField()
     {
-        Text = "", X = 18, Y = 1, Width = 30, SchemeName = "dialogo"
+        Text = productoAEditar?.Nombre ?? "",
+        X = 18,
+        Y = 3,
+        Width = 30,
+        SchemeName = "dialogo"
     };
 
     var precio = new Label
     {
-        Text = "Precio:", X = 2, Y = 3
+        Text = "Precio:",
+        X = 2,
+        Y = 5
     };
     var txtprecio = new TextField()
     {
-        Text = "", X = 18, Y = 3, Width = 15,SchemeName = "dialogo"
+        Text = productoAEditar?.Precio.ToString() ?? "",
+        X = 18,
+        Y = 5,
+        Width = 15,
+        SchemeName = "dialogo"
     };
 
     var stock = new Label
     {
-        Text = "Stock:", X = 2, Y = 5
+        Text = "Stock:",
+        X = 2,
+        Y = 7
     };
     var txtstock = new TextField()
-    { Text = "", X = 18, Y = 5, Width = 15, SchemeName = "dialogo"};
+    {
+        Text = productoAEditar?.Stock.ToString() ?? "0",
+        X = 18,
+        Y = 7,
+        Width = 15,
+        SchemeName = "dialogo"
+    };
 
     var cant = new Label
     {
-        Text = "Cantidad Medida:", X = 2, Y = 7
+        Text = "Cantidad Medida:",
+        X = 2,
+        Y = 9
     };
     var txtcant = new TextField()
     {
-        Text = "", X = 18, Y = 7, Width = 15, SchemeName = "dialogo"
+        Text = productoAEditar?.cant.ToString() ?? "0",
+        X = 18,
+        Y = 9,
+        Width = 15,
+        SchemeName = "dialogo"
     };
 
     var unidadmedida = new Label
     {
-        Text = "Unidad Medida:", X = 2, Y = 9
+        Text = "Unidad Medida:",
+        X = 2,
+        Y = 11
     };
     var txtunidadmedida = new TextField()
     {
-        Text = "", X = 18, Y = 9, Width = 20, SchemeName = "dialogo"
+        Text = productoAEditar?.unidadmedida ?? "",
+        X = 18,
+        Y = 11,
+        Width = 20,
+        SchemeName = "dialogo"
     };
 
     var btnGuardar = new Button
@@ -372,17 +419,25 @@ void AgregarProducto()
         e.Handled = true;
     };
 
-    btnGuardar.Accepting += (s, e) =>
+    btnGuardar.Accepting += async (s, e) =>
     {
-        string name = txtnombre.Text?.Trim() ?? "";
-        if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+        string codigoVal = txtcodigo.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(codigoVal))
+        {
+            MessageBox.ErrorQuery(app, "Error", "El código es obligatorio.", "OK");
+            txtcodigo.SetFocus();
+            return;
+        }
+
+        string nombreVal = txtnombre.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(nombreVal) || nombreVal.Length < 2)
         {
             MessageBox.ErrorQuery(app, "Error", "El nombre debe tener mas de 1 caracter.", "OK");
             txtnombre.SetFocus();
             return;
         }
 
-        if (!decimal.TryParse(txtprecio.Text, out decimal price) || price < 0)
+        if (!decimal.TryParse(txtprecio.Text, out decimal precioVal) || precioVal < 0)
         {
             MessageBox.ErrorQuery(app, "Error", "El precio debe ser un numero positivo.", "OK");
             txtprecio.SetFocus();
@@ -403,19 +458,37 @@ void AgregarProducto()
             return;
         }
 
-        string unit = txtunidadmedida.Text?.Trim() ?? "";
-        if (string.IsNullOrWhiteSpace(unit))
+        string unidadmedidaVal = txtunidadmedida.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(unidadmedidaVal))
         {
             MessageBox.ErrorQuery(app, "Error", "La unidad de medida es requerida.", "OK");
             txtunidadmedida.SetFocus();
             return;
         }
 
+        using var http = new HttpClient();
+        
+        if (productoAEditar is null)
+        {
+            // nuevo
+            var nuevo = new ProductoDto(0, codigoVal, nombreVal, precioVal, stockVal, cantVal, unidadmedidaVal);
+            await AgregarProd(http, nuevo);
+        }
+        else
+        {
+            // Actualizar 
+            var actualizado = new ProductoDto(productoAEditar.Id, codigoVal, nombreVal, precioVal, stockVal, cantVal, unidadmedidaVal);
+            await ActualizarProducto(http, productoAEditar.Id, actualizado);
+        }
+
+        // Refrescar lista principal
+        productos = await ObtenerProductos(http);
+        sourceabstraccion(productos);
         app.RequestStop();
         e.Handled = true;
     };
 
-    dialogo.Add(nombre, txtnombre, precio, txtprecio, stock, txtstock, cant, txtcant, unidadmedida, txtunidadmedida);
+    dialogo.Add(codigo, txtcodigo, nombre, txtnombre, precio, txtprecio, stock, txtstock, cant, txtcant, unidadmedida, txtunidadmedida);
     dialogo.AddButton(btnGuardar);
     dialogo.AddButton(btnCancelar);
 
@@ -434,14 +507,14 @@ void FiltrarProductos()
     }
     var productosfiltrados = productos
     .Where(p => p.Nombre.ToLower().Contains(busqueda)
-    || 
+    ||
     p.Id.ToString().Contains(busqueda))
     .ToList();
-    
+
     sourceabstraccion(productosfiltrados);
 }
 
-void sourceabstraccion (List<ProductoDto> uso)
+void sourceabstraccion(List<ProductoDto> uso)
 {
     panelmaestro.SetSource(new ObservableCollection<string>(uso
     .Select(p => $"{p.Id,-2} {p.Nombre,-10} {p.cant,3} {p.unidadmedida}")
@@ -515,17 +588,36 @@ async void Refrescar()
     }
 
 }
+
+const string url1 = $"http://localhost:3000/productos/";
+
 static async Task<List<ProductoDto>> ObtenerProductos(HttpClient http)
 {
-    const string url = "http://localhost:3000/productos";
-    return await http.GetFromJsonAsync<List<ProductoDto>>(url) ?? throw new HttpRequestException("No hay productos");
+    return await http.GetFromJsonAsync<List<ProductoDto>>(url1) ?? throw new HttpRequestException("No hay productos");
 }
 static async Task<ProductoDto> TraerProducto(HttpClient http, int id)
 {
-    string url = $"http://localhost:3000/productos/{id}";
+    string url = $"{url1}{id}";
     return await http.GetFromJsonAsync<ProductoDto>(url) ?? throw new HttpRequestException("No existe un producto con este ID");
 }
+static async Task<ProductoDto> AgregarProd(HttpClient http, ProductoDto nuevo)
+{
+    var respuesta = await http.PostAsJsonAsync(url1, nuevo);
+    return await respuesta.Content.ReadFromJsonAsync<ProductoDto>() ?? throw new InvalidOperationException("No se pudo agregar el producto");
 
+}
+static async Task<ProductoDto> ActualizarProducto(HttpClient http, int id, ProductoDto actualizacion)
+{
+    string url = $"{url1}{id}";
+    var respuesta = await http.PutAsJsonAsync(url, actualizacion);
+    return await respuesta.Content.ReadFromJsonAsync<ProductoDto>() ?? throw new InvalidOperationException("No se pudo actualizar el producto");
+}
+static async Task<bool> EliminarProducto(HttpClient http, int id)
+{
+    string url = $"{url1}{id}";
+    var respuesta = await http.DeleteAsync(url);
+    return respuesta.IsSuccessStatusCode;
+}
 
 
 

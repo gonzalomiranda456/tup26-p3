@@ -48,13 +48,14 @@ app.MapPost("/productos", async (Producto nuevo, Repositorio repositorio) =>
     return Results.Ok(nuevo);
 });
 
-app.MapPut("/productos/{id:int}", async (int id, Producto actualizacion, Repositorio repositorio) => 
+app.MapPut("/productos/{id:int}", async (int id, Producto actualizacion, Repositorio repositorio) =>
 {
     await repositorio.Actualizar(id, actualizacion);
     return Results.Ok(actualizacion);
 });
 
-app.MapDelete("/productos/{id:int}", async (int id, Repositorio repositorio) => { 
+app.MapDelete("/productos/{id:int}", async (int id, Repositorio repositorio) =>
+{
     await repositorio.Eliminar(id);
     return Results.Ok();
 });
@@ -83,8 +84,8 @@ class Producto
     public string Codigo { get; set; } = null!;
     public string Nombre { get; set; } = null!;
     public decimal Precio { get; set; }
-    public int Cant {get; set;}
-    public string Unidadmedida {get; set;}
+    public int Cant { get; set; }
+    public string Unidadmedida { get; set; }
     public int Stock { get; set; }
     public Producto(int id, string codigo, string nombre, decimal precio, int stock, int cant, string unidadmedida)
     {
@@ -164,7 +165,8 @@ class Repositorio
     public List<Movimiento> TraerMovimiento(int id) =>
     db.Movimientos.Where(m => m.ProductoId == id).ToList();
 
-    async public Task<Producto> AgregarProducto(Producto producto) {
+    async public Task<Producto> AgregarProducto(Producto producto)
+    {
 
         db.Productos.Add(producto);
         await db.SaveChangesAsync();
@@ -172,19 +174,19 @@ class Repositorio
     }
     async public Task<Producto?> Actualizar(int id, Producto actualizacion)
     {
-     var cambio = db.Productos.FirstOrDefault(p=>p.Id==id);
-    
-    if (cambio is not null) return null;
-    cambio?.Nombre = actualizacion.Nombre;
-    cambio?.Precio = actualizacion.Precio;
-    cambio?.Stock = actualizacion.Stock;
-    cambio?.Cant = actualizacion.Cant;
-    cambio?.Unidadmedida = actualizacion.Unidadmedida;
-    await db.SaveChangesAsync();
-    return cambio;
+        var cambio = db.Productos.FirstOrDefault(p => p.Id == id);
+
+        if (cambio is null) return null;
+        cambio.Nombre = actualizacion.Nombre;
+        cambio.Precio = actualizacion.Precio;
+        cambio.Stock = actualizacion.Stock;
+        cambio.Cant = actualizacion.Cant;
+        cambio.Unidadmedida = actualizacion.Unidadmedida;
+        await db.SaveChangesAsync();
+        return cambio;
     }
 
-    async public Task<bool> Eliminar (int id)
+    async public Task<bool> Eliminar(int id)
     {
         var eliminado = db.Productos.FirstOrDefault(p => p.Id == id);
         if (eliminado is null) return false;
