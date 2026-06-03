@@ -141,6 +141,11 @@ var menu = new MenuBar
     Menus = [
         new MenuBarItem("_Archivo", [
             new MenuItem("Agregar", "", () => DialogoProducto(null), Key.F2),
+            new MenuItem("Editar", "", () => {
+                var prod = ObtenerProductoSeleccionado("Debe seleccionar un producto para editar.");
+                if (prod is not null) DialogoProducto(prod);
+            }, Key.F3),
+            new MenuItem("Eliminar", "", async () => await ConfirmarYEliminarProducto(), Key.Delete),
             new MenuItem("_Salir", "S", () => app.RequestStop())
         ]),
         new MenuBarItem("_Movimientos", [
@@ -283,51 +288,13 @@ gui.KeyDown += async (sender, e) =>
     else if (e.KeyCode == Key.F3)
     {
         e.Handled = true;
-        int indice = panelmaestro.SelectedItem ?? -1;
-        if (indice >= 0 && indice < productos.Count)
-        {
-            DialogoProducto(productos[indice]);
-        }
-        else
-        {
-            MessageBox.ErrorQuery(app, "Error", "Debe seleccionar un producto para editar.", "OK");
-        }
+        var prod = ObtenerProductoSeleccionado("Debe seleccionar un producto para editar.");
+        if (prod is not null) DialogoProducto(prod);
     }
     else if (e.KeyCode == Key.Delete)
     {
         e.Handled = true;
-        int indice = panelmaestro.SelectedItem ?? -1;
-        if (indice >= 0 && indice < productos.Count)
-        {
-            var prod = productos[indice];
-            int confirmacion = MessageBox.Query(app, "Confirmar eliminación", $"¿Seguro que desea eliminar el producto \"{prod.Nombre}\"?", "Sí", "No") ?? 1;
-            if (confirmacion == 0)
-            {
-                try
-                {
-                    using var http = new HttpClient();
-                    bool eliminado = await EliminarProducto(http, prod.Id);
-                    if (eliminado)
-                    {
-                        productos = await ObtenerProductos(http);
-                        sourceabstraccion(productos);
-                        await Refrescardetalle(null);
-                    }
-                    else
-                    {
-                        MessageBox.ErrorQuery(app, "Error", "No se pudo eliminar el producto en el servidor.", "OK");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.ErrorQuery(app, "Error", $"Error de conexión: {ex.Message}", "OK");
-                }
-            }
-        }
-        else
-        {
-            MessageBox.ErrorQuery(app, "Error", "Debe seleccionar un producto para eliminar.", "OK");
-        }
+        await ConfirmarYEliminarProducto();
     }
     else if (e.KeyCode == Key.F6)
     {
@@ -357,6 +324,47 @@ confirmar.Accepting += (_, e) =>
     app.RequestStop();
     cerrarapp = true;
 };
+
+ProductoDto? ObtenerProductoSeleccionado(string mensajeError)
+{
+    int indice = panelmaestro.SelectedItem ?? -1;
+    if (indice >= 0 && indice < productos.Count)
+    {
+        return productos[indice];
+    }
+    MessageBox.ErrorQuery(app, "Error", mensajeError, "OK");
+    return null;
+}
+
+async Task ConfirmarYEliminarProducto()
+{
+    var prod = ObtenerProductoSeleccionado("Seleccionar un producto para eliminar.");
+    if (prod is null) return;
+
+    int confirmacion = MessageBox.Query(app, "Confirmar eliminación", $"¿Seguro que desea eliminar el producto \"{prod.Nombre}\"?", "Sí", "No") ?? 1;
+    if (confirmacion == 0)
+    {
+        try
+        {
+            using var http = new HttpClient();
+            bool eliminado = await EliminarProducto(http, prod.Id);
+            if (eliminado)
+            {
+                productos = await ObtenerProductos(http);
+                sourceabstraccion(productos);
+                await Refrescardetalle(null);
+            }
+            else
+            {
+                MessageBox.ErrorQuery(app, "Error", "No se pudo eliminar el producto en el servidor.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.ErrorQuery(app, "Error", $"Error de conexión: {ex.Message}", "OK");
+        }
+    }
+}
 
 //Buscador
 input.TextChanged += (sender, e) => FiltrarProductos();
