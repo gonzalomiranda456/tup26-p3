@@ -234,7 +234,7 @@ listadetalles = new TextView
 };
 detalle.Add(listadetalles, buscar);
 
-var teclasdisponibles = new Label
+var teclasdisponibles = new TextView
 {
     Text = " F2: Agregar | F3: Editar | Del: Eliminar | F6: Compra | F7: Venta | F8: Ajuste | Esc: Salir",
     X = 0,
@@ -242,6 +242,9 @@ var teclasdisponibles = new Label
     Width = Dim.Fill(),
     Height = 1,
     SchemeName = "Esquemaestro",
+    WordWrap = true,
+    CanFocus = false,
+    ReadOnly = true
 };
 
 //Navegacion 

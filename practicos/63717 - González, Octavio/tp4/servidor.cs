@@ -68,7 +68,12 @@ app.MapGet("/productos/{id:int}/movimientos", (int id, Repositorio repositorio) 
     return Results.Ok(movimiento);
 });
 
-app.MapPost("/productos/{id:int}/movimientos", (int id, Repositorio repositorio) => { });
+app.MapPost("/productos/{id:int}/movimientos", async (int id, Movimiento mov, Repositorio repositorio) =>
+{
+    var resultado = await repositorio.RegistrarMov(id, mov);
+    if (resultado is null) return Results.BadRequest("No se pudo registrar el movimiento.");
+    return Results.Ok(resultado);
+});
 
 
 
@@ -194,7 +199,11 @@ class Repositorio
         if (mov.Tipo == TipoMovimiento.compra) producto.Stock += mov.Cantidad;
         if (mov.Tipo == TipoMovimiento.venta) producto.Stock -= mov.Cantidad;
         if (mov.Tipo == TipoMovimiento.ajuste) producto.Stock = mov.Cantidad;
-            
+        
+        mov.ProductoId = productoid;
+        mov.Fecha = DateTime.Now;
+
+        await db.Movimientos.AddAsync(mov);
         await db.SaveChangesAsync();
         return mov;          
     
