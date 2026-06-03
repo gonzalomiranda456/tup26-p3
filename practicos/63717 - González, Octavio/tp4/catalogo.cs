@@ -1,6 +1,5 @@
 #:package Terminal.Gui@2.*
 #:property PublishAot=false
-
 using System.Net.Http.Json;
 using Terminal.Gui;
 using Terminal.Gui.App;
@@ -130,7 +129,10 @@ dialogosalir.Add(seguro);
 dialogosalir.AddButton(confirmar);
 dialogosalir.AddButton(cancelar);
 
+//Para evitar problemas con compilador
 ListView panelmaestro = null!;
+FrameView detalle = null!;
+TextView listadetalles = null!;
 
 //Menu
 
@@ -138,11 +140,12 @@ var menu = new MenuBar
 {
     Menus = [
         new MenuBarItem("_Archivo", [
-            new MenuItem("_Agregar", "", () => DialogoProducto(null)),
-            new MenuItem("Salir", "", () => app.RequestStop())
+            new MenuItem("Agregar", "", () => DialogoProducto(null), Key.F2),
+            new MenuItem("_Salir", "S", () => app.RequestStop())
         ]),
         new MenuBarItem("_Movimientos", [
-            new MenuItem("_Compra", "", () => {}),
+            new MenuItem("_Compra", "", () => DialogoMovimiento(1), Key.F6),
+            new MenuItem("_Venta", "", () => DialogoMovimiento(2), Key.F7),
         ])
     ],
     SchemeName = "Esquemaestro"
@@ -201,7 +204,7 @@ maestro.Add(cabeceramaestro, panelmaestro);
 
 //detalle
 
-var detalle = new FrameView
+detalle = new FrameView
 {
     Title = "Detalle",
     X = Pos.Right(maestro),
@@ -213,7 +216,7 @@ var detalle = new FrameView
 };
 
 
-var listadetalles = new TextView
+listadetalles = new TextView
 {
     X = 0,
     Y = 0,
@@ -258,8 +261,6 @@ input.KeyDown += (sender, e) =>
 gui.Add(menu, maestro, detalle, buscar, input, teclasdisponibles);
 panelmaestro.ValueChanged += async (sender, e) => await Refrescardetalle(e.NewValue);
 
-
-
 // Funciones de Terminal Gui 
 
 //para salir
@@ -294,6 +295,7 @@ app.Run(gui);
 
 //funciones locales -----------------------------
 
+const string url1 = $"http://localhost:3000/productos/";
 
 void DialogoProducto(ProductoDto? productoAEditar = null)
 {
@@ -467,7 +469,7 @@ void DialogoProducto(ProductoDto? productoAEditar = null)
         }
 
         using var http = new HttpClient();
-        
+
         if (productoAEditar is null)
         {
             // nuevo
@@ -489,6 +491,116 @@ void DialogoProducto(ProductoDto? productoAEditar = null)
     };
 
     dialogo.Add(codigo, txtcodigo, nombre, txtnombre, precio, txtprecio, stock, txtstock, cant, txtcant, unidadmedida, txtunidadmedida);
+    dialogo.AddButton(btnGuardar);
+    dialogo.AddButton(btnCancelar);
+
+    app.Run(dialogo);
+}
+
+void DialogoMovimiento(int tipo)
+{
+    int indice = panelmaestro.SelectedItem ?? -1;
+    if (indice < 0 || indice >= productos.Count)
+    {
+        MessageBox.ErrorQuery(app, "Error", "Debe seleccionar un producto del panel maestro.", "OK");
+        return;
+    }
+    var prod = productos[indice];
+
+    string titulo = tipo == 1 ? "Registrar Compra" : "Registrar Venta";
+
+    var dialogo = new Dialog
+    {
+        X = Pos.Center(),
+        Y = Pos.Center(),
+        Width = 45,
+        Height = 10,
+        SchemeName = "dialogo",
+        Title = titulo
+    };
+
+    dialogo.Border.LineStyle = LineStyle.Rounded;
+    dialogo.Border.Thickness = new Thickness(1);
+
+    var Cant = new Label
+    {
+        Text = "Cantidad:",
+        X = 2,
+        Y = 2
+    };
+
+    var txtCant = new TextField
+    {
+        Text = "",
+        X = 15,
+        Y = 2,
+        Width = 20,
+        SchemeName = "dialogo"
+    };
+
+    var btnGuardar = new Button
+    {
+        Title = "_Guardar",
+        IsDefault = true,
+        SchemeName = "esquemabotones"
+    };
+
+    var btnCancelar = new Button
+    {
+        Title = "_Cancelar",
+        SchemeName = "esquemabotones"
+    };
+
+    btnCancelar.Accepting += (s, e) =>
+    {
+        app.RequestStop();
+        e.Handled = true;
+    };
+
+    btnGuardar.Accepting += async (s, e) =>
+    {
+        if (!int.TryParse(txtCant.Text, out int cantidadVal) || cantidadVal <= 0)
+        {
+            MessageBox.ErrorQuery(app, "Error", "La cantidad debe ser mayor a 0", "OK");
+            txtCant.SetFocus();
+            return;
+        }
+
+        if (tipo == 2 && prod.Stock < cantidadVal)
+        {
+            MessageBox.ErrorQuery(app, "Error", "Stock insuficiente", "OK");
+            txtCant.SetFocus();
+            return;
+        }
+
+        try
+        {
+            using var http = new HttpClient();
+            var mov = new MovimientoDto(0, prod.Id, tipo, cantidadVal, DateTime.Now);
+            string url = $"{url1}{prod.Id}/movimientos";
+            var respuesta = await http.PostAsJsonAsync(url, mov);
+
+            if (!respuesta.IsSuccessStatusCode)
+            {
+                MessageBox.ErrorQuery(app, "Error", "No se pudo registrar.", "OK");
+                return;
+            }
+
+            // Recargar productos y actualizar detalle
+            productos = await ObtenerProductos(http);
+            sourceabstraccion(productos);
+            await Refrescardetalle(indice);
+
+            app.RequestStop();
+            e.Handled = true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.ErrorQuery(app, "Error", $"Error de conexión: {ex.Message}", "OK");
+        }
+    };
+
+    dialogo.Add(Cant, txtCant);
     dialogo.AddButton(btnGuardar);
     dialogo.AddButton(btnCancelar);
 
@@ -521,10 +633,6 @@ void sourceabstraccion(List<ProductoDto> uso)
     .ToList()
     ));
 }
-
-
-
-
 
 //Mostrar detalle
 async Task Refrescardetalle(int? indice)
@@ -573,7 +681,6 @@ async Task Refrescardetalle(int? indice)
     """));
 }
 
-
 async void Refrescar()
 {
     try
@@ -589,7 +696,6 @@ async void Refrescar()
 
 }
 
-const string url1 = $"http://localhost:3000/productos/";
 
 static async Task<List<ProductoDto>> ObtenerProductos(HttpClient http)
 {
@@ -618,8 +724,6 @@ static async Task<bool> EliminarProducto(HttpClient http, int id)
     var respuesta = await http.DeleteAsync(url);
     return respuesta.IsSuccessStatusCode;
 }
-
-
 
 
 // ── DTO ───────────────────────────────────────────────────────────────────
