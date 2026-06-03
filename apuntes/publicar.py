@@ -6,6 +6,7 @@ import datetime as dt
 import fnmatch
 import hashlib
 import html
+import json
 import subprocess
 import re
 import shutil
@@ -101,6 +102,8 @@ def code_language_label(language: str) -> str:
         lang = language.strip().lower()
         aliases = {
                 "": "texto",
+        "htm": "html",
+        "html": "html",
                 "txt": "texto",
                 "text": "texto",
                 "plaintext": "texto",
@@ -108,6 +111,8 @@ def code_language_label(language: str) -> str:
                 "shell": "bash",
                 "sh": "bash",
                 "zsh": "bash",
+        "xhtml": "html",
+        "xml": "xml",
         }
         return aliases.get(lang, lang)
 
@@ -274,6 +279,17 @@ def render_code_block(code: str, language: str) -> str:
         ]
         return wrap_code_block(_highlight_regex(code, patterns, "language-shell"), lang)
 
+    if lang in {"htm", "html", "xhtml", "xml"}:
+        patterns = [
+            ("comment", r"<!--[\s\S]*?-->"),
+            ("doctype", r"<!DOCTYPE(?:\s+[^>]+)?>|<!doctype(?:\s+[^>]+)?>"),
+            ("tag", r"</?[A-Za-z][A-Za-z0-9:-]*|<\?[A-Za-z][A-Za-z0-9:-]*"),
+            ("attr", r"\b[A-Za-z_:][A-Za-z0-9:._-]*(?=\s*=)"),
+            ("string", r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''),
+            ("punct", r"\?>|/?>|="),
+        ]
+        return wrap_code_block(_highlight_regex(code, patterns, "language-html"), lang)
+
     language_class = f"language-{lang}" if lang else ""
     return wrap_code_block(_render_plain_code(code, language_class), lang)
 
@@ -343,6 +359,35 @@ def render_mermaid_block(
         f'<img src="{asset_href}" alt="Diagrama Mermaid" />'
         f"</figure>"
     )
+
+
+def share_via_airdrop(path: Path) -> None:
+    script = f"""
+ObjC.import('Cocoa');
+
+const url = $.NSURL.fileURLWithPath({json.dumps(str(path))});
+const items = $.NSArray.arrayWithObject(url);
+const service = $.NSSharingService.sharingServiceNamed($.NSSharingServiceNameSendViaAirDrop);
+
+if (!service) {{
+  throw new Error('AirDrop no esta disponible en este sistema.');
+}}
+
+service.performWithItems(items);
+""".strip()
+
+    result = subprocess.run(
+        ["osascript", "-l", "JavaScript"],
+        input=script,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        details = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"No se pudo invocar AirDrop: {details}")
 
 
 def wrap_xhtml_page(title: str, body: str, *, nav: bool = False) -> str:
@@ -734,6 +779,19 @@ tr:last-child td { border-bottom: 0; }
   color: oklch(43% 0.065 215);
   font-weight: 700;
 }
+.tok-doctype {
+    color: #6c6177;
+    color: oklch(49% 0.029 305);
+    font-weight: 700;
+}
+.tok-tag, .tok-punct {
+    color: #225f72;
+    color: oklch(43% 0.065 215);
+}
+.tok-attr {
+    color: #8a3d20;
+    color: oklch(45% 0.094 47);
+}
 blockquote {
   background: #f7f8fb;
   background: oklch(97.7% 0.004 260);
@@ -967,7 +1025,14 @@ def main() -> int:
     build_epub(markdown_files)
     print(f"     Salida: {OUTPUT.name}\n")
 
-    print("- Paso 3: Abrir el libro en Apple Books...")
+    print("- Paso 3: Compartir el libro por AirDrop...")
+    try:
+        share_via_airdrop(OUTPUT)
+        print("     AirDrop invocado.")
+    except RuntimeError as exc:
+        print(f"     Aviso: {exc}", file=sys.stderr)
+
+    print("- Paso 4: Abrir el libro en Apple Books...")
     subprocess.run(["osascript", "-e", 'tell application "Books" to quit'], check=False)
     subprocess.Popen(
         ["open", "-a", "Books", str(OUTPUT)],
