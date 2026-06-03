@@ -146,6 +146,7 @@ var menu = new MenuBar
         new MenuBarItem("_Movimientos", [
             new MenuItem("_Compra", "", () => DialogoMovimiento(1), Key.F6),
             new MenuItem("_Venta", "", () => DialogoMovimiento(2), Key.F7),
+            new MenuItem("_Ajuste", "", () => DialogoMovimiento(3), Key.F8),
         ])
     ],
     SchemeName = "Esquemaestro"
@@ -500,6 +501,7 @@ void DialogoProducto(ProductoDto? productoAEditar = null)
 void DialogoMovimiento(int tipo)
 {
     int indice = panelmaestro.SelectedItem ?? -1;
+   
     if (indice < 0 || indice >= productos.Count)
     {
         MessageBox.ErrorQuery(app, "Error", "Debe seleccionar un producto del panel maestro.", "OK");
@@ -507,7 +509,7 @@ void DialogoMovimiento(int tipo)
     }
     var prod = productos[indice];
 
-    string titulo = tipo == 1 ? "Registrar Compra" : "Registrar Venta";
+    string titulo = tipo == 1 ? "Registrar Compra" : (tipo == 2 ? "Registrar Venta" : "Registrar Ajuste");
 
     var dialogo = new Dialog
     {
@@ -559,9 +561,9 @@ void DialogoMovimiento(int tipo)
 
     btnGuardar.Accepting += async (s, e) =>
     {
-        if (!int.TryParse(txtCant.Text, out int cantidadVal) || cantidadVal <= 0)
+        if (!int.TryParse(txtCant.Text, out int cantidadVal) || (tipo != 3 && cantidadVal <= 0) || (tipo == 3 && cantidadVal < 0))
         {
-            MessageBox.ErrorQuery(app, "Error", "La cantidad debe ser mayor a 0", "OK");
+            MessageBox.ErrorQuery(app, "Error", tipo == 3 ? "La cantidad debe ser mayor o igual a 0" : "La cantidad debe ser mayor a 0", "OK");
             txtCant.SetFocus();
             return;
         }

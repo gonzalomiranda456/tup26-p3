@@ -186,6 +186,19 @@ class Repositorio
         return cambio;
     }
 
+    async public Task<Movimiento> RegistrarMov (int productoid,Movimiento mov)
+    {
+        var producto = db.Productos.FirstOrDefault(p => p.Id == productoid);
+
+        if (producto is null) return null!;
+        if (mov.Tipo == TipoMovimiento.compra) producto.Stock += mov.Cantidad;
+        if (mov.Tipo == TipoMovimiento.venta) producto.Stock -= mov.Cantidad;
+        if (mov.Tipo == TipoMovimiento.ajuste) producto.Stock = mov.Cantidad;
+            
+        await db.SaveChangesAsync();
+        return mov;          
+    
+    }
     async public Task<bool> Eliminar(int id)
     {
         var eliminado = db.Productos.FirstOrDefault(p => p.Id == id);
