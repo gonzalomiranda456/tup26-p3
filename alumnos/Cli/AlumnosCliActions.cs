@@ -283,31 +283,58 @@ static class AlumnosCliActions {
 
     public static int CerrarPullRequests(string? trabajoPractico) {
         GitHub gh = new();
+        bool cerrarTodos = string.IsNullOrWhiteSpace(trabajoPractico);
+        int numeroTp = 0;
 
-        if (string.IsNullOrWhiteSpace(trabajoPractico)) {
-            EjecutarConIndicador(
-                "Cerrar PRs",
-                "Cerrando PRs abiertos...",
-                actualizarEstado => {
-                    actualizarEstado("Consultando y cerrando PRs abiertos...");
-                    gh.CerrarPRsAbiertos();
-                });
-            return 0;
+        if (!cerrarTodos) {
+            numeroTp = ObtenerNumeroTP(trabajoPractico);
         }
 
-        int numeroTp = ObtenerNumeroTP(trabajoPractico);
-        if (numeroTp <= 0) {
+        if (!cerrarTodos && numeroTp <= 0) {
             Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
             return 1;
         }
 
-        EjecutarConIndicador(
+        List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Cerrar PRs",
-            $"Cerrando PRs abiertos de TP{numeroTp}...",
+            cerrarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs abiertos de TP{numeroTp}...",
             actualizarEstado => {
-                actualizarEstado($"Consultando y cerrando PRs abiertos de TP{numeroTp}...");
-                gh.CerrarPRsAbiertos(numeroTp);
+                actualizarEstado("Leyendo PRs abiertos desde GitHub...");
+                return gh.PullRequests(soloAbiertos: true, tp: numeroTp);
             });
+
+        if (prs.Count == 0) {
+            Log.Info(cerrarTodos
+                ? "No hay PRs abiertos para cerrar."
+                : $"No hay PRs abiertos para cerrar en TP{numeroTp}.");
+            return 0;
+        }
+
+        int cerrados = 0;
+        int errores = 0;
+        AnsiConsole.Progress()
+            .AutoClear(false)
+            .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
+            .Start(ctx => {
+                var tarea = ctx.AddTask("Cerrando PRs", maxValue: prs.Count);
+                foreach ((int Numero, string Titulo) pr in prs) {
+                    tarea.Description = $"Cerrando PR #{pr.Numero}";
+                    if (gh.CerrarPR(pr.Numero, informarExito: false)) {
+                        cerrados++;
+                    } else {
+                        errores++;
+                    }
+                    tarea.Increment(1);
+                }
+                tarea.Description = "Cerrar PRs";
+            });
+
+        string alcance = cerrarTodos ? "abiertos" : $"abiertos de TP{numeroTp}";
+        Log.Info($"Resumen: {cerrados}/{prs.Count} PRs {alcance} cerrados.");
+        if (errores > 0) {
+            Log.Error($"No se pudieron cerrar {errores} PR(s).");
+        }
+
         return 0;
     }
 

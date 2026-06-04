@@ -384,13 +384,19 @@ class GitHub {
         }
     }
 
-    public void CerrarPR(int numeroPR) {
+    public bool CerrarPR(int numeroPR, bool informarExito = true) {
         string? salida = Ejecutar($"Error al cerrar el PR #{numeroPR}",
             $"/pulls/{numeroPR}", "--method", "PATCH", "-f", "state=closed");
 
         if (salida is not null) {
-            Log.Info($"PR #{numeroPR} cerrado exitosamente.");
+            if (informarExito) {
+                Log.Info($"PR #{numeroPR} cerrado exitosamente.");
+            }
+
+            return true;
         }
+
+        return false;
     }
 
     public void BajarArchivo(int numeroPR, string patron, string rutaDestino, bool forzar = false) {
