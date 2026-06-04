@@ -1076,6 +1076,7 @@ static class AlumnosCliActions {
             1 => lineasTotales   >= 100,
             2 => lineasAgregadas >= 20,
             3 => lineasAgregadas >= 50,
+            4 => lineasAgregadas >= 300,
             _ => lineasTotales   >= 100
         };
 
@@ -1097,11 +1098,7 @@ static class AlumnosCliActions {
 
     static string MensajeRecuperacion(Alumno alumno, int? numeroTp) {
         string tpsTexto = numeroTp switch {
-            1 => "el trabajo práctico 1",
-            2 => "el trabajo práctico 2",
-            3 => "el trabajo práctico 3",
-            4 => "el trabajo práctico 4",
-            5 => "el trabajo práctico 5",
+            int x and >= 1 and <= 6 => $"el trabajo práctico {x}",
             _ => "el trabajo práctico 1 ni el trabajo práctico 2"
         };
 
