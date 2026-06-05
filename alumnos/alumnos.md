@@ -59,7 +59,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 61489   Gómez, Tomás                    (381)390-5024   tomasgomez18               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22    9
 63182   González Rojas, Emmanuel        (381)612-5571   emmanuelgr-web             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22   10
 63717   González, Octavio               (381)604-1868   owning01                   🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    20    9
-61161   González, Thomas Ezequiel       (381)369-9891   kobinee                    🟢🟢🔴🟢⚪️⚪️   🟢⚪️   No    14    5 
+61161   González, Thomas Ezequiel       (381)369-9891   kobinee                    🟢🟢🔴🟢⚪️⚪️   🟢⚪️   No    14    5
 62844   Guzmán, Luciano Leonel          (388)665-1248   lucianoleonelguzman        🔴🟢🟢🔴⚪️⚪️   🟢⚪️   No    16   10
 63231   Herrera, Rocío Tatiana          (381)208-9907   tatianaherrera-commits     🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18   10
 63425   Holmquist, Jeremy               (381)522-4955   jeremy-holmquist           🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    13    6
@@ -77,5 +77,5 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63232   Roldan, Enzo Joaquín            (381)565-4292   roldanebzo                 🟢🟢🟢🔴⚪️⚪️   🟢⚪️   No    18    5
 63216   Sánchez, Sofía Micaela          (381)342-9672   sofisanchez126             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    20   10
 63207   Saravia, César Nahum            (381)612-1173   nahum-saravia              🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18   10
-61026   Thompson, María José            (381)448-3445   mariajosethompson0-eng     🟢🟢🟢🔴⚪️⚪️   🟢⚪️   No    19    9 
+61026   Thompson, María José            (381)448-3445   mariajosethompson0-eng     🟢🟢🟢🔴⚪️⚪️   🟢⚪️   No    19    9
 ```

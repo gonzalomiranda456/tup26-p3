@@ -14,7 +14,7 @@ public class Alumno {
     public bool Presente = false;
     public int Asistencias = 0;
     public int Nota = 0;
-    public string Codigo = "";
+    public string Observaciones = "";
 
     public List<Estado> practicos = new();
     public List<Estado> examenes = new();
@@ -26,7 +26,7 @@ public class Alumno {
     public bool ConGithub => EsGitHubValido(GitHub);
     public bool ConFoto => TieneFoto;
 
-    public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto, bool presente = false, int asistencias = 0, int nota = 0, string codigo = "") {
+    public Alumno(int legajo, string comision, string nombre, string apellido, string telefono, string github, bool tieneFoto, bool presente = false, int asistencias = 0, int nota = 0, string observaciones = "") {
         Legajo = legajo;
         Comision = NormalizarComision(comision);
         Nombre = NormalizarNombre(nombre);
@@ -37,7 +37,7 @@ public class Alumno {
         Presente = presente;
         Asistencias = asistencias;
         Nota = nota;
-        Codigo = codigo.Trim();
+        Observaciones = observaciones.Trim();
     }
 
     public static int Comparar(Alumno a, Alumno b) {

@@ -354,7 +354,7 @@ static class AlumnosCliActions {
 
         Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
         List<TrabajoPresentadoLocal> trabajosPresentados = new();
-        bool habiaCodigos = alumnos.Any(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
+        bool habiaObservaciones = alumnos.Any(alumno => !string.IsNullOrWhiteSpace(alumno.Observaciones));
 
         Alumno[] alumnosOrdenados = alumnos.OrderBy(alumno => alumno.Legajo).ToArray();
         AnsiConsole.Progress()
@@ -368,7 +368,7 @@ static class AlumnosCliActions {
                     int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
                     int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
-                    // alumno.Codigo = string.Empty;
+                    // alumno.Observaciones = string.Empty;
 
                     Estado estado = Estado.Desaprobado;
                     if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
@@ -386,7 +386,7 @@ static class AlumnosCliActions {
         int copias = RevisarCopiasTrabajosPresentados(numeroTp, trabajosPresentados);
         int marcados = alumnos.Count(alumno => alumno.EstadoPractico(numeroTp) == Estado.Aprobado);
 
-        if (trabajosPresentados.Count > 0 || habiaCodigos) {
+        if (trabajosPresentados.Count > 0 || habiaObservaciones) {
             AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         }
 
@@ -395,7 +395,7 @@ static class AlumnosCliActions {
             int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
             int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
 
-            alumno.Codigo = string.Empty;
+            alumno.Observaciones = string.Empty;
 
             var estado = alumno.EstadoPractico(numeroTp);
             Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
@@ -453,7 +453,7 @@ static class AlumnosCliActions {
             .Start("Registrar respuestas · Preparando lectura de WhatsApp...", contexto =>
                 CargarCodigosDesdeWhatsApp(alumnos, estado => contexto.Status($"Registrar respuestas · {estado}")));
 
-        IEnumerable<Alumno> conCodigo = alumnos.Where(alumno => !string.IsNullOrWhiteSpace(alumno.Codigo));
+        IEnumerable<Alumno> conCodigo = alumnos.Where(alumno => !string.IsNullOrWhiteSpace(alumno.Observaciones));
         AlumnosManager.Listar(conCodigo, "Alumnos con código registrado");
         Log.WriteLine($"Códigos detectados: {conCodigo.Count()}");
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
@@ -815,7 +815,7 @@ static class AlumnosCliActions {
         foreach (Alumno alumno in alumnos) {
             if (!codigosDetectados.TryGetValue(alumno.Legajo, out var detectado)) { continue; }
 
-            alumno.Codigo = detectado.Codigo;
+            alumno.Observaciones = detectado.Codigo;
             alumno.Presente = true;
             Log.Info($"Código detectado ({detectado.Origen}) [{detectado.Fecha:HH:mm}]: {alumno.NombreCompleto} → {detectado.Codigo}");
         }
@@ -944,9 +944,9 @@ static class AlumnosCliActions {
             string codigo = string.Join(",", grupo.Order());
             foreach (int legajoGrupo in grupo) {
                 if (alumnosPorLegajo.TryGetValue(legajoGrupo, out Alumno? alumno)) {
-                    string anterior = numeroTp == 1 ? "" : alumno.Codigo;
-                    alumno.Codigo = $"{anterior} TP{numeroTp}:{codigo}".Trim();
-                    Console.WriteLine($"{numeroTp} -> {anterior} | {alumno.Codigo}");
+                    string anterior = numeroTp == 1 ? "" : alumno.Observaciones;
+                    alumno.Observaciones = $"{anterior} TP{numeroTp}:{codigo}".Trim();
+                    Console.WriteLine($"{numeroTp} -> {anterior} | {alumno.Observaciones}");
                 }
             }
         }
