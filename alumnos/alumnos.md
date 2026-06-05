@@ -18,7 +18,7 @@ Legajo  Nombre y Apellido               Teléfono       Fot  GitHub             
 63700   Jiménez, Nelson Maximiliano     (381)639-2861  Sí   maximilianojimnez          🟢🟢🔴🔴⚪️⚪️          🟢⚪️      No      14     0  8
 63399   Lazarte, Gonzalo Romeo          (381)576-0069  Sí   tutu-04                    🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      16     0  10
 63211   Montero, Luca                   (381)528-7848  Sí   monteroluca007             🟢🟢🔴🔴⚪️⚪️          🟢⚪️      No      14     0  10
-63350   Páez Carabajal, Santiago        (381)572-4096  Sí   santiagopaez-2             🟢🟢🟢🔴⚪️⚪️          🟢⚪️      No      10     0  9
+63350   Páez Carabajal, Santiago        (381)572-4096  Sí   santiagopaez-2             🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      10     0  9
 61581   Paz, Naim Federico              (381)353-0060  Sí   naimp074                   🟢🟢🟢🔴⚪️⚪️          🟢⚪️      No      13     0  10
 63647   Paz, Valentina                  (381)599-6422  Sí   valepaz11                  🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      13     0  10
 63389   Pereyra Petroni, Nicolas        (381)332-4401  Sí   nicopereyra255-ship-it     🔴🟢🟢🔴⚪️⚪️          🟢⚪️      No       9     0  8
