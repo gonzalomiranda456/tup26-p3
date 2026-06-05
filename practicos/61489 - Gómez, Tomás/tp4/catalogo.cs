@@ -1,3 +1,6 @@
+#:package Terminal.Gui@1.*
+#:property PublishAot=false
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Collections.ObjectModel;
+using NStack;
 using Terminal.Gui;
 
 public enum TipoMovimiento { Compra, Venta, Ajuste }
@@ -68,14 +72,14 @@ public class Program
 
         var lblBuscar = new Label { Text = "Buscar:", X = 1, Y = 0 };
         txtBuscar = new TextField { Text = "", X = Pos.Right(lblBuscar) + 1, Y = 0, Width = Dim.Fill() - 1 };
-        txtBuscar.TextChanged += (s, e) => FiltrarProductos();
+        txtBuscar.TextChanged += _ => FiltrarProductos();
 
         listProductosUI = new ListView {
             X = 0, Y = 2,
             Width = Dim.Fill(), Height = Dim.Fill(),
             AllowsMarking = false
         };
-        listProductosUI.SelectedItemChanged += (s, e) => {
+        listProductosUI.SelectedItemChanged += e => {
             if (listaProductos.Count > 0 && e.Item >= 0) {
                 productoSeleccionado = listaProductos[e.Item];
                 CargarMovimientos();
@@ -152,7 +156,7 @@ public class Program
         dialog.Add(new Label { Text = "Precio:", X = 1, Y = 5 }, txtPrecio);
 
         var btnGuardar = new Button { Text = "Guardar", IsDefault = true };
-        btnGuardar.Accepting += (s, e) => {
+        btnGuardar.Clicked += () => {
             var nuevo = new Producto {
                 Codigo = txtCodigo.Text.ToString(),
                 Nombre = txtNombre.Text.ToString(),
@@ -170,7 +174,7 @@ public class Program
         };
 
         var btnCancelar = new Button { Text = "Cancelar" };
-        btnCancelar.Accepting += (s, e) => Application.RequestStop();
+        btnCancelar.Clicked += () => Application.RequestStop();
 
         dialog.AddButton(btnGuardar);
         dialog.AddButton(btnCancelar);
@@ -192,7 +196,7 @@ public class Program
         dialog.Add(new Label { Text = "Precio:", X = 1, Y = 5 }, txtPrecio);
 
         var btnGuardar = new Button { Text = "Actualizar", IsDefault = true };
-        btnGuardar.Accepting += (s, e) => {
+        btnGuardar.Clicked += () => {
             productoSeleccionado.Codigo = txtCodigo.Text.ToString();
             productoSeleccionado.Nombre = txtNombre.Text.ToString();
             productoSeleccionado.Precio = decimal.TryParse(txtPrecio.Text.ToString(), out var p) ? p : 0;
@@ -205,7 +209,7 @@ public class Program
         };
 
         var btnCancelar = new Button { Text = "Cancelar" };
-        btnCancelar.Accepting += (s, e) => Application.RequestStop();
+        btnCancelar.Clicked += () => Application.RequestStop();
 
         dialog.AddButton(btnGuardar);
         dialog.AddButton(btnCancelar);
@@ -237,14 +241,14 @@ public class Program
 
         var dialog = new Dialog { Title = "Registrar Movimiento", Width = 40, Height = 12 };
 
-        var radioTipo = new RadioGroup { RadioLabels = new string[] { "Compra (Sumar)", "Venta (Restar)", "Ajuste (Fijar)" }, X = 10, Y = 1 };
+        var radioTipo = new RadioGroup { RadioLabels = new ustring[] { "Compra (Sumar)", "Venta (Restar)", "Ajuste (Fijar)" }, X = 10, Y = 1 };
         var txtCantidad = new TextField { Text = "", X = 10, Y = 5, Width = 20 };
 
         dialog.Add(new Label { Text = "Tipo:", X = 1, Y = 1 }, radioTipo);
         dialog.Add(new Label { Text = "Cantidad:", X = 1, Y = 5 }, txtCantidad);
 
         var btnGuardar = new Button { Text = "Registrar", IsDefault = true };
-        btnGuardar.Accepting += (s, e) => {
+        btnGuardar.Clicked += () => {
             if (int.TryParse(txtCantidad.Text.ToString(), out int cant)) {
                 var tipoSeleccionado = (TipoMovimiento)radioTipo.SelectedItem;
                 
@@ -265,7 +269,7 @@ public class Program
         };
 
         var btnCancelar = new Button { Text = "Cancelar" };
-        btnCancelar.Accepting += (s, e) => Application.RequestStop();
+        btnCancelar.Clicked += () => Application.RequestStop();
 
         dialog.AddButton(btnGuardar);
         dialog.AddButton(btnCancelar);

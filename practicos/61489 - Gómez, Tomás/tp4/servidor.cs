@@ -1,9 +1,9 @@
-using System;
-using System.Linq;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+#:sdk Microsoft.NET.Sdk.Web
+#:package Microsoft.EntityFrameworkCore.Sqlite@*
+#:property PublishAot=false
+
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CatalogoDb>();
