@@ -720,7 +720,13 @@ static class AlumnosCliActions {
     static string CarpetaTrabajoPractico(int numeroTp) => $"tp{numeroTp}";
 
     static void CargarAsistenciasHastaHoy(Alumnos alumnos) {
-        WAppService wapp = new();
+        WAppService wapp = EjecutarConIndicador(
+            "Relevar asistencias",
+            "Sincronizando WhatsApp...",
+            actualizarEstado => {
+                actualizarEstado("Sincronizando WhatsApp antes de leer mensajes...");
+                return new WAppService();
+            });
         DateOnly hoy = DateOnly.FromDateTime(DateTime.Today);
 
         DateTime desde = new(hoy.Year, 4, 1);
@@ -729,36 +735,25 @@ static class AlumnosCliActions {
             .ToDictionary(alumno => alumno.Legajo, _ => new HashSet<DateOnly>());
 
         foreach (var grupo in new[] { "C7", "C9" }) {
-            List<MensajeWhatsApp> mensajes = [];
-            AnsiConsole.Status()
-                .Spinner(Spinner.Known.Dots)
-                .SpinnerStyle(Style.Parse("cyan"))
-                .Start($"Cargando mensajes de {grupo}", contexto => {
-                    contexto.Status($"Bajando mensajes de {grupo}...");
-                    mensajes = wapp.Mensajes(grupo, desde, hasta);
-                });
-
+            IEnumerable<MensajeWhatsApp> mensajes = wapp.Mensajes(grupo, desde, hasta).Where(mensaje => EsMensajeDeAsistencia(mensaje, desde, hasta));
             AnsiConsole.Progress()
-                .AutoClear(false)
+                .AutoClear(true)
                 .Start(ctx => {
-                    var tarea = ctx.AddTask($"Procesando mensajes de {grupo}", maxValue: mensajes.Count);
-                    // tarea.Description = $"Procesando {grupo}";
+                    var tarea = ctx.AddTask($"Procesando mensajes de {grupo}", maxValue: mensajes.Count());
                     foreach (var mensaje in mensajes) {
-                        if (EsMensajeDeAsistencia(mensaje, desde, hasta)) {
-                            string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
-                            Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
-                            if (alumno is not null) {
-                                asistenciasPorAlumno[alumno.Legajo].Add(DateOnly.FromDateTime(mensaje.Fecha));
-                            }
+                        string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                        Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
+                        if (alumno is not null) {
+                            asistenciasPorAlumno[alumno.Legajo].Add(DateOnly.FromDateTime(mensaje.Fecha));
+                            tarea.Increment(1);
                         }
-                        tarea.Increment(1);
                     }
                 });
         }
 
         foreach (Alumno alumno in alumnos) {
             HashSet<DateOnly> fechas = asistenciasPorAlumno[alumno.Legajo];
-            alumno.Presente = fechas.Contains(hoy);
+            alumno.Presente    = fechas.Contains(hoy);
             alumno.Asistencias = fechas.Count(fecha => fecha < hoy);
         }
     }
