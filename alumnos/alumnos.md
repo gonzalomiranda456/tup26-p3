@@ -56,7 +56,7 @@ Legajo  Nombre y Apellido               Teléfono       Fot  GitHub             
 63737   Galván, Rocío Julieta           (381)647-5597  Sí   rociogalvani               🔴🔴🟢🟢⚪️⚪️          🟢⚪️      No      16     0  10
 63345   García, Franco Tomás            (381)207-5701  Sí   francotms                  🔴🟢🟢🟢⚪️⚪️          🟢⚪️      No      10     0  10
 61057   Getar, Thomas                   (381)336-2147  Sí   thomasgetar                🔴🔴🔴🔴⚪️⚪️          🟢⚪️      No      16     0  7
-61489   Gómez, Tomás                    (381)390-5024  Sí   tomasgomez18               🟢🟠🟢🟢⚪️⚪️          🟢⚪️      No      22     9  C2
+61489   Gómez, Tomás                    (381)390-5024  Sí   tomasgomez18               🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      22     9  C2
 63182   González Rojas, Emmanuel        (381)612-5571  Sí   emmanuelgr-web             🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      22     0  10
 63717   González, Octavio               (381)604-1868  Sí   owning01                   🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      20     0  9
 61161   González, Thomas Ezequiel       (381)369-9891  Sí   kobinee                    🟢🟢🔴🟢⚪️⚪️          🟢⚪️      No      14     5  C3 TP3:61161,61489
@@ -77,5 +77,5 @@ Legajo  Nombre y Apellido               Teléfono       Fot  GitHub             
 63232   Roldan, Enzo Joaquín            (381)565-4292  Sí   roldanebzo                 🟢🟢🟢🔴⚪️⚪️          🟢⚪️      No      18     0  5
 63216   Sánchez, Sofía Micaela          (381)342-9672  Sí   sofisanchez126             🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      20     0  10
 63207   Saravia, César Nahum            (381)612-1173  Sí   nahum-saravia              🟢🟢🟢🟢⚪️⚪️          🟢⚪️      No      18     0  10
-61026   Thompson, María José            (381)448-3445  Sí   mariajosethompson0-eng     🟢🟠🟢🔴⚪️⚪️          🟢⚪️      No      19     9  C2
+61026   Thompson, María José            (381)448-3445  Sí   mariajosethompson0-eng     🟢🟢🟢🔴⚪️⚪️          🟢⚪️      No      19     9  C2
 ```
