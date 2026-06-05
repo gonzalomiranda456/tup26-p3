@@ -1106,7 +1106,7 @@ static class AlumnosCliActions {
             1 => lineasTotales   >= 100,
             2 => lineasAgregadas >= 20,
             3 => lineasAgregadas >= 50,
-            4 => lineasAgregadas >= 200,
+            4 => lineasAgregadas >= 100,
             _ => lineasTotales   >= 100
         };
 
