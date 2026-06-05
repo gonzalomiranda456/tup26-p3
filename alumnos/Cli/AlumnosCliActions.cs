@@ -435,12 +435,7 @@ static class AlumnosCliActions {
     public static int RelevarAsistencias() {
         Alumnos alumnos = CargarAlumnos();
 
-        AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .SpinnerStyle(Style.Parse("cyan"))
-            .Start("Contar asistencias · Preparando relevamiento...", contexto =>
-                CargarAsistenciasHastaHoy(alumnos, estado => contexto.Status($"Contar asistencias · {estado}")));
-
+        CargarAsistenciasHastaHoy(alumnos);
         Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
         AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
         Log.WriteLine($"Presentes detectados hoy: {presentesHoy.Length}");
@@ -724,8 +719,7 @@ static class AlumnosCliActions {
 
     static string CarpetaTrabajoPractico(int numeroTp) => $"tp{numeroTp}";
 
-    static void CargarAsistenciasHastaHoy(Alumnos alumnos, Action<string>? actualizarEstado = null) {
-        actualizarEstado?.Invoke("Sincronizando WhatsApp...");
+    static void CargarAsistenciasHastaHoy(Alumnos alumnos) {
         WAppService wapp = new();
         DateOnly hoy = DateOnly.FromDateTime(DateTime.Today);
 
@@ -735,20 +729,33 @@ static class AlumnosCliActions {
             .ToDictionary(alumno => alumno.Legajo, _ => new HashSet<DateOnly>());
 
         foreach (var grupo in new[] { "C7", "C9" }) {
-            actualizarEstado?.Invoke($"Leyendo mensajes de {grupo}...");
-            foreach (var mensaje in wapp.Mensajes(grupo, desde, hasta)) {
-                if (!EsMensajeDeAsistencia(mensaje, desde, hasta)) { continue; }
+            List<MensajeWhatsApp> mensajes = [];
+            AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots)
+                .SpinnerStyle(Style.Parse("cyan"))
+                .Start($"Cargando mensajes de {grupo}", contexto => {
+                    contexto.Status($"Bajando mensajes de {grupo}...");
+                    mensajes = wapp.Mensajes(grupo, desde, hasta);
+                });
 
-                string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
-                Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
-
-                if (alumno is null) { continue; }
-
-                asistenciasPorAlumno[alumno.Legajo].Add(DateOnly.FromDateTime(mensaje.Fecha));
-            }
+            AnsiConsole.Progress()
+                .AutoClear(false)
+                .Start(ctx => {
+                    var tarea = ctx.AddTask($"Procesando mensajes de {grupo}", maxValue: mensajes.Count);
+                    // tarea.Description = $"Procesando {grupo}";
+                    foreach (var mensaje in mensajes) {
+                        if (EsMensajeDeAsistencia(mensaje, desde, hasta)) {
+                            string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
+                            Alumno? alumno = alumnos.BuscarPorTelefono(telefono);
+                            if (alumno is not null) {
+                                asistenciasPorAlumno[alumno.Legajo].Add(DateOnly.FromDateTime(mensaje.Fecha));
+                            }
+                        }
+                        tarea.Increment(1);
+                    }
+                });
         }
 
-        actualizarEstado?.Invoke("Consolidando asistencias...");
         foreach (Alumno alumno in alumnos) {
             HashSet<DateOnly> fechas = asistenciasPorAlumno[alumno.Legajo];
             alumno.Presente = fechas.Contains(hoy);

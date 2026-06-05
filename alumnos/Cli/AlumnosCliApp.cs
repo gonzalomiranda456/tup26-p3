@@ -244,8 +244,8 @@ static class AlumnosCliApp {
     static string[] SolicitarMenuAsistencias() {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Asistencias y WhatsApp[/] · Elegí una acción", [
-                new("registrar-respuestas",   "Registrar respuestas",  "Leer respuestas de WhatsApp y registrar códigos"),
                 new("contar-asistencias",     "Contar asistencias",    "Detectar presentes desde WhatsApp"),
+                new("registrar-respuestas",   "Registrar respuestas",  "Leer respuestas de WhatsApp y registrar códigos"),
                 new("registrar-asistencias",  "Registrar asistencias", "Consolidar presentes del día"),
                 new("wapp-grupos",            "WhatsApp grupos",       "Listar grupos y participantes"),
                 new("wapp-recuperar-tp1-tp2", "Recuperar TP1/TP2",     "Enviar aviso a alumnos que no presentaron TP1 ni TP2"),

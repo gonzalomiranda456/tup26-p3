@@ -166,6 +166,14 @@ class WAppService {
         return ListarGruposDesdeBaseLocal();
     }
 
+    public int CantidadMensajes(string[] referencias) {
+        DateOnly hoy = DateOnly.FromDateTime(DateTime.Today);
+        DateTime desde = new(hoy.Year, 4, 1);
+        DateTime hasta = hoy.ToDateTime(new TimeOnly(13, 0));
+        
+        return referencias.Sum(referencia => Mensajes(referencia, desde, hasta).Count);
+    }
+
     public List<MensajeWhatsApp> Mensajes(string referencia, DateTime? desde = null, DateTime? hasta = null) {
         ValidarNoVacio(referencia, nameof(referencia));
         ValidarTrue(!desde.HasValue || !hasta.HasValue || desde.Value <= hasta.Value, "La fecha inicial no puede ser mayor que la fecha final.");
@@ -868,7 +876,7 @@ class WAppService {
         string salida = EjecutarYObtenerSalida(argumentos);
 
         if (!string.IsNullOrWhiteSpace(salida)) {
-            Log.Info(salida);
+            // Log.Info(salida);
         }
     }
 
