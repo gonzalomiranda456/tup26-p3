@@ -28,6 +28,7 @@ BOOK_AUTHOR     = "Ing. Alejandro Di Battista"
 BOOK_COVER      = WORKDIR / "portada.jpg"
 EXCLUDED        = ["00.*.md", "09.*.md", "README.md", "CONTRIBUTING.md", "LICENSE.md", "examen.md"]
 MERMAID_TIMEOUT_SECONDS = 120
+AIRDROP_TIMEOUT_SECONDS = 180
 
 
 def is_excluded(path: Path) -> bool:
@@ -365,6 +366,9 @@ def share_via_airdrop(path: Path) -> None:
     script = f"""
 ObjC.import('Cocoa');
 
+// Inicializa AppKit para poder presentar la hoja de AirDrop desde osascript.
+$.NSApplicationLoad();
+
 const url = $.NSURL.fileURLWithPath({json.dumps(str(path))});
 const items = $.NSArray.arrayWithObject(url);
 const service = $.NSSharingService.sharingServiceNamed($.NSSharingServiceNameSendViaAirDrop);
@@ -373,7 +377,40 @@ if (!service) {{
   throw new Error('AirDrop no esta disponible en este sistema.');
 }}
 
+// performWithItems es asincronico y muestra la ventana de AirDrop. Sin un run
+// loop activo, el proceso terminaria de inmediato y cerraria esa ventana antes
+// de poder elegir destinatario o completar la transferencia. El delegate avisa
+// cuando termina (envio, fallo o cancelacion) para cortar la espera temprano.
+let finished = false;
+if (!$.PublicarAirDropDelegate) {{
+  ObjC.registerSubclass({{
+    name: 'PublicarAirDropDelegate',
+    superclass: 'NSObject',
+    protocols: ['NSSharingServiceDelegate'],
+    methods: {{
+      'sharingService:didShareItems:': {{
+        types: ['void', ['id', 'id']],
+        implementation: function () {{ finished = true; }}
+      }},
+      'sharingService:didFailToShareItems:withError:': {{
+        types: ['void', ['id', 'id', 'id']],
+        implementation: function () {{ finished = true; }}
+      }}
+    }}
+  }});
+}}
+
+const delegate = $.PublicarAirDropDelegate.alloc.init;
+service.delegate = delegate;
 service.performWithItems(items);
+
+// Mantiene vivo el proceso mientras la ventana de AirDrop esta abierta, con un
+// limite de seguridad para no quedar bloqueado indefinidamente.
+const runLoop = $.NSRunLoop.currentRunLoop;
+const deadline = $.NSDate.dateWithTimeIntervalSinceNow({AIRDROP_TIMEOUT_SECONDS});
+while (!finished && $.NSDate.date.compare(deadline) < 0) {{
+  runLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.25));
+}}
 """.strip()
 
     result = subprocess.run(
