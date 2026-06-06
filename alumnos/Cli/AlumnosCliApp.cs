@@ -172,10 +172,10 @@ static class AlumnosCliApp {
     static string[] SolicitarMenuPrs() {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / PRs[/] · Elegí una acción", [
-                new("prs",                 "Revisar PRs",          "Mostrar estado de pull requests"),
-                new("bajar-prs",           "Bajar PRs",            "Descargar y sobrescribir todos los prácticos"),
+                new("prs",                 "1. Revisar PRs",          "Mostrar estado de pull requests"),
+                new("bajar-prs",           "2. Bajar PRs",            "Descargar y sobrescribir todos los prácticos"),
+                new("cerrar-prs",          "3. Cerrar PRs",           "Cerrar pull requests abiertos"),
                 new("publicar",            "Publicar práctico",    "Copiar el enunciado de un TP a cada alumno"),
-                new("cerrar-prs",          "Cerrar PRs",           "Cerrar pull requests abiertos"),
                 new("revisar-presentados", "Revisar presentados",  "Marcar TPs presentados según líneas locales"),
                 new("volver",              "Volver",               "Regresar al menú principal")
             ]);
@@ -228,7 +228,7 @@ static class AlumnosCliApp {
             $"[bold cyan]{accion}[/] · Elegí la ruta de salida", [
                 new("predeterminada", "Predeterminada", "Usar la ruta de salida configurada"),
                 new("personalizada",  "Personalizada",  "Ingresar una ruta manualmente"),
-                new("cancelar",       "Cancelar",       "Volver al menú sin ejecutar")
+                new("volver",       "Volver",       "Volver al menú sin ejecutar")
             ]);
 
         if (modoRuta.Command == "cancelar") { return Array.Empty<string>(); }
@@ -300,7 +300,7 @@ static class AlumnosCliApp {
             $"[bold cyan]{accion}[/] · Elegí cómo manejar archivos existentes", [
                 new("conservar",     "Conservar",     "No reemplazar archivos ya existentes"),
                 new("sobrescribir",  "Sobrescribir",  "Reemplazar archivos ya existentes"),
-                new("cancelar",      "Cancelar",      "Volver al menú sin ejecutar")
+                new("volver",      "Volver",      "Volver al menú sin ejecutar")
             ]);
 
         return opcion.Command;
@@ -323,7 +323,7 @@ static class AlumnosCliApp {
 
         List<InteractiveChoice> opciones = [
             .. practicos.Select(practico => new InteractiveChoice(practico.Carpeta, $"TP{practico.Numero}", practico.Carpeta)),
-            new("cancelar", "Cancelar", "Volver al menú sin ejecutar")
+            new("volver", "Volver", "Volver al menú sin ejecutar")
         ];
 
         InteractiveChoice seleccionado = AnsiConsole.Prompt(
@@ -333,7 +333,7 @@ static class AlumnosCliApp {
                 .UseConverter(choice => $"[green]{choice.Label,-22}[/] [grey] {choice.Description}[/]")
                 .AddChoices(opciones));
 
-        return seleccionado.Command == "cancelar" ? null : seleccionado.Command;
+        return seleccionado.Command == "volver" ? null : seleccionado.Command;
     }
 
     static bool EsAliasAyuda(string valor) =>
