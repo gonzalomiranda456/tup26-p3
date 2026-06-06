@@ -11,10 +11,6 @@ static class AlumnosCliApp {
 
             config.AddCommand<ListarCommand>("listar")
                 .WithDescription("Muestra todos los alumnos.");
-            config.AddCommand<Tp1NoPresentadoCommand>("tp1-no-presentado")
-                .WithDescription("Lista alumnos que no presentaron el trabajo práctico 1.");
-            config.AddCommand<Tp2NoPresentadoCommand>("tp2-no-presentado")
-                .WithDescription("Lista alumnos que no presentaron el trabajo práctico 2.");
             config.AddCommand<TpNoPresentadoCommand>("tp-no-presentado")
                 .WithDescription("Lista alumnos que no presentaron un trabajo práctico, ignorando quienes no presentaron ninguno.");
             config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
@@ -41,10 +37,8 @@ static class AlumnosCliApp {
                 .WithDescription("Cierra PRs abiertos; opcionalmente filtra por TP.");
             config.AddCommand<RevisarPresentadosCommand>("revisar-presentados")
                 .WithDescription("Marca TPs presentados a partir del código local.");
-            config.AddCommand<RegistrarAsistenciasCommand>("registrar-asistencias")
-                .WithDescription("Convierte presentes del día en asistencias acumuladas.");
             config.AddCommand<RelevarAsistenciasCommand>("contar-asistencias")
-                .WithDescription("Busca asistencias de hoy a partir de WhatsApp.");
+                .WithDescription("Reconstruye las asistencias hasta hoy y marca los presentes del día desde WhatsApp.");
             config.AddCommand<WappGruposCommand>("wapp-grupos")
                 .WithDescription("Lista grupos y participantes de WhatsApp.");
         });
@@ -115,7 +109,6 @@ static class AlumnosCliApp {
             "bajar-prs" => $"Bajar PRs{detalle}",
             "cerrar-prs" => $"Cerrar PRs{detalle}",
             "revisar-presentados" => $"Revisar presentados{detalle}",
-            "registrar-asistencias" => "Registrar asistencias",
             "contar-asistencias" => "Contar asistencias desde WhatsApp",
             "wapp-grupos" => "Listar grupos y participantes de WhatsApp",
             _ => args[0]
@@ -210,13 +203,11 @@ static class AlumnosCliApp {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Asistencias y WhatsApp[/] · Elegí una acción", [
                 new("contar-asistencias",     "Contar asistencias",    "Detectar presentes desde WhatsApp"),
-                new("registrar-asistencias",  "Registrar asistencias", "Consolidar presentes del día"),
                 new("wapp-grupos",            "WhatsApp grupos",       "Listar grupos y participantes"),
                 new("volver",                 "Volver",                "Regresar al menú principal")
             ]);
 
         return opcion.Command switch {
-            "registrar-asistencias" => ["registrar-asistencias"],
             "contar-asistencias" => ["contar-asistencias"],
             "wapp-grupos" => ["wapp-grupos"],
             _ => Array.Empty<string>()

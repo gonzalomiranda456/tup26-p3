@@ -42,16 +42,6 @@ sealed class ListarCommand : Command<VacioSettings> {
         AlumnosCliActions.Listar();
 }
 
-sealed class Tp1NoPresentadoCommand : Command<VacioSettings> {
-    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
-        AlumnosCliActions.ListarTp1NoPresentado();
-}
-
-sealed class Tp2NoPresentadoCommand : Command<VacioSettings> {
-    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
-        AlumnosCliActions.ListarTp2NoPresentado();
-}
-
 sealed class TpNoPresentadoCommand : Command<TrabajoPracticoSettings> {
     protected override int Execute(CommandContext context, TrabajoPracticoSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.ListarTpNoPresentado(settings.TrabajoPractico);
@@ -115,11 +105,6 @@ sealed class CerrarPrsCommand : Command<CerrarPrsSettings> {
 sealed class RevisarPresentadosCommand : Command<TrabajoPracticoSettings> {
     protected override int Execute(CommandContext context, TrabajoPracticoSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.RevisarPresentados(settings.TrabajoPractico);
-}
-
-sealed class RegistrarAsistenciasCommand : Command<VacioSettings> {
-    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
-        AlumnosCliActions.RegistrarAsistencias();
 }
 
 sealed class RelevarAsistenciasCommand : Command<VacioSettings> {

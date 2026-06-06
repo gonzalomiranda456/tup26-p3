@@ -38,8 +38,6 @@ dotnet run -- revisar-presentados 3
 - `sin-telefono`: lista alumnos sin teléfono.
 - `sin-foto`: lista alumnos sin foto y sincroniza ese estado desde las carpetas locales.
 - `tp-no-presentado <tp>`: lista alumnos que no presentaron el trabajo práctico indicado, ignorando quienes no presentaron ningún práctico.
-- `tp1-no-presentado`: alias de `tp-no-presentado TP1`.
-- `tp2-no-presentado`: alias de `tp-no-presentado TP2`.
 - `sin-practicos`: lista alumnos que no presentaron ningún práctico.
 - `limpiar-proyectos-practicos`: elimina `bin`, `obj`, `.vs` y cachés de compilación dentro de `practicos/`.
 
@@ -68,8 +66,7 @@ dotnet run -- revisar-presentados 3
 
 ### Asistencias y WhatsApp
 
-- `contar-asistencias`: releva presentes del día a partir de WhatsApp.
-- `registrar-asistencias`: consolida los presentes del día como asistencias acumuladas.
+- `contar-asistencias`: reconstruye las asistencias hasta hoy y marca los presentes del día a partir de WhatsApp.
 - `wapp-grupos`: lista grupos y participantes de WhatsApp.
 
 ## Archivos de referencia

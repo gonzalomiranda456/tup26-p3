@@ -19,14 +19,6 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int ListarTp1NoPresentado() {
-        return ListarTpNoPresentado("1");
-    }
-
-    public static int ListarTp2NoPresentado() {
-        return ListarTpNoPresentado("2");
-    }
-
     public static int ListarTpNoPresentado(string trabajoPractico) {
         int numeroTp = ObtenerNumeroTP(trabajoPractico);
         if (numeroTp <= 0) {
@@ -346,33 +338,6 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int RegistrarAsistencias() {
-        Alumnos alumnos = CargarAlumnos();
-        Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
-        int contar = presentesHoy.Length;
-
-        if (contar > 0) {
-            AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
-        }
-
-        foreach (Alumno alumno in alumnos) {
-            if (alumno.Presente) {
-                alumno.Asistencias++;
-            }
-
-            alumno.Presente = false;
-            alumno.Examen(1, alumno.Asistencias switch { >= 8 => Estado.Aprobado, >= 4 => Estado.Pendiente, _ => Estado.Desaprobado });
-        }
-
-        AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
-        if (contar == 0) {
-            Log.WriteLine("No hay alumnos presentes para registrar.");
-        }
-
-        Log.WriteLine($"Asistencias registradas: {contar}");
-        return 0;
-    }
-
     public static int RelevarAsistencias() {
         Alumnos alumnos = CargarAlumnos();
 
@@ -380,7 +345,7 @@ static class AlumnosCliActions {
         Alumno[] presentesHoy = alumnos.Where(alumno => alumno.Presente).OrderBy(alumno => alumno.Legajo).ToArray();
         AlumnosManager.Listar(presentesHoy, "Alumnos presentes hoy");
         Log.WriteLine($"Presentes detectados hoy: {presentesHoy.Length}");
-        Log.WriteLine($"Asistencias acumuladas hasta ayer: {alumnos.Sum(alumno => alumno.Asistencias)}");
+        Log.WriteLine($"Asistencias acumuladas hasta hoy: {alumnos.Sum(alumno => alumno.Asistencias)}");
         AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         return 0;
     }
@@ -530,7 +495,8 @@ static class AlumnosCliActions {
         foreach (Alumno alumno in alumnos) {
             HashSet<DateOnly> fechas = asistenciasPorAlumno[alumno.Legajo];
             alumno.Presente    = fechas.Contains(hoy);
-            alumno.Asistencias = fechas.Count(fecha => fecha < hoy);
+            alumno.Asistencias = fechas.Count;
+            alumno.Examen(1, alumno.Asistencias switch { >= 8 => Estado.Aprobado, >= 4 => Estado.Pendiente, _ => Estado.Desaprobado });
         }
     }
 
