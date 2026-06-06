@@ -27,8 +27,6 @@ static class AlumnosCliApp {
                 .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
             config.AddCommand<PrsCommand>("prs")
                 .WithDescription("Revisa pull requests de los alumnos.");
-            config.AddCommand<NormalizarPrsCommand>("normalizar-prs")
-                .WithDescription("Normaliza títulos de pull requests.");
             config.AddCommand<BajarPrsCommand>("bajar-prs")
                 .WithDescription("Descarga archivos del práctico desde PRs.");
             config.AddCommand<CerrarPrsCommand>("cerrar-prs")
@@ -102,7 +100,6 @@ static class AlumnosCliApp {
             "informar-estado" => "Informar estado",
             "publicar" => $"Publicar práctico{detalle}",
             "prs" => "Revisar pull requests",
-            "normalizar-prs" => "Normalizar PRs",
             "bajar-prs" => $"Bajar PRs{detalle}",
             "cerrar-prs" => $"Cerrar PRs{detalle}",
             "revisar-presentados" => $"Revisar presentados{detalle}",
@@ -176,7 +173,6 @@ static class AlumnosCliApp {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / PRs[/] · Elegí una acción", [
                 new("prs",                 "Revisar PRs",          "Mostrar estado de pull requests"),
-                new("normalizar-prs",      "Normalizar PRs",       "Ajustar títulos de pull requests"),
                 new("bajar-prs",           "Bajar PRs",            "Descargar archivos de un trabajo práctico"),
                 new("publicar",            "Publicar práctico",    "Copiar el enunciado de un TP a cada alumno"),
                 new("cerrar-prs",          "Cerrar PRs",           "Cerrar pull requests abiertos"),
@@ -186,7 +182,6 @@ static class AlumnosCliApp {
 
         return opcion.Command switch {
             "prs" => ["prs"],
-            "normalizar-prs" => ConstruirArgumentosNormalizarPrs(),
             "bajar-prs" => ConstruirArgumentosBajarPrs(),
             "publicar" => ConstruirArgumentosPublicarPractico(),
             "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
@@ -246,16 +241,6 @@ static class AlumnosCliApp {
         return string.IsNullOrWhiteSpace(ruta)
             ? Array.Empty<string>()
             : [comando, ruta.Trim()];
-    }
-
-    static string[] ConstruirArgumentosNormalizarPrs() {
-        string modo = PedirModoEjecucion("Normalizar PRs");
-
-        return modo switch {
-            "simular" => ["normalizar-prs", "--simular"],
-            "ejecutar" => ["normalizar-prs"],
-            _ => Array.Empty<string>()
-        };
     }
 
     static string[] ConstruirArgumentosTpNoPresentado() {
@@ -335,17 +320,6 @@ static class AlumnosCliApp {
         return trabajoPractico is null
             ? Array.Empty<string>()
             : ["revisar-presentados", trabajoPractico];
-    }
-
-    static string PedirModoEjecucion(string accion, string etiquetaEjecucion = "Ejecutar cambios reales") {
-        InteractiveChoice opcion = PedirOpcion(
-            $"[bold cyan]{accion}[/] · Elegí el modo de ejecución", [
-                new("simular",  "Simulación", etiquetaEjecucion == "Enviar mensajes reales" ? "Previsualizar sin enviar mensajes" : "Previsualizar sin aplicar cambios"),
-                new("ejecutar", "Real",       etiquetaEjecucion),
-                new("cancelar", "Cancelar",   "Volver al menú sin ejecutar")
-            ]);
-
-        return opcion.Command;
     }
 
     static string PedirModoSobrescritura(string accion) {

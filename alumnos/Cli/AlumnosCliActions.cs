@@ -112,8 +112,7 @@ static class AlumnosCliActions {
     }
 
     public static int RevisarPullRequests() {
-        Alumnos alumnos = CargarAlumnos();
-        GitHub gh = new();
+        (Alumnos alumnos, GitHub gh) = PrepararPullRequests();
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Revisar PRs",
             "Consultando pull requests abiertos...",
@@ -156,14 +155,6 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int NormalizarPullRequests(bool simular) {
-        Alumnos alumnos = CargarAlumnos();
-        Log.Info(simular ? "Simulando normalización de PRs..." : "Normalizando títulos de PRs...");
-        Log.Info("Leyendo PRs abiertos y verificando títulos...");
-        new GitHub().NormalizarTitulos(alumnos, simular);
-        return 0;
-    }
-
     public static int BajarPullRequests(string? trabajoPractico, bool forzar) {
         bool bajarTodos = EsTodosLosTrabajosPracticos(trabajoPractico);
         int numeroTp = bajarTodos ? 0 : ObtenerNumeroTP(trabajoPractico);
@@ -172,8 +163,7 @@ static class AlumnosCliActions {
             return 1;
         }
 
-        PrepararCarpetasAlumnos();
-        GitHub gh = new();
+        (_, GitHub gh) = PrepararPullRequests(prepararCarpetas: true);
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Bajar PRs",
             bajarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs con archivos de TP{numeroTp}...",
@@ -211,7 +201,6 @@ static class AlumnosCliActions {
     }
 
     public static int CerrarPullRequests(string? trabajoPractico) {
-        GitHub gh = new();
         bool cerrarTodos = string.IsNullOrWhiteSpace(trabajoPractico);
         int numeroTp = 0;
 
@@ -224,6 +213,7 @@ static class AlumnosCliActions {
             return 1;
         }
 
+        (_, GitHub gh) = PrepararPullRequests();
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Cerrar PRs",
             cerrarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs abiertos de TP{numeroTp}...",
@@ -461,6 +451,17 @@ static class AlumnosCliActions {
         Alumnos alumnos = CargarAlumnos();
         AlumnosManager.CrearCarpetas(alumnos);
         return alumnos;
+    }
+
+    static (Alumnos Alumnos, GitHub GitHub) PrepararPullRequests(bool prepararCarpetas = false) {
+        Alumnos alumnos = prepararCarpetas
+            ? CargarAlumnosConCarpetasPreparadas()
+            : CargarAlumnos();
+        GitHub gh = new();
+
+        Log.Info("Normalizando títulos de PRs antes de continuar...");
+        gh.NormalizarTitulos(alumnos);
+        return (alumnos, gh);
     }
 
     static string CarpetaTrabajoPractico(int numeroTp) => $"tp{numeroTp}";

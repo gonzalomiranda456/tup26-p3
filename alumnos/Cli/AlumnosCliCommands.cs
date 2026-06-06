@@ -9,11 +9,6 @@ sealed class RutaSalidaSettings : CommandSettings {
     public string? Ruta { get; init; }
 }
 
-sealed class NormalizarPrsSettings : CommandSettings {
-    [CommandOption("--simular")]
-    public bool Simular { get; init; }
-}
-
 class TrabajoPracticoSettings : CommandSettings {
     [CommandArgument(0, "<tp>")]
     public string TrabajoPractico { get; init; } = string.Empty;
@@ -80,11 +75,6 @@ sealed class PublicarCommand : Command<PublicarPracticoSettings> {
 sealed class PrsCommand : Command<VacioSettings> {
     protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.RevisarPullRequests();
-}
-
-sealed class NormalizarPrsCommand : Command<NormalizarPrsSettings> {
-    protected override int Execute(CommandContext context, NormalizarPrsSettings settings, CancellationToken cancellationToken) =>
-        AlumnosCliActions.NormalizarPullRequests(settings.Simular);
 }
 
 sealed class BajarPrsCommand : Command<BajarPrsSettings> {

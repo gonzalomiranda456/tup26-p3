@@ -56,8 +56,9 @@ Las carpetas de alumnos se crean o normalizan automáticamente antes de los coma
 
 ### Pull requests y presentaciones
 
+Los títulos de los PRs se normalizan automáticamente antes de revisarlos, descargarlos o cerrarlos.
+
 - `prs`: revisa pull requests de los alumnos.
-- `normalizar-prs [--simular]`: ajusta títulos de pull requests.
 - `bajar-prs [tp] [--forzar]`: descarga archivos desde los PRs; sin `tp` baja todos los prácticos detectados por carpetas `tpN`.
 - `cerrar-prs [tp]`: cierra todos los PRs abiertos, o solo los del práctico indicado.
 - `revisar-presentados <tp>`: marca presentaciones a partir del código local de cada carpeta.

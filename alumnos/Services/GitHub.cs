@@ -23,7 +23,7 @@ Servicio para interactuar con la API de GitHub mediante `gh api`.
 
 - `PRConConflictos()`: informa PRs que no son mergeables.
 
-- `NormalizarTitulos(alumnos, simular)`: ajusta títulos de PRs al formato esperado.
+- `NormalizarTitulos(alumnos, simular)`: ajusta títulos de PRs al formato esperado; si falta el legajo, intenta obtenerlo de una única carpeta del PR.
     - `alumnos`: colección usada para resolver nombre completo por legajo.
     - `simular`: muestra cambios sin aplicarlos.
 
@@ -206,14 +206,26 @@ class GitHub {
 
         foreach ((int Numero, string Titulo) pr in prs) {
             int legajo = ExtraerLegajo(pr.Titulo);
+            List<string>? archivos = null;
 
             if (legajo <= 0) {
-                if (omitidos++ == 0) {
-                    Log.Error("= PRs sin información suficiente para normalizar =");
-                }
+                archivos = ListarArchivos(pr.Numero);
+                List<int> legajosEnCarpetas = ExtraerLegajosUnicosDeCarpetas(archivos);
 
-                Log.Error($"No se puede normalizar PR #{pr.Numero}: falta legajo en el título.\n > {pr.Titulo}");
-                continue;
+                if (legajosEnCarpetas.Count == 1) {
+                    legajo = legajosEnCarpetas[0];
+                    Log.Info($"PR #{pr.Numero}: legajo {legajo} detectado desde la carpeta del alumno.");
+                } else {
+                    if (omitidos++ == 0) {
+                        Log.Error("= PRs sin información suficiente para normalizar =");
+                    }
+
+                    string motivo = legajosEnCarpetas.Count == 0
+                        ? "no se encontró una carpeta con legajo"
+                        : $"se encontraron varias carpetas con legajo ({string.Join(", ", legajosEnCarpetas)})";
+                    Log.Error($"No se puede normalizar PR #{pr.Numero}: falta legajo en el título y {motivo}.\n > {pr.Titulo}");
+                    continue;
+                }
             }
 
             Alumno? alumno = alumnos.BuscarPorLegajo(legajo);
@@ -226,7 +238,8 @@ class GitHub {
                 continue;
             }
 
-            List<int> tpsPresentados = ListarTPsPresentados(pr.Numero, alumno.CarpetaNombre);
+            archivos ??= ListarArchivos(pr.Numero);
+            List<int> tpsPresentados = TPsPresentadosDesdeArchivos(archivos, alumno.CarpetaNombre);
             if (tpsPresentados.Count == 0) {
                 if (omitidos++ == 0) {
                     Log.Error("= PRs sin información suficiente para normalizar =");
@@ -708,6 +721,24 @@ class GitHub {
         }
 
         return trabajosPracticos.Order().ToList();
+    }
+
+    static List<int> ExtraerLegajosUnicosDeCarpetas(IEnumerable<string> nombresRemotos) {
+        HashSet<int> legajos = new();
+
+        foreach (string nombreRemoto in nombresRemotos) {
+            string[] segmentos = NormalizarRutaRemota(nombreRemoto)
+                .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string carpeta in segmentos.SkipLast(1)) {
+                int legajo = ExtraerLegajo(carpeta);
+                if (legajo > 0) {
+                    legajos.Add(legajo);
+                }
+            }
+        }
+
+        return legajos.Order().ToList();
     }
 
 
