@@ -31,7 +31,7 @@ static class AlumnosCliActions {
             .Where(TieneAlgunPracticoPresentado)
             .Where(alumno => alumno.EstadoPractico(numeroTp) != Estado.Aprobado);
 
-        AlumnosManager.Listar(noPresentaron, $"Alumnos que no presentaron TP{numeroTp}");
+        AlumnosManager.Listar(noPresentaron, $"Alumnos con TP{numeroTp} faltante");
         return 0;
     }
 
@@ -202,32 +202,18 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int CerrarPullRequests(string? trabajoPractico) {
-        bool cerrarTodos = string.IsNullOrWhiteSpace(trabajoPractico);
-        int numeroTp = 0;
-
-        if (!cerrarTodos) {
-            numeroTp = ObtenerNumeroTP(trabajoPractico);
-        }
-
-        if (!cerrarTodos && numeroTp <= 0) {
-            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
-            return 1;
-        }
-
+    public static int CerrarPullRequests() {
         (_, GitHub gh) = PrepararPullRequests();
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Cerrar PRs",
-            cerrarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs abiertos de TP{numeroTp}...",
+            "Consultando todos los PRs abiertos...",
             actualizarEstado => {
                 actualizarEstado("Leyendo PRs abiertos desde GitHub...");
-                return gh.PullRequests(soloAbiertos: true, tp: numeroTp);
+                return gh.PullRequests(soloAbiertos: true);
             });
 
         if (prs.Count == 0) {
-            Log.Info(cerrarTodos
-                ? "No hay PRs abiertos para cerrar."
-                : $"No hay PRs abiertos para cerrar en TP{numeroTp}.");
+            Log.Info("No hay PRs abiertos para cerrar.");
             return 0;
         }
 
@@ -250,8 +236,7 @@ static class AlumnosCliActions {
                 tarea.Description = "Cerrar PRs";
             });
 
-        string alcance = cerrarTodos ? "abiertos" : $"abiertos de TP{numeroTp}";
-        Log.Info($"Resumen: {cerrados}/{prs.Count} PRs {alcance} cerrados.");
+        Log.Info($"Resumen: {cerrados}/{prs.Count} PRs abiertos cerrados.");
         if (errores > 0) {
             Log.Error($"No se pudieron cerrar {errores} PR(s).");
         }

@@ -42,14 +42,14 @@ Los títulos de los PRs se normalizan automáticamente antes de revisarlos, desc
 
 - `revisar-prs`: revisa pull requests de los alumnos.
 - `bajar-prs`: descarga y sobrescribe todos los prácticos detectados en los PRs, y luego revisa automáticamente los TP presentados.
-- `cerrar-prs [tp]`: cierra todos los PRs abiertos, o solo los del práctico indicado.
+- `cerrar-prs`: cierra todos los PRs abiertos.
 - `publicar-practico <tp> [--forzar]`: copia el enunciado del práctico indicado a la carpeta de cada alumno.
 
 Las carpetas de alumnos se crean o normalizan automáticamente antes de los comandos que las recorren o modifican.
 
 ### Auditoría
 
-- `listar-no-presentaron-tp <tp>`: lista alumnos que no presentaron el trabajo práctico indicado, ignorando quienes no presentaron ningún práctico.
+- `listar-practicos-faltantes <tp>`: lista alumnos a quienes les falta el trabajo práctico indicado.
 
 ### Exportación
 

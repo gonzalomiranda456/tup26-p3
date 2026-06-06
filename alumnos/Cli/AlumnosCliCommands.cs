@@ -19,17 +19,12 @@ sealed class PublicarPracticoSettings : TrabajoPracticoSettings {
     public bool Forzar { get; init; }
 }
 
-sealed class CerrarPrsSettings : CommandSettings {
-    [CommandArgument(0, "[tp]")]
-    public string? TrabajoPractico { get; init; }
-}
-
 sealed class ListarAlumnosCommand : Command<VacioSettings> {
     protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.Listar();
 }
 
-sealed class ListarNoPresentaronTpCommand : Command<TrabajoPracticoSettings> {
+sealed class ListarPracticosFaltantesCommand : Command<TrabajoPracticoSettings> {
     protected override int Execute(CommandContext context, TrabajoPracticoSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.ListarTpNoPresentado(settings.TrabajoPractico);
 }
@@ -74,9 +69,9 @@ sealed class BajarPrsCommand : Command<VacioSettings> {
         AlumnosCliActions.BajarPullRequests();
 }
 
-sealed class CerrarPrsCommand : Command<CerrarPrsSettings> {
-    protected override int Execute(CommandContext context, CerrarPrsSettings settings, CancellationToken cancellationToken) =>
-        AlumnosCliActions.CerrarPullRequests(settings.TrabajoPractico);
+sealed class CerrarPrsCommand : Command<VacioSettings> {
+    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.CerrarPullRequests();
 }
 
 sealed class RevisarPresentacionesCommand : Command<TrabajoPracticoSettings> {

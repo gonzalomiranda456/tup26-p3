@@ -18,11 +18,11 @@ static class AlumnosCliApp {
             config.AddCommand<BajarPrsCommand>("bajar-prs")
                 .WithDescription("Descarga y sobrescribe todos los prácticos detectados en los PRs.");
             config.AddCommand<CerrarPrsCommand>("cerrar-prs")
-                .WithDescription("Cierra PRs abiertos; opcionalmente filtra por TP.");
+                .WithDescription("Cierra todos los PRs abiertos.");
             config.AddCommand<PublicarPracticoCommand>("publicar-practico")
                 .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
-            config.AddCommand<ListarNoPresentaronTpCommand>("listar-no-presentaron-tp")
-                .WithDescription("Lista alumnos que no presentaron un trabajo práctico, ignorando quienes no presentaron ninguno.");
+            config.AddCommand<ListarPracticosFaltantesCommand>("listar-practicos-faltantes")
+                .WithDescription("Lista alumnos a quienes les falta el trabajo práctico indicado.");
             config.AddCommand<ExportarEstadoCommand>("exportar-estado")
                 .WithDescription("Exporta el estado resumido a ESTADO.md.");
             config.AddCommand<ExportarMarkdownCommand>("exportar-markdown")
@@ -96,8 +96,8 @@ static class AlumnosCliApp {
             "publicar-practico" => $"Publicar práctico{detalle}",
             "revisar-prs" => "Revisar pull requests",
             "bajar-prs" => "Bajar PRs",
-            "cerrar-prs" => $"Cerrar PRs{detalle}",
-            "listar-no-presentaron-tp" => $"Listar alumnos que no presentaron TP{detalle}",
+            "cerrar-prs" => "Cerrar todos los PRs",
+            "listar-practicos-faltantes" => $"Listar prácticos faltantes{detalle}",
             "exportar-estado" => "Exportar Estado",
             "exportar-markdown" => "Exportar alumnos a Markdown",
             "exportar-json" => "Exportar alumnos a JSON",
@@ -128,9 +128,9 @@ static class AlumnosCliApp {
             "contar-asistencias" => ["contar-asistencias"],
             "revisar-prs" => ["revisar-prs"],
             "bajar-prs" => ["bajar-prs"],
-            "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
+            "cerrar-prs" => ["cerrar-prs"],
             "publicar-practico" => ConstruirArgumentosPublicarPractico(),
-            "listar-no-presentaron-tp" => ConstruirArgumentosTpNoPresentado(),
+            "listar-practicos-faltantes" => ConstruirArgumentosPracticosFaltantes(),
             "exportar-estado" => ["exportar-estado"],
             "exportar-markdown" => ["exportar-markdown"],
             "exportar-json" => ["exportar-json"],
@@ -157,7 +157,7 @@ static class AlumnosCliApp {
             new("bajar-prs",                      "Bajar PRs",                      "Descargar y sobrescribir todos los prácticos"),
             new("cerrar-prs",                     "Cerrar PRs",                     "Cerrar pull requests abiertos"),
             new("publicar-practico",              "Publicar práctico",              "Copiar el enunciado de un TP a cada alumno"),
-            new("listar-no-presentaron-tp",       "TP no presentado",               "Listar alumnos que adeudan un práctico"),
+            new("listar-practicos-faltantes",     "Listar prácticos faltantes",      "Listar alumnos que adeudan un práctico"),
             new("exportar-estado",                "Exportar Estado",                "Exportar el resumen a ESTADO.md"),
             new("exportar-markdown",              "Exportar como Markdown",         "Exportar alumnos a alumnos.md"),
             new("exportar-json",                  "Exportar como JSON",             "Exportar alumnos a alumnos.json"),
@@ -167,12 +167,12 @@ static class AlumnosCliApp {
             new("salir",                          "Salir",                          "Cerrar la aplicación")
         ];
 
-    static string[] ConstruirArgumentosTpNoPresentado() {
-        string? trabajoPractico = PedirTrabajoPractico("TP no presentado");
+    static string[] ConstruirArgumentosPracticosFaltantes() {
+        string? trabajoPractico = PedirTrabajoPractico("Listar prácticos faltantes");
 
         return trabajoPractico is null
             ? Array.Empty<string>()
-            : ["listar-no-presentaron-tp", trabajoPractico];
+            : ["listar-practicos-faltantes", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosPublicarPractico() {
@@ -186,29 +186,6 @@ static class AlumnosCliApp {
             "sobrescribir" => ["publicar-practico", trabajoPractico, "--forzar"],
             _ => Array.Empty<string>()
         };
-    }
-
-    static string[] ConstruirArgumentosCerrarPrs() {
-        InteractiveChoice alcance = PedirOpcion(
-            "[bold cyan]Cerrar PRs[/] · Elegí el alcance", [
-                new("todos",    "Todos",     "Cerrar todos los PRs abiertos"),
-                new("por-tp",   "Por TP",    "Cerrar sólo los PRs de un trabajo práctico"),
-                new("cancelar", "Cancelar",  "Volver al menú sin ejecutar")
-            ]);
-
-        return alcance.Command switch {
-            "todos" => ["cerrar-prs"],
-            "por-tp" => ConstruirArgumentosCerrarPrsPorTp(),
-            _ => Array.Empty<string>()
-        };
-    }
-
-    static string[] ConstruirArgumentosCerrarPrsPorTp() {
-        string? trabajoPractico = PedirTrabajoPractico("Cerrar PRs");
-
-        return trabajoPractico is null
-            ? Array.Empty<string>()
-            : ["cerrar-prs", trabajoPractico];
     }
 
     static string PedirModoSobrescritura(string accion) {
