@@ -17,6 +17,7 @@ static class AppPaths {
     public static string ArchivoEstadoRepo => Path.Combine(RepoRoot, "ESTADO.md");
     public static string PracticosDirectory => Path.Combine(RepoRoot, "practicos");
     public static string EnunciadosDirectory => Path.Combine(RepoRoot, "enunciados");
+    public static string ApuntesDirectory => Path.Combine(RepoRoot, "apuntes");
     public static string ArchivoJsonAlumnos => Path.Combine(DataDirectory, "alumnos.json");
 
     public static string EnunciadoPracticoDirectory(string practico) =>

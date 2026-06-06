@@ -21,6 +21,8 @@ static class AlumnosCliApp {
                 .WithDescription("Cierra todos los PRs abiertos.");
             config.AddCommand<PublicarPracticoCommand>("publicar-practico")
                 .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
+            config.AddCommand<PublicarApuntesCommand>("publicar-apuntes")
+                .WithDescription("Ejecuta publicar.py dentro de la carpeta de apuntes.");
             config.AddCommand<ListarPracticosFaltantesCommand>("listar-practicos-faltantes")
                 .WithDescription("Lista alumnos a quienes les falta el trabajo práctico indicado.");
             config.AddCommand<ExportarEstadoCommand>("exportar-estado")
@@ -94,6 +96,7 @@ static class AlumnosCliApp {
             "listar-alumnos" => "Listar alumnos",
             "contar-asistencias" => "Contar asistencias desde WhatsApp",
             "publicar-practico" => $"Publicar práctico{detalle}",
+            "publicar-apuntes" => "Publicar apuntes",
             "revisar-prs" => "Revisar pull requests",
             "bajar-prs" => "Bajar PRs",
             "cerrar-prs" => "Cerrar todos los PRs",
@@ -130,6 +133,7 @@ static class AlumnosCliApp {
             "bajar-prs" => ["bajar-prs"],
             "cerrar-prs" => ["cerrar-prs"],
             "publicar-practico" => ConstruirArgumentosPublicarPractico(),
+            "publicar-apuntes" => ["publicar-apuntes"],
             "listar-practicos-faltantes" => ConstruirArgumentosPracticosFaltantes(),
             "exportar-estado" => ["exportar-estado"],
             "exportar-markdown" => ["exportar-markdown"],
@@ -157,6 +161,7 @@ static class AlumnosCliApp {
             new("bajar-prs",                      "Bajar PRs",                      "Descargar y sobrescribir todos los prácticos"),
             new("cerrar-prs",                     "Cerrar PRs",                     "Cerrar pull requests abiertos"),
             new("publicar-practico",              "Publicar práctico",              "Copiar el enunciado de un TP a cada alumno"),
+            new("publicar-apuntes",               "Publicar apuntes",               "Ejecutar apuntes/publicar.py"),
             new("listar-practicos-faltantes",     "Listar prácticos faltantes",      "Listar alumnos que adeudan un práctico"),
             new("exportar-estado",                "Exportar Estado",                "Exportar el resumen a ESTADO.md"),
             new("exportar-markdown",              "Exportar como Markdown",         "Exportar alumnos a alumnos.md"),

@@ -111,6 +111,37 @@ static class AlumnosCliActions {
         return 0;
     }
 
+    public static int PublicarApuntes() {
+        string script = Path.Combine(AppPaths.ApuntesDirectory, "publicar.py");
+        if (!AppPaths.ExisteArchivo(script)) {
+            Log.Error($"No existe el script de publicación: {script}");
+            return 1;
+        }
+
+        try {
+            Log.Info("Ejecutando apuntes/publicar.py...");
+            ProcessStartInfo startInfo = new() {
+                FileName = "python3",
+                WorkingDirectory = AppPaths.ApuntesDirectory,
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add("publicar.py");
+
+            using Process proceso = Process.Start(startInfo)
+                ?? throw new InvalidOperationException("No se pudo iniciar publicar.py.");
+            proceso.WaitForExit();
+
+            if (proceso.ExitCode != 0) {
+                Log.Error($"publicar.py terminó con código {proceso.ExitCode}.");
+            }
+
+            return proceso.ExitCode;
+        } catch (Exception ex) {
+            Log.Error($"No se pudo ejecutar publicar.py: {ex.Message}");
+            return 1;
+        }
+    }
+
     public static int RevisarPullRequests() {
         (Alumnos alumnos, GitHub gh) = PrepararPullRequests();
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(

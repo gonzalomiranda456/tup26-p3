@@ -59,6 +59,11 @@ sealed class PublicarPracticoCommand : Command<PublicarPracticoSettings> {
         AlumnosCliActions.PublicarPractico(settings.TrabajoPractico, settings.Forzar);
 }
 
+sealed class PublicarApuntesCommand : Command<VacioSettings> {
+    protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
+        AlumnosCliActions.PublicarApuntes();
+}
+
 sealed class RevisarPrsCommand : Command<VacioSettings> {
     protected override int Execute(CommandContext context, VacioSettings settings, CancellationToken cancellationToken) =>
         AlumnosCliActions.RevisarPullRequests();
