@@ -9,34 +9,34 @@ static class AlumnosCliApp {
         app.Configure(config => {
             config.SetApplicationName("dotnet run --");
 
-            config.AddCommand<ListarCommand>("listar")
+            config.AddCommand<ListarAlumnosCommand>("listar-alumnos")
                 .WithDescription("Muestra todos los alumnos.");
-            config.AddCommand<TpNoPresentadoCommand>("tp-no-presentado")
-                .WithDescription("Lista alumnos que no presentaron un trabajo práctico, ignorando quienes no presentaron ninguno.");
-            config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
-                .WithDescription("Elimina bin, obj, .vs y cachés de compilación dentro de prácticos.");
-            config.AddCommand<GuardarCommand>("guardar")
-                .WithDescription("Exporta la lista a Markdown.");
-            config.AddCommand<JsonCommand>("json")
-                .WithDescription("Exporta la lista a JSON.");
-            config.AddCommand<VcfCommand>("vcf")
-                .WithDescription("Exporta la lista a vCard.");
-            config.AddCommand<InformerEstadoCommand>("informar-estado")
-                .WithDescription("Publica el estado resumido en el README.md del repositorio.");
-            config.AddCommand<PublicarCommand>("publicar")
-                .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
-            config.AddCommand<PrsCommand>("prs")
+            config.AddCommand<ContarAsistenciasCommand>("contar-asistencias")
+                .WithDescription("Reconstruye las asistencias hasta hoy y marca los presentes del día desde WhatsApp.");
+            config.AddCommand<RevisarPrsCommand>("revisar-prs")
                 .WithDescription("Revisa pull requests de los alumnos.");
             config.AddCommand<BajarPrsCommand>("bajar-prs")
                 .WithDescription("Descarga y sobrescribe todos los prácticos detectados en los PRs.");
             config.AddCommand<CerrarPrsCommand>("cerrar-prs")
                 .WithDescription("Cierra PRs abiertos; opcionalmente filtra por TP.");
-            config.AddCommand<RevisarPresentadosCommand>("revisar-presentados")
-                .WithDescription("Marca TPs presentados a partir del código local.");
-            config.AddCommand<RelevarAsistenciasCommand>("contar-asistencias")
-                .WithDescription("Reconstruye las asistencias hasta hoy y marca los presentes del día desde WhatsApp.");
-            config.AddCommand<WappGruposCommand>("wapp-grupos")
+            config.AddCommand<PublicarPracticoCommand>("publicar-practico")
+                .WithDescription("Publica el enunciado de un trabajo práctico en la carpeta de cada alumno.");
+            config.AddCommand<ListarNoPresentaronTpCommand>("listar-no-presentaron-tp")
+                .WithDescription("Lista alumnos que no presentaron un trabajo práctico, ignorando quienes no presentaron ninguno.");
+            config.AddCommand<ExportarEstadoCommand>("exportar-estado")
+                .WithDescription("Exporta el estado resumido a ESTADO.md.");
+            config.AddCommand<ExportarMarkdownCommand>("exportar-markdown")
+                .WithDescription("Exporta la lista a Markdown.");
+            config.AddCommand<ExportarJsonCommand>("exportar-json")
+                .WithDescription("Exporta la lista a JSON.");
+            config.AddCommand<ExportarVCardCommand>("exportar-vcard")
+                .WithDescription("Exporta la lista a vCard.");
+            config.AddCommand<ListarGruposWhatsAppCommand>("listar-grupos-whatsapp")
                 .WithDescription("Lista grupos y participantes de WhatsApp.");
+            config.AddCommand<RevisarPresentacionesCommand>("revisar-presentaciones")
+                .WithDescription("Marca TPs presentados a partir del código local.");
+            config.AddCommand<LimpiarArchivosTemporalesCommand>("limpiar-archivos-temporales")
+                .WithDescription("Elimina bin, obj, .vs y cachés de compilación dentro de prácticos.");
         });
 
         return app;
@@ -91,20 +91,20 @@ static class AlumnosCliApp {
 
         string detalle = args.Length > 1 ? $" ({string.Join(" ", args[1..])})" : string.Empty;
         return args[0] switch {
-            "listar" => "Listar alumnos",
-            "tp-no-presentado" => $"Listar alumnos que no presentaron TP{detalle}",
-            "limpiar-proyectos-practicos" => "Limpiar proyectos prácticos",
-            "guardar" => "Guardar alumnos en Markdown",
-            "json" => "Exportar alumnos a JSON",
-            "vcf" => "Exportar alumnos a vCard",
-            "informar-estado" => "Informar estado",
-            "publicar" => $"Publicar práctico{detalle}",
-            "prs" => "Revisar pull requests",
+            "listar-alumnos" => "Listar alumnos",
+            "contar-asistencias" => "Contar asistencias desde WhatsApp",
+            "publicar-practico" => $"Publicar práctico{detalle}",
+            "revisar-prs" => "Revisar pull requests",
             "bajar-prs" => "Bajar PRs",
             "cerrar-prs" => $"Cerrar PRs{detalle}",
-            "revisar-presentados" => $"Revisar presentados{detalle}",
-            "contar-asistencias" => "Contar asistencias desde WhatsApp",
-            "wapp-grupos" => "Listar grupos y participantes de WhatsApp",
+            "listar-no-presentaron-tp" => $"Listar alumnos que no presentaron TP{detalle}",
+            "exportar-estado" => "Exportar Estado",
+            "exportar-markdown" => "Exportar alumnos a Markdown",
+            "exportar-json" => "Exportar alumnos a JSON",
+            "exportar-vcard" => "Exportar alumnos a vCard",
+            "revisar-presentaciones" => $"Revisar presentaciones{detalle}",
+            "limpiar-archivos-temporales" => "Limpiar archivos temporales",
+            "listar-grupos-whatsapp" => "Listar grupos y participantes de WhatsApp",
             _ => args[0]
         };
     }
@@ -124,83 +124,20 @@ static class AlumnosCliApp {
             ObtenerOpcionesPrincipales());
 
         return opcion.Command switch {
-            "listar" => ["listar"],
-            "auditoria" => SolicitarMenuAuditoria(),
-            "exportar" => SolicitarMenuExportar(),
-            "publicar" => ConstruirArgumentosPublicarPractico(),
-            "prs" => SolicitarMenuPrs(),
-            "asistencias" => SolicitarMenuAsistencias(),
-            "salir" => null,
-            _ => Array.Empty<string>()
-        };
-    }
-
-    static string[] SolicitarMenuAuditoria() {
-        InteractiveChoice opcion = PedirOpcion(
-            "[bold cyan]Principal / Auditoría[/] · Elegí una auditoría", [
-                new("tp-no-presentado",            "TP no presentado",  "Elegir un TP y listar alumnos que adeudan ese práctico"),
-                new("limpiar-proyectos-practicos", "Limpiar Prácticos", "Eliminar bin, obj, .vs y cachés dentro de prácticos"),
-                new("volver",                      "Volver",            "Regresar al menú principal")
-            ]);
-
-        return opcion.Command switch {
-            "tp-no-presentado" => ConstruirArgumentosTpNoPresentado(),
-            "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
-            _ => Array.Empty<string>()
-        };
-    }
-
-    static string[] SolicitarMenuExportar() {
-        InteractiveChoice opcion = PedirOpcion(
-            "[bold cyan]Principal / Exportar[/] · Elegí un formato", [
-                new("guardar",         "Markdown",        "Guardar el listado en formato Markdown"),
-                new("json",            "JSON",            "Exportar el listado en JSON"),
-                new("vcf",             "vCard",           "Exportar contactos en formato vCard"),
-                new("informar-estado", "Informar estado", "Publicar en ESTADO.md el estado de los prácticos presentados"),
-                new("volver",          "Volver",          "Regresar al menú principal")
-            ]);
-
-        return opcion.Command switch {
-            "guardar" => ConstruirArgumentosExportacion("Guardar Markdown", "guardar"),
-            "json" => ConstruirArgumentosExportacion("Exportar JSON", "json"),
-            "vcf" => ConstruirArgumentosExportacion("Exportar vCard", "vcf"),
-            "informar-estado" => ["informar-estado"],
-            _ => Array.Empty<string>()
-        };
-    }
-
-    static string[] SolicitarMenuPrs() {
-        InteractiveChoice opcion = PedirOpcion(
-            "[bold cyan]Principal / PRs[/] · Elegí una acción", [
-                new("prs",                 "1. Revisar PRs",          "Mostrar estado de pull requests"),
-                new("bajar-prs",           "2. Bajar PRs",            "Descargar y sobrescribir todos los prácticos"),
-                new("cerrar-prs",          "3. Cerrar PRs",           "Cerrar pull requests abiertos"),
-                new("publicar",            "Publicar práctico",    "Copiar el enunciado de un TP a cada alumno"),
-                new("revisar-presentados", "Revisar presentados",  "Marcar TPs presentados según líneas locales"),
-                new("volver",              "Volver",               "Regresar al menú principal")
-            ]);
-
-        return opcion.Command switch {
-            "prs" => ["prs"],
-            "bajar-prs" => ["bajar-prs"],
-            "publicar" => ConstruirArgumentosPublicarPractico(),
-            "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
-            "revisar-presentados" => ConstruirArgumentosRevisarPresentados(),
-            _ => Array.Empty<string>()
-        };
-    }
-
-    static string[] SolicitarMenuAsistencias() {
-        InteractiveChoice opcion = PedirOpcion(
-            "[bold cyan]Principal / Asistencias y WhatsApp[/] · Elegí una acción", [
-                new("contar-asistencias",     "Contar asistencias",    "Detectar presentes desde WhatsApp"),
-                new("wapp-grupos",            "WhatsApp grupos",       "Listar grupos y participantes"),
-                new("volver",                 "Volver",                "Regresar al menú principal")
-            ]);
-
-        return opcion.Command switch {
+            "listar-alumnos" => ["listar-alumnos"],
             "contar-asistencias" => ["contar-asistencias"],
-            "wapp-grupos" => ["wapp-grupos"],
+            "revisar-prs" => ["revisar-prs"],
+            "bajar-prs" => ["bajar-prs"],
+            "cerrar-prs" => ConstruirArgumentosCerrarPrs(),
+            "publicar-practico" => ConstruirArgumentosPublicarPractico(),
+            "listar-no-presentaron-tp" => ConstruirArgumentosTpNoPresentado(),
+            "exportar-estado" => ["exportar-estado"],
+            "exportar-markdown" => ["exportar-markdown"],
+            "exportar-json" => ["exportar-json"],
+            "exportar-vcard" => ["exportar-vcard"],
+            "listar-grupos-whatsapp" => ["listar-grupos-whatsapp"],
+            "limpiar-archivos-temporales" => ["limpiar-archivos-temporales"],
+            "salir" => null,
             _ => Array.Empty<string>()
         };
     }
@@ -209,46 +146,33 @@ static class AlumnosCliApp {
         AnsiConsole.Prompt(
             new SelectionPrompt<InteractiveChoice>()
                 .Title(titulo)
-                .PageSize(12)
-                .UseConverter(choice => $"[green]{choice.Label,-22}[/] [grey] {choice.Description}[/]")
+                .PageSize(16)
+                .UseConverter(choice => $"[green]{choice.Label,-30}[/] [grey] {choice.Description}[/]")
                 .AddChoices(opciones));
 
     static IReadOnlyList<InteractiveChoice> ObtenerOpcionesPrincipales() => [
-            new("asistencias",    "Asistencias y WhatsApp", "Acciones vinculadas a presentes y grupos"),
-            new("listar",         "Listar",                 "Mostrar todos los alumnos"),
-            new("auditoria",      "Auditoría",              "Revisar datos faltantes o incompletos"),
-            new("exportar",       "Exportar",               "Guardar o exportar en distintos formatos"),
-            new("publicar",       "Publicar práctico",      "Copiar el enunciado de un TP a cada alumno"),
-            new("prs",            "Presentaciones",         "Operaciones sobre pull requests y prácticos"),
-            new("salir",          "Salir",                  "Cerrar la aplicación")
+            new("listar-alumnos",                 "Listar alumnos",                 "Mostrar todos los alumnos"),
+            new("contar-asistencias",             "Contar asistencias",             "Reconstruir asistencias y marcar presentes de hoy"),
+            new("revisar-prs",                    "Revisar PRs",                    "Mostrar el estado de los pull requests"),
+            new("bajar-prs",                      "Bajar PRs",                      "Descargar y sobrescribir todos los prácticos"),
+            new("cerrar-prs",                     "Cerrar PRs",                     "Cerrar pull requests abiertos"),
+            new("publicar-practico",              "Publicar práctico",              "Copiar el enunciado de un TP a cada alumno"),
+            new("listar-no-presentaron-tp",       "TP no presentado",               "Listar alumnos que adeudan un práctico"),
+            new("exportar-estado",                "Exportar Estado",                "Exportar el resumen a ESTADO.md"),
+            new("exportar-markdown",              "Exportar como Markdown",         "Exportar alumnos a alumnos.md"),
+            new("exportar-json",                  "Exportar como JSON",             "Exportar alumnos a alumnos.json"),
+            new("exportar-vcard",                 "Exportar como vCard",            "Exportar contactos a alumnos.vcf"),
+            new("listar-grupos-whatsapp",         "Listar grupos de WhatsApp",      "Listar grupos y participantes"),
+            new("limpiar-archivos-temporales",    "Limpiar archivos temporales",    "Eliminar bin, obj, .vs y cachés"),
+            new("salir",                          "Salir",                          "Cerrar la aplicación")
         ];
-
-    static string[] ConstruirArgumentosExportacion(string accion, string comando) {
-        InteractiveChoice modoRuta = PedirOpcion(
-            $"[bold cyan]{accion}[/] · Elegí la ruta de salida", [
-                new("predeterminada", "Predeterminada", "Usar la ruta de salida configurada"),
-                new("personalizada",  "Personalizada",  "Ingresar una ruta manualmente"),
-                new("volver",       "Volver",       "Volver al menú sin ejecutar")
-            ]);
-
-        if (modoRuta.Command == "cancelar") { return Array.Empty<string>(); }
-        if (modoRuta.Command == "predeterminada") { return [comando]; }
-
-        string ruta = AnsiConsole.Prompt(
-            new TextPrompt<string>($"[bold cyan]{accion}[/] · Ruta de salida ([grey]vacío = cancelar[/]):")
-                .AllowEmpty());
-
-        return string.IsNullOrWhiteSpace(ruta)
-            ? Array.Empty<string>()
-            : [comando, ruta.Trim()];
-    }
 
     static string[] ConstruirArgumentosTpNoPresentado() {
         string? trabajoPractico = PedirTrabajoPractico("TP no presentado");
 
         return trabajoPractico is null
             ? Array.Empty<string>()
-            : ["tp-no-presentado", trabajoPractico];
+            : ["listar-no-presentaron-tp", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosPublicarPractico() {
@@ -258,8 +182,8 @@ static class AlumnosCliApp {
         string sobrescritura = PedirModoSobrescritura("Publicar práctico");
 
         return sobrescritura switch {
-            "conservar" => ["publicar", trabajoPractico],
-            "sobrescribir" => ["publicar", trabajoPractico, "--forzar"],
+            "conservar" => ["publicar-practico", trabajoPractico],
+            "sobrescribir" => ["publicar-practico", trabajoPractico, "--forzar"],
             _ => Array.Empty<string>()
         };
     }
@@ -285,14 +209,6 @@ static class AlumnosCliApp {
         return trabajoPractico is null
             ? Array.Empty<string>()
             : ["cerrar-prs", trabajoPractico];
-    }
-
-    static string[] ConstruirArgumentosRevisarPresentados() {
-        string? trabajoPractico = PedirTrabajoPractico("Revisar presentados");
-
-        return trabajoPractico is null
-            ? Array.Empty<string>()
-            : ["revisar-presentados", trabajoPractico];
     }
 
     static string PedirModoSobrescritura(string accion) {

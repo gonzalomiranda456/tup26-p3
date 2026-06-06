@@ -30,7 +30,7 @@ Legajo  Nombre y Apellido               Prácticos    Exm   Ast  Nta
 63546   Sosa Paz, Jeremías              🟢🟢🟢🟢⚪️   🟢⚪️    22   10
 63547   Sosa Paz, José Lisandro         🟢🟢🟢🟢⚪️   🟢⚪️    19   10
 63447   Suárez, Sofía Celeste           🟢🟢🟢🟢⚪️   🟢⚪️    19   10
-61490   Valdez Bustamante, Tomás        🔴🟢🔴🟢⚪️   🟢⚪️    23    6
+61490   Valdez Bustamante, Tomás        🟢🟢🔴🟢⚪️   🟢⚪️    23    6
 63397   Vercellone, Tomás               🔴🟢🟢🔴⚪️   🟢⚪️    17    9
 ```
 
@@ -48,12 +48,12 @@ Legajo  Nombre y Apellido               Prácticos    Exm   Ast  Nta
 63150   Carlino, Joaquín                🟢🟢🟢🔴⚪️   🟡⚪️     7   10
 63341   Carrer, Juan Cruz               🟢🟢🟢🟢⚪️   🟢⚪️    15   10
 63461   Cativa, Facundo Simón           🟢🟢🔴🔴⚪️   🟢⚪️    15    8
-63218   Cortés, Guillermo Augusto       🟢🔴🟢🟢⚪️   🟢⚪️    18   10
+63218   Cortés, Guillermo Augusto       🟢🟢🟢🟢⚪️   🟢⚪️    18   10
 64016   Cura, Rocío Aylen               🔴🟢🟢🔴⚪️   🟢⚪️    11    7
 63266   Decima, Juan Cruz               🟢🟢🟢🟢⚪️   🟢⚪️    19   10
 63137   Díaz, José Simón                🟢🟢🟢🟢⚪️   🟢⚪️    20    6
 61641   Figueroa, Nahuel Ramón          🟢🔴🔴🔴⚪️   🟢⚪️    14    4
-63737   Galván, Rocío Julieta           🔴🔴🟢🟢⚪️   🟢⚪️    16   10
+63737   Galván, Rocío Julieta           🟢🟢🟢🟢⚪️   🟢⚪️    16   10
 63345   García, Franco Tomás            🔴🟢🟢🟢⚪️   🟢⚪️    10   10
 61057   Getar, Thomas                   🔴🔴🔴🔴⚪️   🟢⚪️    16    7
 61489   Gómez, Tomás                    🟢🟢🟢🟢⚪️   🟢⚪️    22    9

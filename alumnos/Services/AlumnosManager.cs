@@ -375,7 +375,6 @@ static class AlumnosManager {
                 alumno.Nombre,
                 alumno.Apellido,
                 alumno.Telefono,
-                TieneFoto = alumno.ConFoto,
                 GitHub = alumno.GitHub,
                 alumno.Nota,
                 alumno.Observaciones,

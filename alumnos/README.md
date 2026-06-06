@@ -21,9 +21,9 @@ También podés usar la línea de comandos tradicional con `Spectre.Console.CLI`
 
 ```bash
 dotnet run -- --help
-dotnet run -- listar
-dotnet run -- publicar TP3 --forzar
-dotnet run -- revisar-presentados 3
+dotnet run -- listar-alumnos
+dotnet run -- publicar-practico TP3 --forzar
+dotnet run -- revisar-presentaciones 3
 ```
 
 - En los comandos que reciben un práctico, se acepta `1`, `tp1` o `TP1`.
@@ -31,45 +31,41 @@ dotnet run -- revisar-presentados 3
 
 ## Comandos
 
-### Auditoría y listados
+### Operaciones principales
 
-- `listar`: muestra todos los alumnos.
-- `sin-github`: lista alumnos sin cuenta de GitHub.
-- `sin-telefono`: lista alumnos sin teléfono.
-- `sin-foto`: lista alumnos sin foto y sincroniza ese estado desde las carpetas locales.
-- `tp-no-presentado <tp>`: lista alumnos que no presentaron el trabajo práctico indicado, ignorando quienes no presentaron ningún práctico.
-- `sin-practicos`: lista alumnos que no presentaron ningún práctico.
-- `limpiar-proyectos-practicos`: elimina `bin`, `obj`, `.vs` y cachés de compilación dentro de `practicos/`.
+- `listar-alumnos`: muestra todos los alumnos.
+- `contar-asistencias`: reconstruye las asistencias hasta hoy y marca los presentes del día a partir de WhatsApp.
 
-### Exportación
-
-- `guardar [ruta]`: exporta la lista en Markdown. Ruta por defecto: `alumnos.md`.
-- `json [ruta]`: exporta la lista en JSON. Ruta por defecto: `alumnos.json`.
-- `vcf [ruta]`: exporta contactos en formato vCard. Ruta por defecto: `alumnos.vcf`.
-- `informar-estado`: publica un resumen de estado en `ESTADO.md` en la raíz del repositorio.
-
-### Carpetas y enunciados
-
-Las carpetas de alumnos se crean o normalizan automáticamente antes de los comandos que las recorren o modifican.
-
-- `publicar <tp> [--forzar]`: copia el enunciado del práctico indicado a la carpeta de cada alumno.
-
-### Pull requests y presentaciones
+### Pull requests y prácticos
 
 Los títulos de los PRs se normalizan automáticamente antes de revisarlos, descargarlos o cerrarlos.
 
-- `prs`: revisa pull requests de los alumnos.
+- `revisar-prs`: revisa pull requests de los alumnos.
 - `bajar-prs`: descarga y sobrescribe todos los prácticos detectados en los PRs, y luego revisa automáticamente los TP presentados.
 - `cerrar-prs [tp]`: cierra todos los PRs abiertos, o solo los del práctico indicado.
-- `revisar-presentados <tp>`: marca presentaciones a partir del código local de cada carpeta.
+- `publicar-practico <tp> [--forzar]`: copia el enunciado del práctico indicado a la carpeta de cada alumno.
+
+Las carpetas de alumnos se crean o normalizan automáticamente antes de los comandos que las recorren o modifican.
+
+### Auditoría
+
+- `listar-no-presentaron-tp <tp>`: lista alumnos que no presentaron el trabajo práctico indicado, ignorando quienes no presentaron ningún práctico.
+
+### Exportación
+
+- `exportar-estado`: publica un resumen de estado en `ESTADO.md` en la raíz del repositorio.
+- `exportar-markdown [ruta]`: exporta la lista en Markdown. Ruta por defecto: `alumnos.md`.
+- `exportar-json [ruta]`: exporta la lista en JSON. Ruta por defecto: `alumnos.json`.
+- `exportar-vcard [ruta]`: exporta contactos en formato vCard. Ruta por defecto: `alumnos.vcf`.
+
+### Utilidades
+
+- `listar-grupos-whatsapp`: lista grupos y participantes de WhatsApp.
+- `revisar-presentaciones <tp>`: marca presentaciones a partir del código local de cada carpeta.
 	- `TP1`: presentado si tiene al menos 100 líneas totales.
 	- `TP2`: presentado si agrega al menos 20 líneas respecto del enunciado.
 	- `TP3`: presentado si agrega al menos 50 líneas respecto del enunciado.
-
-### Asistencias y WhatsApp
-
-- `contar-asistencias`: reconstruye las asistencias hasta hoy y marca los presentes del día a partir de WhatsApp.
-- `wapp-grupos`: lista grupos y participantes de WhatsApp.
+- `limpiar-archivos-temporales`: elimina `bin`, `obj`, `.vs` y cachés de compilación dentro de `practicos/`.
 
 ## Archivos de referencia
 

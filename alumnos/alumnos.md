@@ -25,7 +25,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63420   Pereyra, Valentina Nazaret      (381)552-8065   valentinapereyra03         🔴🟢🔴🔴⚪️⚪️   🟡⚪️   No     5    5
 63354   Perondi, Luciano                (381)350-0777   lucho-bot                  🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
 63393   Ritorto, Lucca                  (381)627-2271   luccardp                   🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
-63208   Rosconi, Ignacio Federico       (381)533-1344   ignaciorosconi             🔴🟢🔴🔴⚪️⚪️   🟡⚪️   No     8    4
+63208   Rosconi, Ignacio Federico       (381)533-1344   ignaciorosconi             🔴🟢🔴🔴⚪️⚪️   🟢⚪️   No     8    4
 63387   Sosa Gonella, Luca              (381)355-5126   lucasosag1                 🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    16    9
 63546   Sosa Paz, Jeremías              (381)200-7473   jeerepazz                  🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22   10
 63547   Sosa Paz, José Lisandro         (381)675-3624   lisandropaz                🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
@@ -44,7 +44,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63313   Ávila Puntano, Benjamín         (381)329-6643   santiagobnj-avila-pun      🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
 63222   Bajre Martínez, Julián          (381)351-9652   julianbajre-png            🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18    7
 61801   Benega, Maximiliano Abraham     (381)505-9048   abrahambenega              🔴🔴🟢🟢⚪️⚪️   🟢⚪️   No    15    6
-63493   Busnelli, Bruno                 (381)366-0607   brunobusnelli              🟢🟢🔴🔴⚪️⚪️   🟡⚪️   No     8   10
+63493   Busnelli, Bruno                 (381)366-0607   brunobusnelli              🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No     8   10
 63150   Carlino, Joaquín                (381)605-7383   vincent-coffe              🟢🟢🟢🔴⚪️⚪️   🟡⚪️   No     7   10
 63341   Carrer, Juan Cruz               (381)632-5727   juancarrer11               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
 63461   Cativa, Facundo Simón           (381)391-4222   cativafacundo9-gif         🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    15    8
