@@ -11,20 +11,12 @@ static class AlumnosCliApp {
 
             config.AddCommand<ListarCommand>("listar")
                 .WithDescription("Muestra todos los alumnos.");
-            config.AddCommand<SinGithubCommand>("sin-github")
-                .WithDescription("Lista alumnos sin cuenta de GitHub.");
-            config.AddCommand<SinTelefonoCommand>("sin-telefono")
-                .WithDescription("Lista alumnos sin teléfono.");
-            config.AddCommand<SinFotoCommand>("sin-foto")
-                .WithDescription("Lista alumnos sin foto.");
             config.AddCommand<Tp1NoPresentadoCommand>("tp1-no-presentado")
                 .WithDescription("Lista alumnos que no presentaron el trabajo práctico 1.");
             config.AddCommand<Tp2NoPresentadoCommand>("tp2-no-presentado")
                 .WithDescription("Lista alumnos que no presentaron el trabajo práctico 2.");
             config.AddCommand<TpNoPresentadoCommand>("tp-no-presentado")
                 .WithDescription("Lista alumnos que no presentaron un trabajo práctico, ignorando quienes no presentaron ninguno.");
-            config.AddCommand<SinPracticosCommand>("sin-practicos")
-                .WithDescription("Lista alumnos que no presentaron ningún trabajo práctico.");
             config.AddCommand<LimpiarProyectosPracticosCommand>("limpiar-proyectos-practicos")
                 .WithDescription("Elimina bin, obj, .vs y cachés de compilación dentro de prácticos.");
             config.AddCommand<GuardarCommand>("guardar")
@@ -57,12 +49,6 @@ static class AlumnosCliApp {
                 .WithDescription("Busca asistencias de hoy a partir de WhatsApp.");
             config.AddCommand<WappGruposCommand>("wapp-grupos")
                 .WithDescription("Lista grupos y participantes de WhatsApp.");
-            config.AddCommand<WappRecuperarTp1Tp2Command>("wapp-recuperar-tp1-tp2")
-                .WithDescription("Envía un WhatsApp a alumnos que no presentaron TP1 ni TP2.");
-            config.AddCommand<WappFotoParcialCommand>("wapp-foto-parcial")
-                .WithDescription("Envía un WhatsApp a alumnos sin foto pidiéndoles una selfie para el parcial.");
-            config.AddCommand<RegistrarRespuestasCommand>("registrar-respuestas")
-                .WithDescription("Lee respuestas de WhatsApp y registra el código de cada alumno.");
         });
 
         return app;
@@ -118,11 +104,7 @@ static class AlumnosCliApp {
         string detalle = args.Length > 1 ? $" ({string.Join(" ", args[1..])})" : string.Empty;
         return args[0] switch {
             "listar" => "Listar alumnos",
-            "sin-github" => "Listar alumnos sin GitHub",
-            "sin-telefono" => "Listar alumnos sin teléfono",
-            "sin-foto" => "Listar alumnos sin foto",
             "tp-no-presentado" => $"Listar alumnos que no presentaron TP{detalle}",
-            "sin-practicos" => "Listar alumnos sin prácticos presentados",
             "limpiar-proyectos-practicos" => "Limpiar proyectos prácticos",
             "guardar" => "Guardar alumnos en Markdown",
             "json" => "Exportar alumnos a JSON",
@@ -139,9 +121,6 @@ static class AlumnosCliApp {
             "registrar-asistencias" => "Registrar asistencias",
             "contar-asistencias" => "Contar asistencias desde WhatsApp",
             "wapp-grupos" => "Listar grupos y participantes de WhatsApp",
-            "wapp-recuperar-tp1-tp2" => "Recuperar TP1/TP2 por WhatsApp",
-            "wapp-foto-parcial" => "Pedir foto para el parcial por WhatsApp",
-            "registrar-respuestas" => "Registrar respuestas de WhatsApp",
             _ => args[0]
         };
     }
@@ -177,21 +156,13 @@ static class AlumnosCliApp {
     static string[] SolicitarMenuAuditoria() {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Auditoría[/] · Elegí una auditoría", [
-                new("sin-github",                  "Sin GitHub",        "Filtrar alumnos sin usuario GitHub"),
-                new("sin-telefono",                "Sin teléfono",      "Filtrar alumnos sin teléfono"),
-                new("sin-foto",                    "Sin foto",          "Filtrar alumnos sin foto"),
                 new("tp-no-presentado",            "TP no presentado",  "Elegir un TP y listar alumnos que adeudan ese práctico"),
-                new("sin-practicos",               "Sin prácticos",     "Listar alumnos que no presentaron ningún práctico"),
                 new("limpiar-proyectos-practicos", "Limpiar Prácticos", "Eliminar bin, obj, .vs y cachés dentro de prácticos"),
                 new("volver",                      "Volver",            "Regresar al menú principal")
             ]);
 
         return opcion.Command switch {
-            "sin-github" => ["sin-github"],
-            "sin-telefono" => ["sin-telefono"],
-            "sin-foto" => ["sin-foto"],
             "tp-no-presentado" => ConstruirArgumentosTpNoPresentado(),
-            "sin-practicos" => ["sin-practicos"],
             "limpiar-proyectos-practicos" => ["limpiar-proyectos-practicos"],
             _ => Array.Empty<string>()
         };
@@ -245,11 +216,8 @@ static class AlumnosCliApp {
         InteractiveChoice opcion = PedirOpcion(
             "[bold cyan]Principal / Asistencias y WhatsApp[/] · Elegí una acción", [
                 new("contar-asistencias",     "Contar asistencias",    "Detectar presentes desde WhatsApp"),
-                new("registrar-respuestas",   "Registrar respuestas",  "Leer respuestas de WhatsApp y registrar códigos"),
                 new("registrar-asistencias",  "Registrar asistencias", "Consolidar presentes del día"),
                 new("wapp-grupos",            "WhatsApp grupos",       "Listar grupos y participantes"),
-                new("wapp-recuperar-tp1-tp2", "Recuperar TP1/TP2",     "Enviar aviso a alumnos que no presentaron TP1 ni TP2"),
-                new("wapp-foto-parcial",      "Foto para el parcial",  "Pedir selfie a alumnos sin foto de perfil"),
                 new("volver",                 "Volver",                "Regresar al menú principal")
             ]);
 
@@ -257,9 +225,6 @@ static class AlumnosCliApp {
             "registrar-asistencias" => ["registrar-asistencias"],
             "contar-asistencias" => ["contar-asistencias"],
             "wapp-grupos" => ["wapp-grupos"],
-            "wapp-recuperar-tp1-tp2" => ConstruirArgumentosWappRecuperarTp1Tp2(),
-            "wapp-foto-parcial" => ConstruirArgumentosWappFotoParcial(),
-            "registrar-respuestas" => ["registrar-respuestas"],
             _ => Array.Empty<string>()
         };
     }
@@ -399,42 +364,6 @@ static class AlumnosCliApp {
         return trabajoPractico is null
             ? Array.Empty<string>()
             : ["revisar-presentados", trabajoPractico];
-    }
-
-    static string[] ConstruirArgumentosWappRecuperarTp1Tp2() {
-        InteractiveChoice seleccion = PedirOpcion(
-            "[bold cyan]Recuperar TP1/TP2 por WhatsApp[/] · Elegí qué TP recuperar", [
-                new("1",        "TP1",      "Enviar aviso por TP1"),
-                new("2",        "TP2",      "Enviar aviso por TP2"),
-                new("ambos",    "Ambos",    "Enviar aviso por TP1 y TP2"),
-                new("cancelar", "Cancelar", "Volver al menú sin ejecutar")
-            ]);
-
-        if (seleccion.Command == "cancelar") { return Array.Empty<string>(); }
-
-        string? tpArg = seleccion.Command switch {
-            "1" => "1",
-            "2" => "2",
-            _ => null
-        };
-
-        string modo = PedirModoEjecucion("Recuperar TP1/TP2 por WhatsApp", "Enviar mensajes reales");
-        if (modo == "cancelar") { return Array.Empty<string>(); }
-
-        List<string> args = ["wapp-recuperar-tp1-tp2"];
-        if (tpArg is not null) args.Add(tpArg);
-        if (modo == "simular") args.Add("--simular");
-        return [.. args];
-    }
-
-    static string[] ConstruirArgumentosWappFotoParcial() {
-        string modo = PedirModoEjecucion("Foto para el parcial por WhatsApp", "Enviar mensajes reales");
-
-        return modo switch {
-            "simular" => ["wapp-foto-parcial", "--simular"],
-            "ejecutar" => ["wapp-foto-parcial"],
-            _ => Array.Empty<string>()
-        };
     }
 
     static string PedirModoEjecucion(string accion, string etiquetaEjecucion = "Ejecutar cambios reales") {

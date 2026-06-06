@@ -7,7 +7,6 @@ readonly record struct LimpiezaCompilacionPracticosResultado(IReadOnlyList<strin
 
 static class AppPaths {
     static readonly string dataDirectory = ResolverDirectorioDatos();
-    static readonly string[] extensionesFotoAlumno = [".png", ".jpg", ".jpeg"];
     static readonly string[] directoriosCompilacionPracticos = ["bin", "obj", ".vs"];
     static readonly string[] sufijosArchivosCacheCompilacion = [".lscache", ".suo", ".userosscache", ".sln.docstates"];
 
@@ -56,15 +55,6 @@ static class AppPaths {
 
     public static string PracticoAlumnoSubdirectory(string rutaBase, Alumno alumno, string subdirectorio) =>
         Path.Combine(PracticoAlumnoDirectory(rutaBase, alumno), subdirectorio);
-
-    public static string FotoPerfilOrigen(string rutaFotos, Alumno alumno) =>
-        Path.Combine(rutaFotos, alumno.TelefonoId, "foto.png");
-
-    public static string FotoAlumnoDestino(string rutaCarpetaAlumno) =>
-        Path.Combine(rutaCarpetaAlumno, "foto.png");
-
-    public static IEnumerable<string> FotosAlumno(string rutaCarpetaAlumno) =>
-        extensionesFotoAlumno.Select(extension => Path.Combine(rutaCarpetaAlumno, $"foto{extension}"));
 
     public static string WacliStoreDirectory(string? store) {
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -244,20 +234,6 @@ static class AppPaths {
 
     public static void RenombrarCarpetaAlumno(string origen, Alumno alumno) =>
         RenombrarCarpeta(origen, PracticoAlumnoDirectory(alumno));
-
-
-    public static bool ExisteFotoPerfil(string rutaFotos, Alumno alumno) =>
-        ExisteArchivo(FotoPerfilOrigen(rutaFotos, alumno));
-
-    public static bool ExisteFotoAlumno(string rutaCarpetaAlumno) =>
-        FotosAlumno(rutaCarpetaAlumno).Any(ExisteArchivo);
-
-    public static CopiaRuta CopiarFotoPerfil(string rutaFotos, Alumno alumno, string rutaCarpetaAlumno) {
-        string origen = FotoPerfilOrigen(rutaFotos, alumno);
-        string destino = FotoAlumnoDestino(rutaCarpetaAlumno);
-        File.Copy(origen, destino);
-        return new(origen, destino);
-    }
 
     public static CopiaRuta CopiarEnunciadoPractico(Alumno alumno, string practico, bool forzar = false) {
         string nombrePractico = practico.Trim();

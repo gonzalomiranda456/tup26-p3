@@ -30,7 +30,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63546   Sosa Paz, Jeremías              (381)200-7473   jeerepazz                  🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22   10
 63547   Sosa Paz, José Lisandro         (381)675-3624   lisandropaz                🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
 63447   Suárez, Sofía Celeste           (381)246-3725   suarezsofia541-alt         🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
-61490   Valdez Bustamante, Tomás        (381)303-1034   tomas-valdez-bustamante    🔴🟢🔴🟢⚪️⚪️   🟢⚪️   No    23    6
+61490   Valdez Bustamante, Tomás        (381)303-1034   tomas-valdez-bustamante    🟢🟢🔴🟢⚪️⚪️   🟢⚪️   No    23    6
 63397   Vercellone, Tomás               (381)676-6267   xtomi2456                  🔴🟢🟢🔴⚪️⚪️   🟢⚪️   No    17    9
 ```
 
@@ -53,7 +53,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63266   Decima, Juan Cruz               (381)558-9063   devjuancruz003-com         🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
 63137   Díaz, José Simón                (381)617-9958   josesimondiaz              🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    20    6
 61641   Figueroa, Nahuel Ramón          (381)353-2589   figueroanahuel16           🟢🔴🔴🔴⚪️⚪️   🟢⚪️   No    14    4
-63737   Galván, Rocío Julieta           (381)647-5597   rociogalvani               🔴🔴🟢🟢⚪️⚪️   🟢⚪️   No    16   10
+63737   Galván, Rocío Julieta           (381)647-5597   rociogalvani               🟢🔴🟢🟢⚪️⚪️   🟢⚪️   No    16   10
 63345   García, Franco Tomás            (381)207-5701   francotms                  🔴🟢🟢🟢⚪️⚪️   🟢⚪️   No    10   10
 61057   Getar, Thomas                   (381)336-2147   thomasgetar                🔴🔴🔴🔴⚪️⚪️   🟢⚪️   No    16    7
 61489   Gómez, Tomás                    (381)390-5024   tomasgomez18               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22    9

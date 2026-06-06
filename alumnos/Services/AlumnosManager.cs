@@ -32,10 +32,6 @@ Servicio estático para leer, transformar y exportar la información de alumnos.
     - `alumnos`: colección a procesar.
     - `practico`: nombre del práctico.
 
-- `CopiarFotoPerfil(alumnos, rutaFotos)`: copia fotos de perfil a las carpetas de alumnos cuando corresponde.
-    - `alumnos`: colección a procesar.
-    - `rutaFotos`: carpeta base de fotos origen.
-
 - `CopiarEnunciadoPracticos(alumnos, practico, forzar)`: copia el enunciado de un práctico a cada carpeta de alumno.
     - `alumnos`: colección a procesar.
     - `practico`: nombre del práctico.
@@ -256,39 +252,6 @@ static class AlumnosManager {
         }
     }
 
-    public static void CopiarFotoPerfil(IEnumerable<Alumno> alumnos, string rutaFotos) {
-        if (!AppPaths.ExisteDirectorioPracticos()) {
-            Log.Error($"No existe la carpeta base de prácticos: {AppPaths.PracticosDirectory}");
-            return;
-        }
-
-        foreach (Alumno alumno in alumnos) {
-            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
-                continue;
-            }
-
-            if (!AppPaths.ExisteFotoPerfil(rutaFotos, alumno)) {
-                continue;
-            }
-
-            string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(alumno.Legajo);
-            if (!AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno)) {
-                continue;
-            }
-
-            if (AppPaths.ExisteFotoAlumno(rutaCarpetaAlumno!)) {
-                continue;
-            }
-
-            try {
-                CopiaRuta copia = AppPaths.CopiarFotoPerfil(rutaFotos, alumno, rutaCarpetaAlumno!);
-                Log.Info($"Foto copiada: {copia.Origen} -> {copia.Destino}");
-            } catch (Exception ex) {
-                Log.Error($"Error al copiar la foto para {alumno.CarpetaNombre}: {ex.Message}");
-            }
-        }
-    }
-
     public static void CopiarEnunciadoPracticos(IEnumerable<Alumno> alumnos, string practico, bool forzar = false) {
         string nombrePractico = practico.Trim();
 
@@ -494,25 +457,6 @@ static class AlumnosManager {
         } catch (Exception ex) {
             Log.Error($"Error al guardar el archivo vCard: {ex.Message}");
         }
-    }
-
-    public static int SincronizarEstadoFotosDesdeCarpetas(IEnumerable<Alumno> alumnos) {
-        int actualizados = 0;
-
-        foreach (Alumno alumno in alumnos) {
-            string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(alumno.Legajo);
-            bool tieneFotoEnCarpeta = AppPaths.ExisteCarpetaAlumno(rutaCarpetaAlumno) &&
-                                      AppPaths.ExisteFotoAlumno(rutaCarpetaAlumno!);
-
-            if (alumno.TieneFoto == tieneFotoEnCarpeta) {
-                continue;
-            }
-
-            alumno.TieneFoto = tieneFotoEnCarpeta;
-            actualizados++;
-        }
-
-        return actualizados;
     }
 
     static Alumno? ExtraerAlumnoFormatoMarkdown(string linea, string comisionActual) {

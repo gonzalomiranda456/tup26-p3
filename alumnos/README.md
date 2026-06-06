@@ -72,9 +72,6 @@ dotnet run -- revisar-presentados 3
 - `contar-asistencias`: releva presentes del día a partir de WhatsApp.
 - `registrar-asistencias`: consolida los presentes del día como asistencias acumuladas.
 - `wapp-grupos`: lista grupos y participantes de WhatsApp.
-- `wapp-recuperar-tp1-tp2 [tp] [--simular]`: envía un aviso de recuperación por WhatsApp.
-- `wapp-foto-parcial [--simular]`: pide una selfie a alumnos sin foto registrada para el parcial.
-- `registrar-respuestas`: lee respuestas de WhatsApp y registra el código informado por cada alumno.
 
 ## Archivos de referencia
 

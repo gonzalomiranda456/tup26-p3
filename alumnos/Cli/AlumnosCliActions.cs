@@ -19,32 +19,6 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int ListarSinGithub() {
-        Alumnos alumnos = CargarAlumnos();
-        AlumnosManager.Listar(alumnos.ConGithub(false), "Alumnos sin GitHub");
-        return 0;
-    }
-
-    public static int ListarSinTelefono() {
-        Alumnos alumnos = CargarAlumnos();
-        AlumnosManager.Listar(alumnos.ConTelefono(false), "Alumnos sin telefono");
-        return 0;
-    }
-
-    public static int ListarSinFoto() {
-        Alumnos alumnos = CargarAlumnos();
-        int actualizados = AlumnosManager.SincronizarEstadoFotosDesdeCarpetas(alumnos);
-
-        if (actualizados > 0) {
-            Log.Info($"Estado de foto actualizado desde carpetas: {actualizados} alumno(s).");
-        } else {
-            Log.Info("No hubo cambios en el estado de fotos al revisar carpetas.");
-        }
-
-        AlumnosManager.Listar(alumnos.ConFotos(false), "Alumnos sin foto");
-        return 0;
-    }
-
     public static int ListarTp1NoPresentado() {
         return ListarTpNoPresentado("1");
     }
@@ -66,14 +40,6 @@ static class AlumnosCliActions {
             .Where(alumno => alumno.EstadoPractico(numeroTp) != Estado.Aprobado);
 
         AlumnosManager.Listar(noPresentaron, $"Alumnos que no presentaron TP{numeroTp}");
-        return 0;
-    }
-
-    public static int ListarSinPracticosPresentados() {
-        Alumnos alumnos = CargarAlumnos();
-        IEnumerable<Alumno> sinPracticos = alumnos.Where(alumno => !TieneAlgunPracticoPresentado(alumno));
-
-        AlumnosManager.Listar(sinPracticos, "Alumnos sin prácticos presentados");
         return 0;
     }
 
@@ -443,22 +409,6 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int RegistrarRespuestas() {
-        Alumnos alumnos = CargarAlumnos();
-
-        AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .SpinnerStyle(Style.Parse("cyan"))
-            .Start("Registrar respuestas · Preparando lectura de WhatsApp...", contexto =>
-                CargarCodigosDesdeWhatsApp(alumnos, estado => contexto.Status($"Registrar respuestas · {estado}")));
-
-        IEnumerable<Alumno> conCodigo = alumnos.Where(alumno => !string.IsNullOrWhiteSpace(alumno.Observaciones));
-        AlumnosManager.Listar(conCodigo, "Alumnos con código registrado");
-        Log.WriteLine($"Códigos detectados: {conCodigo.Count()}");
-        AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
-        return 0;
-    }
-
     public static int WappGrupos() {
         Alumnos alumnos = CargarAlumnos();
 
@@ -517,155 +467,6 @@ static class AlumnosCliActions {
         }
 
         return 0;
-    }
-
-    public static int WappRecuperarPracticos(string? trabajoPractico, bool simular) {
-        int? numeroTp = null;
-        if (!string.IsNullOrWhiteSpace(trabajoPractico)) {
-            int n = ObtenerNumeroTP(trabajoPractico);
-            if (n <= 0) {
-                Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
-                return 1;
-            }
-            numeroTp = n;
-        }
-
-        Alumnos alumnos = CargarAlumnos();
-        List<Alumno> destinatarios = alumnos
-            .Where(alumno => numeroTp switch {
-                1 => alumno.EstadoPractico(1) != Estado.Aprobado,
-                2 => alumno.EstadoPractico(2) != Estado.Aprobado,
-                _ => alumno.EstadoPractico(1) != Estado.Aprobado && alumno.EstadoPractico(2) != Estado.Aprobado
-            })
-            .OrderBy(alumno => alumno.Comision)
-            .ThenBy(alumno => alumno.NombreCompleto)
-            .ThenBy(alumno => alumno.Legajo)
-            .ToList();
-
-        string etiqueta = numeroTp is int tp ? $"TP{tp}" : "TP1 y TP2";
-        if (destinatarios.Count == 0) {
-            Log.Info($"No hay alumnos con {etiqueta} pendiente de presentación.");
-            return 0;
-        }
-
-        Log.Info($"{(simular ? "Simulación" : "Envío")} de WhatsApp a alumnos con {etiqueta} no presentado.");
-
-        int enviados = 0;
-        int omitidos = 0;
-
-        if (simular) {
-            foreach (Alumno alumno in destinatarios) {
-                string mensaje = MensajeRecuperacion(alumno, numeroTp);
-                if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
-                    omitidos++;
-                    Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
-                    continue;
-                }
-                Log.Info($"\n-- SIMULAR {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId} ".PadRight(90, '-'));
-                Log.WriteLine(mensaje);
-            }
-        } else {
-            WAppService wapp = EjecutarConIndicador(
-                "Recuperar TP1/TP2 por WhatsApp",
-                "Sincronizando WhatsApp...",
-                actualizarEstado => {
-                    actualizarEstado("Sincronizando WhatsApp antes de enviar mensajes...");
-                    return new WAppService();
-                });
-            AnsiConsole.Progress()
-                .AutoClear(false)
-                .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
-                .Start(ctx => {
-                    var tarea = ctx.AddTask($"Enviando {etiqueta}", maxValue: destinatarios.Count);
-                    foreach (Alumno alumno in destinatarios) {
-                        string mensaje = MensajeRecuperacion(alumno, numeroTp);
-                        if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
-                            omitidos++;
-                            Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
-                        } else {
-                            try {
-                                wapp.Enviar(alumno.TelefonoId, mensaje, null);
-                                enviados++;
-                                Log.Info($"Enviado: {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
-                            } catch (Exception ex) {
-                                omitidos++;
-                                Log.Error($"No se pudo enviar a {alumno.Legajo} | {alumno.NombreCompleto}: {ex.Message}");
-                            }
-                        }
-                        tarea.Increment(1);
-                    }
-                });
-        }
-
-        Log.Info($"Resumen WhatsApp {etiqueta}: destinatarios={destinatarios.Count}, enviados={enviados}, omitidos={omitidos}, simular={simular}");
-        return omitidos > 0 && !simular ? 1 : 0;
-    }
-
-    public static int WappFotoParcial(bool simular) {
-        Alumnos alumnos = CargarAlumnos();
-        List<Alumno> destinatarios = alumnos
-            .Where(alumno => !alumno.ConFoto)
-            .OrderBy(alumno => alumno.Comision)
-            .ThenBy(alumno => alumno.NombreCompleto)
-            .ThenBy(alumno => alumno.Legajo)
-            .ToList();
-
-        if (destinatarios.Count == 0) {
-            Log.Info("No hay alumnos sin foto de perfil.");
-            return 0;
-        }
-
-        Log.Info($"{(simular ? "Simulación" : "Envío")} de WhatsApp a alumnos sin foto de perfil.");
-
-        int enviados = 0;
-        int omitidos = 0;
-
-        if (simular) {
-            foreach (Alumno alumno in destinatarios) {
-                string mensaje = MensajeFotoParcial(alumno);
-                if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
-                    omitidos++;
-                    Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
-                    continue;
-                }
-                Log.Info($"\n-- SIMULAR {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId} ".PadRight(90, '-'));
-                Log.WriteLine(mensaje);
-            }
-        } else {
-            WAppService wapp = EjecutarConIndicador(
-                "Foto para el parcial por WhatsApp",
-                "Sincronizando WhatsApp...",
-                actualizarEstado => {
-                    actualizarEstado("Sincronizando WhatsApp antes de enviar mensajes...");
-                    return new WAppService();
-                });
-            AnsiConsole.Progress()
-                .AutoClear(false)
-                .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
-                .Start(ctx => {
-                    var tarea = ctx.AddTask("Enviando foto parcial", maxValue: destinatarios.Count);
-                    foreach (Alumno alumno in destinatarios) {
-                        string mensaje = MensajeFotoParcial(alumno);
-                        if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) {
-                            omitidos++;
-                            Log.Warning($"Omitido sin teléfono: {alumno.Legajo} | {alumno.NombreCompleto}");
-                        } else {
-                            try {
-                                wapp.Enviar(alumno.TelefonoId, mensaje, null);
-                                enviados++;
-                                Log.Info($"Enviado: {alumno.Legajo} | {alumno.NombreCompleto} | {alumno.TelefonoId}");
-                            } catch (Exception ex) {
-                                omitidos++;
-                                Log.Error($"No se pudo enviar a {alumno.Legajo} | {alumno.NombreCompleto}: {ex.Message}");
-                            }
-                        }
-                        tarea.Increment(1);
-                    }
-                });
-        }
-
-        Log.Info($"Resumen WhatsApp foto parcial: destinatarios={destinatarios.Count}, enviados={enviados}, omitidos={omitidos}, simular={simular}");
-        return omitidos > 0 && !simular ? 1 : 0;
     }
 
     public static int ObtenerNumeroTP(string? valor) {
@@ -755,87 +556,6 @@ static class AlumnosCliActions {
             alumno.Presente    = fechas.Contains(hoy);
             alumno.Asistencias = fechas.Count(fecha => fecha < hoy);
         }
-    }
-
-    static void CargarCodigosDesdeWhatsApp(Alumnos alumnos, Action<string>? actualizarEstado = null) {
-        actualizarEstado?.Invoke("Sincronizando WhatsApp...");
-        WAppService wapp = new();
-        DateTime desde = DateTime.Today.AddDays(-30);
-        DateTime hasta = DateTime.Today.AddDays(1);
-        Dictionary<int, (DateTime Fecha, string Codigo, string Origen)> codigosDetectados = new();
-
-        foreach (string grupo in new[] { "C7", "C9" }) {
-            actualizarEstado?.Invoke($"Leyendo mensajes del grupo {grupo}...");
-            try {
-                foreach (MensajeWhatsApp mensaje in wapp.Mensajes(grupo, desde, hasta)) {
-                    if (mensaje.FromMe) { continue; }
-
-                    string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
-                    if (codigo is null) { continue; }
-
-                    Alumno? alumno = ExtraerLegajoDesdeCodigo(codigo) is int legajo
-                        ? alumnos.BuscarPorLegajo(legajo)
-                        : null;
-
-                    if (alumno is null) {
-                        string telefono = wapp.ObtenerTelefonoAutorMensaje(mensaje);
-                        alumno = alumnos.BuscarPorTelefono(telefono);
-                    }
-
-                    if (alumno is null) { continue; }
-
-                    RegistrarCodigoDetectado(alumno, mensaje, codigo, grupo);
-                }
-            } catch (Exception ex) {
-                Log.Warning($"No se pudieron leer mensajes del grupo {grupo}: {ex.Message}");
-            }
-        }
-
-        foreach (Alumno alumno in alumnos) {
-            if (string.IsNullOrWhiteSpace(alumno.TelefonoId)) { continue; }
-
-            actualizarEstado?.Invoke($"Leyendo chat privado de {alumno.NombreCompleto}...");
-            try {
-                foreach (MensajeWhatsApp mensaje in wapp.Mensajes(alumno.TelefonoId, desde, hasta)) {
-                    if (mensaje.FromMe) { continue; }
-
-                    string? codigo = ExtraerCodigoDesdeTexto(mensaje.Content);
-                    if (codigo is not null) {
-                        RegistrarCodigoDetectado(alumno, mensaje, codigo, "privado");
-                    }
-                }
-            } catch (Exception ex) {
-                Log.Warning($"No se pudieron leer mensajes de {alumno.NombreCompleto}: {ex.Message}");
-            }
-        }
-
-        actualizarEstado?.Invoke("Consolidando códigos...");
-
-        foreach (Alumno alumno in alumnos) {
-            if (!codigosDetectados.TryGetValue(alumno.Legajo, out var detectado)) { continue; }
-
-            alumno.Observaciones = detectado.Codigo;
-            alumno.Presente = true;
-            Log.Info($"Código detectado ({detectado.Origen}) [{detectado.Fecha:HH:mm}]: {alumno.NombreCompleto} → {detectado.Codigo}");
-        }
-
-        void RegistrarCodigoDetectado(Alumno alumno, MensajeWhatsApp mensaje, string codigo, string origen) {
-            if (codigosDetectados.TryGetValue(alumno.Legajo, out var anterior) && anterior.Fecha > mensaje.Fecha) {
-                return;
-            }
-
-            codigosDetectados[alumno.Legajo] = (mensaje.Fecha, codigo, origen);
-        }
-    }
-
-    static string? ExtraerCodigoDesdeTexto(string texto) {
-        Match m = Regex.Match(texto, @"\b\d+\.\d+\.[a-zA-Z0-9]+(?:\.\d{2})?\b");
-        return m.Success ? m.Value : null;
-    }
-
-    static int? ExtraerLegajoDesdeCodigo(string codigo) {
-        string primerParte = codigo.Split('.')[0];
-        return int.TryParse(primerParte, out int legajo) ? legajo : null;
     }
 
     static bool EsMensajeDeAsistencia(MensajeWhatsApp mensaje, DateTime desde, DateTime hasta) {
@@ -1118,34 +838,4 @@ static class AlumnosCliActions {
 
     readonly record struct CopiaDetectada(int LineasComunes, int MaximoLineas, double Porcentaje);
 
-    static string MensajeFotoParcial(Alumno alumno) =>
-        $"""
-        Hola *{alumno.Nombre}*.
-
-        No tengo registrada una foto tuya en el sistema y mañana tenemos el parcial.
-
-        Respondé este mensaje con una *selfie simple* para que pueda identificarte durante el examen. 📸
-        """;
-
-    static string MensajeRecuperacion(Alumno alumno, int? numeroTp) {
-        string tpsTexto = numeroTp switch {
-            int x and >= 1 and <= 6 => $"el trabajo práctico {x}",
-            _ => "el trabajo práctico 1 ni el trabajo práctico 2"
-        };
-
-        return $"""
-            Hola *{alumno.Nombre}*.
-
-            Según mi registro, no has presentado {tpsTexto}.
-
-            Podes recuperar el trabajo si lo presentas hasta el próximo jueves {ProximoJueves():dd/MM}.
-            """;
-    }
-
-    static DateTime ProximoJueves() {
-        int dias = ((int)DayOfWeek.Thursday - (int)DateTime.Today.DayOfWeek + 7) % 7;
-        if (dias == 0) { dias = 7; }
-
-        return DateTime.Today.AddDays(dias);
-    }
 }
