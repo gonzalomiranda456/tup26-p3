@@ -48,12 +48,12 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63150   Carlino, Joaquín                (381)605-7383   vincent-coffe              🟢🟢🟢🔴⚪️⚪️   🟡⚪️   No     7   10
 63341   Carrer, Juan Cruz               (381)632-5727   juancarrer11               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
 63461   Cativa, Facundo Simón           (381)391-4222   cativafacundo9-gif         🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    15    8
-63218   Cortés, Guillermo Augusto       (381)606-0586   guillecortes01             🟢🔴🟢🟢⚪️⚪️   🟢⚪️   No    18   10
+63218   Cortés, Guillermo Augusto       (381)606-0586   guillecortes01             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18   10
 64016   Cura, Rocío Aylen               (381)478-8799   rocura26                   🔴🟢🟢🔴⚪️⚪️   🟢⚪️   No    11    7
 63266   Decima, Juan Cruz               (381)558-9063   devjuancruz003-com         🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
 63137   Díaz, José Simón                (381)617-9958   josesimondiaz              🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    20    6
 61641   Figueroa, Nahuel Ramón          (381)353-2589   figueroanahuel16           🟢🔴🔴🔴⚪️⚪️   🟢⚪️   No    14    4
-63737   Galván, Rocío Julieta           (381)647-5597   rociogalvani               🟢🔴🟢🟢⚪️⚪️   🟢⚪️   No    16   10
+63737   Galván, Rocío Julieta           (381)647-5597   rociogalvani               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    16   10
 63345   García, Franco Tomás            (381)207-5701   francotms                  🔴🟢🟢🟢⚪️⚪️   🟢⚪️   No    10   10
 61057   Getar, Thomas                   (381)336-2147   thomasgetar                🔴🔴🔴🔴⚪️⚪️   🟢⚪️   No    16    7
 61489   Gómez, Tomás                    (381)390-5024   tomasgomez18               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    22    9

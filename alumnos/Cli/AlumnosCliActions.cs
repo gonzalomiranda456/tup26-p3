@@ -155,18 +155,11 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int BajarPullRequests(string? trabajoPractico, bool forzar) {
-        bool bajarTodos = EsTodosLosTrabajosPracticos(trabajoPractico);
-        int numeroTp = bajarTodos ? 0 : ObtenerNumeroTP(trabajoPractico);
-        if (!bajarTodos && numeroTp <= 0) {
-            Log.Error(MensajeTrabajoPracticoInvalido(trabajoPractico));
-            return 1;
-        }
-
+    public static int BajarPullRequests() {
         (_, GitHub gh) = PrepararPullRequests(prepararCarpetas: true);
         List<(int Numero, string Titulo)> prs = EjecutarConIndicador(
             "Bajar PRs",
-            bajarTodos ? "Consultando PRs abiertos..." : $"Consultando PRs con archivos de TP{numeroTp}...",
+            "Consultando PRs abiertos...",
             actualizarEstado => {
                 actualizarEstado("Leyendo PRs abiertos desde GitHub...");
                 return gh.PullRequests();
@@ -180,21 +173,30 @@ static class AlumnosCliActions {
         int indice = 0;
         int procesados = 0;
         int trabajosProcesados = 0;
+        HashSet<int> trabajosParaRevisar = new();
         foreach (var pr in prs) {
             indice++;
             Log.Info($"\nRevisando PR {indice}/{prs.Count}: #{pr.Numero} | {pr.Titulo}");
-            int trabajos = gh.BajarArchivosAlumno(pr.Numero, forzar, bajarTodos ? null : numeroTp, informarOmitidos: bajarTodos);
-            if (trabajos > 0) {
+            IReadOnlyList<int> trabajos = gh.BajarArchivosAlumno(pr.Numero, forzar: true);
+            if (trabajos.Count > 0) {
                 procesados++;
-                trabajosProcesados += trabajos;
+                trabajosProcesados += trabajos.Count;
+                trabajosParaRevisar.UnionWith(trabajos);
             }
         }
 
-        string alcance = bajarTodos ? "todos los TP detectados" : $"TP{numeroTp}";
-        Log.Info($"\nResumen: {procesados}/{prs.Count} PR(s) procesados para {alcance}. TPs bajados: {trabajosProcesados}. Forzar: {forzar}");
+        const string alcance = "todos los TP detectados";
+        Log.Info($"\nResumen: {procesados}/{prs.Count} PR(s) procesados para {alcance}. TPs bajados: {trabajosProcesados}. Sobrescritura: sí");
         if (procesados == 0) {
             Log.Error($"No se encontraron PRs con archivos para {alcance}.");
             return 1;
+        }
+
+        Log.Info($"\nRevisando automáticamente los TP descargados: {string.Join(", ", trabajosParaRevisar.Order().Select(tp => $"TP{tp}"))}");
+        foreach (int tp in trabajosParaRevisar.Order()) {
+            if (RevisarPresentados(tp.ToString()) != 0) {
+                return 1;
+            }
         }
 
         return 0;
@@ -408,12 +410,6 @@ static class AlumnosCliActions {
 
         return numeroTp;
     }
-
-    public static bool EsTodosLosTrabajosPracticos(string? valor) =>
-        string.IsNullOrWhiteSpace(valor) ||
-        string.Equals(valor.Trim(), "todos", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor.Trim(), "todo", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(valor.Trim(), "all", StringComparison.OrdinalIgnoreCase);
 
     public static bool EsTrabajoPracticoValido(string? valor) => ObtenerNumeroTP(valor) > 0;
 

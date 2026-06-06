@@ -279,16 +279,14 @@ static class AlumnosManager {
 
             if (!carpetasConLegajo.Any()) {
                 AppPaths.AsegurarCarpetaAlumno(alumno);
-                Log.Debug($" ➕ {rutaCarpeta,-40}");
+                Log.Info($" ➕ {nombreCarpeta}");
                 return true;
             }
 
             if (carpetasConLegajo.Count == 1) {
                 string rutaCarpetaExistente = carpetasConLegajo[0];
                 string rutaRelativa = AppPaths.RutaRelativaDesdePracticos(rutaCarpetaExistente);
-                if (string.Equals(rutaCarpetaExistente, rutaCarpeta, StringComparison.OrdinalIgnoreCase)) {
-                    Log.Info($" ✅ {rutaRelativa,-40}");
-                } else {
+                if (!string.Equals(rutaCarpetaExistente, rutaCarpeta, StringComparison.OrdinalIgnoreCase)) {
                     AppPaths.RenombrarCarpetaAlumno(rutaCarpetaExistente, alumno);
                     Log.Warning($" 🔄 {rutaRelativa,-40} → {nombreCarpeta}");
                 }

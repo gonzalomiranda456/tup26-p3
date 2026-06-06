@@ -62,7 +62,7 @@ Servicio para interactuar con la API de GitHub mediante `gh api`.
     - `rutaDestino`: carpeta destino local.
     - `forzar`: sobrescribe archivos existentes si corresponde.
 
-- `BajarArchivosAlumno(numeroPR, forzar)`: descarga los archivos del práctico del alumno resuelto a partir del título del PR.
+- `BajarArchivosAlumno(numeroPR, forzar)`: descarga los archivos del práctico del alumno resuelto a partir del título del PR y devuelve los TP procesados.
     - `numeroPR`: número del pull request.
     - `forzar`: sobrescribe archivos existentes si corresponde.
 
@@ -497,10 +497,10 @@ class GitHub {
         }
     }
 
-    public int BajarArchivosAlumno(int numeroPR, bool forzar = false, int? numeroTpSolicitado = null, bool informarOmitidos = true) {
+    public IReadOnlyList<int> BajarArchivosAlumno(int numeroPR, bool forzar = false, int? numeroTpSolicitado = null, bool informarOmitidos = true) {
         string? titulo = ObtenerTituloPR(numeroPR);
         if (string.IsNullOrWhiteSpace(titulo)) {
-            return 0;
+            return [];
         }
 
         int legajo = ExtraerLegajo(titulo);
@@ -508,7 +508,7 @@ class GitHub {
             if (informarOmitidos) {
                 Log.Warning($"Se omite PR #{numeroPR}: no se pudo resolver legajo desde el título '{titulo}'.");
             }
-            return 0;
+            return [];
         }
 
         string? rutaCarpetaAlumno = AppPaths.ObtenerCarpetaUnicaMismoLegajo(legajo);
@@ -516,7 +516,7 @@ class GitHub {
             if (informarOmitidos) {
                 Log.Warning($"Se omite PR #{numeroPR}: no se encontró carpeta única para legajo {legajo}.");
             }
-            return 0;
+            return [];
         }
 
         string carpetaAlumno = Path.GetFileName(rutaCarpetaAlumno!);
@@ -532,7 +532,7 @@ class GitHub {
             if (informarOmitidos) {
                 Log.Warning($"Se omite PR #{numeroPR}: no se encontraron archivos en {detalle} de '{carpetaAlumno}'.");
             }
-            return 0;
+            return [];
         }
 
         foreach (int numeroTp in tpsPresentados) {
@@ -541,7 +541,7 @@ class GitHub {
             BajarDirectorio(numeroPR, carpetaAlumno, carpetaTp, rutaDestino, forzar);
         }
 
-        return tpsPresentados.Count;
+        return tpsPresentados;
     }
 
     public bool Merge(int numeroPR) {
