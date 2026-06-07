@@ -43,7 +43,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63300   Álvarez, Hernán Fabricio        (381)581-4086   hernancarpalvarez28        🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    17   10
 63313   Ávila Puntano, Benjamín         (381)329-6643   santiagobnj-avila-pun      🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    19   10
 63222   Bajre Martínez, Julián          (381)351-9652   julianbajre-png            🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18    7
-61801   Benega, Maximiliano Abraham     (381)505-9048   abrahambenega              🟢🔴🟢🟢⚪️⚪️   🟢⚪️   No    15    6
+61801   Benega, Maximiliano Abraham     (381)505-9048   abrahambenega              🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15    6
 63493   Busnelli, Bruno                 (381)366-0607   brunobusnelli              🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No     8   10
 63150   Carlino, Joaquín                (381)605-7383   vincent-coffe              🟢🟢🟢🔴⚪️⚪️   🟡⚪️   No     7   10
 63341   Carrer, Juan Cruz               (381)632-5727   juancarrer11               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
