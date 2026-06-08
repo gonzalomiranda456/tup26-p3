@@ -42,12 +42,12 @@ static class AlumnosCliActions {
         IReadOnlyList<string> elementosRestantes = resultado.ElementosRestantes;
 
         if (elementosEliminados.Count == 0 && elementosRestantes.Count == 0) {
-            Log.Info("No se encontraron carpetas ni cachés de compilación dentro de prácticos.");
+            Log.Info("No se encontraron carpetas ni cachés de compilación dentro de prácticos, enunciados ni clases.");
             return 0;
         }
 
         foreach (string ruta in elementosEliminados) {
-            Log.Info($"Eliminado: {AppPaths.RutaRelativaDesdePracticos(ruta)}");
+            Log.Info($"Eliminado: {AppPaths.RutaRelativaDesdeRepo(ruta)}");
         }
 
         Log.Info($"Total de elementos eliminados: {elementosEliminados.Count}");
@@ -55,7 +55,7 @@ static class AlumnosCliActions {
         if (elementosRestantes.Count > 0) {
             Log.Warning($"Quedaron o se regeneraron {elementosRestantes.Count} elemento(s) de compilación.");
             foreach (string ruta in elementosRestantes.Take(10)) {
-                Log.Warning($"Pendiente: {AppPaths.RutaRelativaDesdePracticos(ruta)}");
+                Log.Warning($"Pendiente: {AppPaths.RutaRelativaDesdeRepo(ruta)}");
             }
 
             if (elementosRestantes.Count > 10) {

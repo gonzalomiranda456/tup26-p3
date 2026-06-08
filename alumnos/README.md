@@ -66,7 +66,7 @@ Las carpetas de alumnos se crean o normalizan automáticamente antes de los coma
 	- `TP1`: presentado si tiene al menos 100 líneas totales.
 	- `TP2`: presentado si agrega al menos 20 líneas respecto del enunciado.
 	- `TP3`: presentado si agrega al menos 50 líneas respecto del enunciado.
-- `limpiar-archivos-temporales`: elimina `bin`, `obj`, `.vs` y cachés de compilación dentro de `practicos/`.
+- `limpiar-archivos-temporales`: elimina `bin`, `obj`, `.vs` y cachés de compilación dentro de `practicos/`, `enunciados/` y `clases/`.
 
 ## Archivos de referencia
 
