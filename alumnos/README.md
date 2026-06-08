@@ -24,6 +24,7 @@ dotnet run -- --help
 dotnet run -- listar-alumnos
 dotnet run -- publicar-practico TP3 --forzar
 dotnet run -- revisar-presentaciones 3
+dotnet run -- revisar-presentaciones
 ```
 
 - En los comandos que reciben un práctico, se acepta `1`, `tp1` o `TP1`.
@@ -62,7 +63,7 @@ Las carpetas de alumnos se crean o normalizan automáticamente antes de los coma
 ### Utilidades
 
 - `listar-grupos-whatsapp`: lista grupos y participantes de WhatsApp.
-- `revisar-presentaciones <tp>`: marca presentaciones a partir del código local de cada carpeta.
+- `revisar-presentaciones [tp]`: marca presentaciones a partir del código local de cada carpeta. Si no se indica un TP, revisa todos los prácticos con enunciado disponible.
 	- `TP1`: presentado si tiene al menos 100 líneas totales.
 	- `TP2`: presentado si agrega al menos 20 líneas respecto del enunciado.
 	- `TP3`: presentado si agrega al menos 50 líneas respecto del enunciado.

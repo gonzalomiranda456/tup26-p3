@@ -134,6 +134,7 @@ static class AlumnosCliApp {
             "cerrar-prs" => ["cerrar-prs"],
             "publicar-practico" => ConstruirArgumentosPublicarPractico(),
             "publicar-apuntes" => ["publicar-apuntes"],
+            "revisar-presentaciones" => ConstruirArgumentosRevisarPresentaciones(),
             "listar-practicos-faltantes" => ConstruirArgumentosPracticosFaltantes(),
             "exportar-estado" => ["exportar-estado"],
             "exportar-markdown" => ["exportar-markdown"],
@@ -160,6 +161,7 @@ static class AlumnosCliApp {
             new("revisar-prs",                    "Revisar PRs",                    "Mostrar el estado de los pull requests"),
             new("bajar-prs",                      "Bajar PRs",                      "Descargar y sobrescribir todos los prácticos"),
             new("cerrar-prs",                     "Cerrar PRs",                     "Cerrar pull requests abiertos"),
+            new("revisar-presentaciones",         "Revisar presentaciones",         "Marcar TP presentados desde el código local"),
             new("publicar-practico",              "Publicar práctico",              "Copiar el enunciado de un TP a cada alumno"),
             new("publicar-apuntes",               "Publicar apuntes",               "Ejecutar apuntes/publicar.py"),
             new("listar-practicos-faltantes",     "Listar prácticos faltantes",      "Listar alumnos que adeudan un práctico"),
@@ -178,6 +180,16 @@ static class AlumnosCliApp {
         return trabajoPractico is null
             ? Array.Empty<string>()
             : ["listar-practicos-faltantes", trabajoPractico];
+    }
+
+    static string[] ConstruirArgumentosRevisarPresentaciones() {
+        string? trabajoPractico = PedirTrabajoPractico("Revisar presentaciones", permitirTodos: true);
+
+        return trabajoPractico is null
+            ? Array.Empty<string>()
+            : string.IsNullOrWhiteSpace(trabajoPractico)
+                ? ["revisar-presentaciones"]
+                : ["revisar-presentaciones", trabajoPractico];
     }
 
     static string[] ConstruirArgumentosPublicarPractico() {
@@ -204,11 +216,12 @@ static class AlumnosCliApp {
         return opcion.Command;
     }
 
-    static string? PedirTrabajoPractico(string accion) {
+    static string? PedirTrabajoPractico(string accion, bool permitirTodos = false) {
         IReadOnlyList<EnunciadoPracticoDisponible> practicos = AppPaths.ListarEnunciadosPracticos();
         if (practicos.Count == 0) {
+            string textoVacio = permitirTodos ? "todos" : "cancelar";
             string valor = AnsiConsole.Prompt(
-                new TextPrompt<string>($"[bold cyan]{accion}[/] · Trabajo práctico ([green]TP1[/] o [green]1[/], [grey]vacío = cancelar[/]):")
+                new TextPrompt<string>($"[bold cyan]{accion}[/] · Trabajo práctico ([green]TP1[/] o [green]1[/], [grey]vacío = {textoVacio}[/]):")
                     .PromptStyle("cyan")
                     .AllowEmpty()
                     .Validate(valor =>
@@ -216,10 +229,15 @@ static class AlumnosCliApp {
                             ? ValidationResult.Success()
                             : ValidationResult.Error(AlumnosCliActions.MensajeTrabajoPracticoInvalido(valor))));
 
-            return string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
+            if (string.IsNullOrWhiteSpace(valor)) {
+                return permitirTodos ? string.Empty : null;
+            }
+
+            return valor.Trim();
         }
 
         List<InteractiveChoice> opciones = [
+            .. permitirTodos ? [new InteractiveChoice(string.Empty, "Todos", $"Revisar los {practicos.Count} trabajos prácticos")] : Array.Empty<InteractiveChoice>(),
             .. practicos.Select(practico => new InteractiveChoice(practico.Carpeta, $"TP{practico.Numero}", practico.Carpeta)),
             new("volver", "Volver", "Volver al menú sin ejecutar")
         ];

@@ -19,7 +19,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63399   Lazarte, Gonzalo Romeo          (381)576-0069   tutu-04                    🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    17   10
 63211   Montero, Luca                   (381)528-7848   monteroluca007             🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    14   10
 63350   Páez Carabajal, Santiago        (381)572-4096   santiagopaez-2             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    13    9
-61581   Paz, Naim Federico              (381)353-0060   naimp074                   🟢🟢🟢🔴⚪️⚪️   🟢⚪️   No    16   10
+61581   Paz, Naim Federico              (381)353-0060   naimp074                   🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    16   10
 63647   Paz, Valentina                  (381)599-6422   valepaz11                  🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    16   10
 63389   Pereyra Petroni, Nicolas        (381)332-4401   nicopereyra255-ship-it     🔴🟢🟢🔴⚪️⚪️   🟢⚪️   No    11    8
 63420   Pereyra, Valentina Nazaret      (381)552-8065   valentinapereyra03         🔴🟢🔴🔴⚪️⚪️   🟡⚪️   No     5    5
@@ -45,7 +45,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63222   Bajre Martínez, Julián          (381)351-9652   julianbajre-png            🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18    7
 61801   Benega, Maximiliano Abraham     (381)505-9048   abrahambenega              🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15    6
 63493   Busnelli, Bruno                 (381)366-0607   brunobusnelli              🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No     8   10
-63150   Carlino, Joaquín                (381)605-7383   vincent-coffe              🟢🟢🟢🔴⚪️⚪️   🟡⚪️   No     7   10
+63150   Carlino, Joaquín                (381)605-7383   vincent-coffe              🟢🟢🟢🟢⚪️⚪️   🟡⚪️   No     7   10
 63341   Carrer, Juan Cruz               (381)632-5727   juancarrer11               🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    15   10
 63461   Cativa, Facundo Simón           (381)391-4222   cativafacundo9-gif         🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    15    8
 63218   Cortés, Guillermo Augusto       (381)606-0586   guillecortes01             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    18   10

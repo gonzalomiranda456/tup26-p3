@@ -207,20 +207,22 @@ static class AlumnosCliActions {
         int indice = 0;
         int procesados = 0;
         int trabajosProcesados = 0;
+        int archivosDescargados = 0;
         HashSet<int> trabajosParaRevisar = new();
         foreach (var pr in prs) {
             indice++;
             Log.Info($"\nRevisando PR {indice}/{prs.Count}: #{pr.Numero} | {pr.Titulo}");
-            IReadOnlyList<int> trabajos = gh.BajarArchivosAlumno(pr.Numero, forzar: true);
-            if (trabajos.Count > 0) {
+            BajadaArchivosAlumnoResultado bajada = gh.BajarArchivosAlumno(pr.Numero, forzar: true);
+            if (bajada.Archivos.Count > 0) {
                 procesados++;
-                trabajosProcesados += trabajos.Count;
-                trabajosParaRevisar.UnionWith(trabajos);
+                trabajosProcesados += bajada.TrabajosPracticos.Count;
+                archivosDescargados += bajada.Archivos.Count;
+                trabajosParaRevisar.UnionWith(bajada.TrabajosPracticos);
             }
         }
 
         const string alcance = "todos los TP detectados";
-        Log.Info($"\nResumen: {procesados}/{prs.Count} PR(s) procesados para {alcance}. TPs bajados: {trabajosProcesados}. Sobrescritura: sí");
+        Log.Info($"\nResumen: {procesados}/{prs.Count} PR(s) procesados para {alcance}. TPs detectados: {trabajosProcesados}. Archivos bajados: {archivosDescargados}. Sobrescritura: sí");
         if (procesados == 0) {
             Log.Error($"No se encontraron PRs con archivos para {alcance}.");
             return 1;
@@ -254,7 +256,7 @@ static class AlumnosCliActions {
         int cerrados = 0;
         int errores = 0;
         AnsiConsole.Progress()
-            .AutoClear(false)
+            .AutoClear(true)
             .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
             .Start(ctx => {
                 var tarea = ctx.AddTask("Cerrando PRs", maxValue: prs.Count);
@@ -278,7 +280,24 @@ static class AlumnosCliActions {
         return 0;
     }
 
-    public static int RevisarPresentados(string trabajoPractico) {
+    public static int RevisarPresentados(string? trabajoPractico) {
+        if (string.IsNullOrWhiteSpace(trabajoPractico)) {
+            IReadOnlyList<EnunciadoPracticoDisponible> practicos = AppPaths.ListarEnunciadosPracticos();
+            if (practicos.Count == 0) {
+                Log.Error($"No se encontraron enunciados de trabajos prácticos en {AppPaths.EnunciadosDirectory}.");
+                return 1;
+            }
+
+            Log.Info($"Revisando todos los trabajos prácticos: {string.Join(", ", practicos.Select(practico => $"TP{practico.Numero}"))}");
+            foreach (EnunciadoPracticoDisponible practico in practicos) {
+                if (RevisarPresentados(practico.Numero.ToString()) != 0) {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
+
         int numeroTp = ObtenerNumeroTP(trabajoPractico);
 
         if (numeroTp <= 0) {
@@ -294,11 +313,12 @@ static class AlumnosCliActions {
 
         Log.Info($"{carpetaTp.ToUpperInvariant()} | líneas base del enunciado: {lineasEnunciado}");
         List<TrabajoPresentadoLocal> trabajosPresentados = new();
+        List<PresentacionCambiada> presentacionesCambiadas = new();
         bool habiaObservaciones = alumnos.Any(alumno => !string.IsNullOrWhiteSpace(alumno.Observaciones));
 
         Alumno[] alumnosOrdenados = alumnos.OrderBy(alumno => alumno.Legajo).ToArray();
         AnsiConsole.Progress()
-            .AutoClear(false)
+            .AutoClear(true)
             .Columns(new TaskDescriptionColumn(), new ProgressBarColumn(), new PercentageColumn(), new SpinnerColumn())
             .Start(ctx => {
                 var tarea = ctx.AddTask($"Revisando presentados TP{numeroTp}", maxValue: alumnosOrdenados.Length);
@@ -310,6 +330,7 @@ static class AlumnosCliActions {
 
                     // alumno.Observaciones = string.Empty;
 
+                    Estado estadoAnterior = alumno.EstadoPractico(numeroTp);
                     Estado estado = Estado.Desaprobado;
                     if (PracticoParecePresentado(numeroTp, lineasTotales, lineasAgregadas)) {
                         estado = Estado.Aprobado;
@@ -319,6 +340,9 @@ static class AlumnosCliActions {
                     }
 
                     alumno.Practico(numeroTp, estado);
+                    if (estadoAnterior != estado) {
+                        presentacionesCambiadas.Add(new(alumno, estadoAnterior, estado, lineasTotales, lineasAgregadas));
+                    }
                     tarea.Increment(1);
                 }
             });
@@ -326,22 +350,19 @@ static class AlumnosCliActions {
         int copias = RevisarCopiasTrabajosPresentados(numeroTp, trabajosPresentados);
         int marcados = alumnos.Count(alumno => alumno.EstadoPractico(numeroTp) == Estado.Aprobado);
 
-        if (trabajosPresentados.Count > 0 || habiaObservaciones) {
+        if (presentacionesCambiadas.Count > 0 || trabajosPresentados.Count > 0 || habiaObservaciones) {
             AlumnosManager.Escribir(alumnos, AppPaths.ArchivoAlumnos);
         }
 
-        foreach (Alumno alumno in alumnos.OrderBy(alumno => alumno.Legajo)) {
-            string rutaPractico = AppPaths.PracticoAlumnoSubdirectory(alumno, carpetaTp);
-            int lineasTotales   = ContarLineasPracticoLocal(rutaPractico);
-            int lineasAgregadas = Math.Max(0, lineasTotales - lineasEnunciado);
-
-            alumno.Observaciones = string.Empty;
-
-            var estado = alumno.EstadoPractico(numeroTp);
-            Log.Info($"{alumno.Legajo} | {alumno.NombreCompleto,-40} | L:{lineasTotales,4} | L+:{lineasAgregadas,4} | marcado    {estado.ToEmoji()}");
+        if (presentacionesCambiadas.Count == 0) {
+            Log.Warning("No hubo cambios de estado.");
+        } else {
+            foreach (PresentacionCambiada cambio in presentacionesCambiadas.OrderBy(cambio => cambio.Alumno.Legajo)) {
+                Log.Print($"{cambio.Alumno.Legajo} | {cambio.Alumno.NombreCompleto,-40} | L:{cambio.LineasTotales,4} | L+:{cambio.LineasAgregadas,4} | {cambio.EstadoAnterior.ToEmoji()} -> {cambio.EstadoNuevo.ToEmoji()}");
             }
+        }
 
-        Log.Info($"Resumen TP{numeroTp}: marcados={marcados}, copias={copias}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
+        Log.Success($"Resumen TP{numeroTp}: marcados={marcados}, copias={copias}, total={alumnos.Count()}, porcentaje={marcados * 100.0 / alumnos.Count():F2}%");
         return 0;
     }
 
@@ -798,6 +819,7 @@ static class AlumnosCliActions {
         alumno.practicos.Any(estado => estado == Estado.Aprobado);
 
     sealed record TrabajoPresentadoLocal(Alumno Alumno, string RutaPractico, HashSet<string> LineasCodigo);
+    sealed record PresentacionCambiada(Alumno Alumno, Estado EstadoAnterior, Estado EstadoNuevo, int LineasTotales, int LineasAgregadas);
 
     readonly record struct CopiaDetectada(int LineasComunes, int MaximoLineas, double Porcentaje);
 
