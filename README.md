@@ -62,7 +62,7 @@ A modo de referencia, las siguientes imágenes muestran un ejemplo de cómo podr
 
 | Vista de detalle                              | Edición de un contacto                |
 |:---------------------------------------------:|:-------------------------------------:|
-| ![Vista de detalle del contacto](detalle.png) | ![Edición de un contacto](editar.png) |
+| ![Vista de detalle del contacto](detalle.jpg) | ![Edición de un contacto](editar.jpg) |
 
 ---
 
