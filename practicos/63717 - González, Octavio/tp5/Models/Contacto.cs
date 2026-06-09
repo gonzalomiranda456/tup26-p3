@@ -1,5 +1,6 @@
 namespace tp5.Models;
-
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 public class Contacto
 {
     public int Id { get; set; }
@@ -12,4 +13,10 @@ public class Contacto
     public string Direccion { get; set; } = "";
     public DateOnly? FechaNacimiento { get; set; }
     public string Notas { get; set; } = "";
+}
+//DB CONTEXT. 
+class ContactoDb : DbContext
+{
+    public ContactoDb(DbContextOptions<ContactoDb> options) : base(options) { }
+    public DbSet<Contacto> Contactos => Set<Contacto>();
 }
