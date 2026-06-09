@@ -15,7 +15,7 @@ Legajo  Nombre y Apellido               Teléfono        GitHub                 
 63457   González Dupuy, Ignacio         (381)683-1233   ignas11                    🟢🟢🟢🟢⚪️⚪️   🟢⚪️   Sí    23   10
 61577   González, Lucas Alfredo         (381)669-4386   lucasgonzaa                🟢🔴🔴🔴⚪️⚪️   🟢⚪️   Sí    19   10
 63174   Jerez, Luciano Germán           (381)550-7143   luchex1525                 🟢🟢🟢🟢⚪️⚪️   🟢⚪️   Sí    24    9
-63700   Jiménez, Nelson Maximiliano     (381)639-2861   maximilianojimnez          🟢🟢🔴🔴⚪️⚪️   🟢⚪️   Sí    18    8
+63700   Jiménez, Nelson Maximiliano     (381)639-2861   maximilianojimnez          🟢🟢🟢🔴⚪️⚪️   🟢⚪️   Sí    18    8
 63399   Lazarte, Gonzalo Romeo          (381)576-0069   tutu-04                    🟢🟢🟢🟢⚪️⚪️   🟢⚪️   No    17   10
 63211   Montero, Luca                   (381)528-7848   monteroluca007             🟢🟢🔴🔴⚪️⚪️   🟢⚪️   No    14   10
 63350   Páez Carabajal, Santiago        (381)572-4096   santiagopaez-2             🟢🟢🟢🟢⚪️⚪️   🟢⚪️   Sí    14    9
