@@ -18,6 +18,7 @@ static class AppPaths {
     public static string PracticosDirectory => Path.Combine(RepoRoot, "practicos");
     public static string EnunciadosDirectory => Path.Combine(RepoRoot, "enunciados");
     public static string ClasesDirectory => Path.Combine(RepoRoot, "clases");
+    public static string ExperimentosDirectory => Path.Combine(RepoRoot, "experimentos");
     public static string ApuntesDirectory => Path.Combine(RepoRoot, "apuntes");
     public static string ArchivoJsonAlumnos => Path.Combine(DataDirectory, "alumnos.json");
 
@@ -183,7 +184,7 @@ static class AppPaths {
     public static LimpiezaCompilacionPracticosResultado LimpiarDirectoriosCompilacionPracticos() {
         const int intentosMaximos = 5;
         List<string> elementosEliminados = new();
-        string[] directoriosLimpieza = [PracticosDirectory, EnunciadosDirectory, ClasesDirectory];
+        string[] directoriosLimpieza = [PracticosDirectory, EnunciadosDirectory, ClasesDirectory, ExperimentosDirectory];
 
         for (int intento = 0; intento < intentosMaximos; intento++) {
             List<string> rutas = directoriosLimpieza

@@ -39,7 +39,7 @@ static class AlumnosCliActions {
         PrepararCarpetasAlumnos();
         LimpiezaCompilacionPracticosResultado resultado = AppPaths.LimpiarDirectoriosCompilacionPracticos();
         IReadOnlyList<string> elementosEliminados = resultado.ElementosEliminados;
-        IReadOnlyList<string> elementosRestantes = resultado.ElementosRestantes;
+        IReadOnlyList<string> elementosRestantes  = resultado.ElementosRestantes;
 
         if (elementosEliminados.Count == 0 && elementosRestantes.Count == 0) {
             Log.Info("No se encontraron carpetas ni cachés de compilación dentro de prácticos, enunciados ni clases.");
