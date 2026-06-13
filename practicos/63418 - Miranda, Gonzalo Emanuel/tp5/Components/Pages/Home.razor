@@ -1,7 +1,79 @@
 @page "/"
+@rendermode InteractiveServer
+@inject ContactoService ContactoService
 
 <PageTitle>TP5: AgendaWeb</PageTitle>
 
-<div class="d-flex align-items-center justify-content-center vh-100">
-    <h1 class="display-3 fw-bold"><i class="bi bi-person-vcard me-3"></i>TP5: AgendaWeb</h1>
+<div class="container mt-4">
+    <div class="row">
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="🔍 Buscar contacto..." 
+                           @bind="terminoBusqueda" 
+                           @bind:event="oninput"
+                           @onkeyup="FiltrarContactos" />
+                </div>
+                
+                <div class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+                    @if (contactos == null)
+                    {
+                        <p class="p-3 text-muted">Cargando contactos...</p>
+                    }
+                    else if (!contactos.Any())
+                    {
+                        <p class="p-3 text-muted">No se encontraron contactos.</p>
+                    }
+                    else
+                    {
+                        @foreach (var contacto in contactos)
+                        {
+                            <button type="button" class="list-group-item list-group-item-action">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-light text-primary d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px; font-weight: bold;">
+                                        @(contacto.Nombre.FirstOrDefault())@(contacto.Apellido.FirstOrDefault())
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">@contacto.Nombre @contacto.Apellido</h6>
+                                        <small class="text-muted">@contacto.Empresa</small>
+                                    </div>
+                                </div>
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center justify-content-center text-muted">
+                    <p>Seleccione un contacto para ver los detalles (Próximo paso...)</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
+
+@code {
+    // Variables de estado
+    private List<Contacto> contactos;
+    private string terminoBusqueda = "";
+
+    // Este método se ejecuta automáticamente cuando la página carga por primera vez
+    protected override async Task OnInitializedAsync()
+    {
+        // Llamamos al servicio para traer los 20 contactos de prueba
+        contactos = await ContactoService.ObtenerContactosAsync();
+    }
+
+    // Este método se ejecuta cada vez que el usuario suelta una tecla en el buscador
+    private async Task FiltrarContactos()
+    {
+        contactos = await ContactoService.BuscarContactosAsync(terminoBusqueda);
+    }
+}
